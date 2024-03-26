@@ -128,3 +128,39 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Dependency directories
+node_modules/
+
+# Compiled output
+/android/app/build/
+/android/.gradle
+/android/build/
+
+# Android files
+/android/app/*.iml
+/android/*.iml
+/android/local.properties
+/android/.idea/
+/android/captures/
+*.keystore
+!android/app/debug.keystore
+
+# iOS files
+/ios/build/
+/ios/*.xcodeproj/
+/ios/*.xcworkspace/
+
+# Misc
+.DS_Store
+/.vscode/
+*.swp
+*.swo
+
+# Temp files
+*.tmp
+*.temp
+*~
+
+# Environments
+.env
