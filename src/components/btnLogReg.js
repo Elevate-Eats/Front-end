@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-const Form_Login_Register = () => {
+const BtnLogReg = () => {
   return (
     <View>
-      <Text>Form_Login_Register</Text>
+      <Text>BtnLogReg</Text>
     </View>
   )
 }
 
-export default Form_Login_Register
+export default BtnLogReg
 
 const styles = StyleSheet.create({})

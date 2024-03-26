@@ -1,4 +1,6 @@
-import Button_Login_Register from './btn_logreg';
-import Form_Login_Register from './form_logreg';
+import BtnLogReg from './btnLogReg';
+import FormLogReg from './formLogReg';
+import TopBar from './topBar';
+import BottomBar from './bottomBar';
 
-export {Button_Login_Register, Form_Login_Register};
+export {BtnLogReg, FormLogReg, TopBar, BottomBar};
