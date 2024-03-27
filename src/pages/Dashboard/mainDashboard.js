@@ -7,8 +7,6 @@ import {LOGIN_ENDPOINT} from '@env';
 
 import {TopBar} from '../../components';
 
-const Drawer = createDrawerNavigator();
-
 const MainDashboard = ({navigation}) => {
   return (
     <View style={{flex: 1, backgroundColor: Colors.backgroundColor}}>

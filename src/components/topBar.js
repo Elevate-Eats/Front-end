@@ -6,7 +6,12 @@ import {DrawerBar} from '.';
 const TopBar = ({navigation}) => {
   return (
     <Appbar.Header dark={true} elevated={true}>
-      <Appbar.Action icon="menu" isLeading={true} color={'#000'} />
+      <Appbar.Action
+        icon="menu"
+        isLeading={true}
+        color={'#000'}
+        onPress={() => navigation.openDrawer()}
+      />
       <Appbar.Content
         title="Dashboard"
         color={'#000'}
