@@ -2,5 +2,5 @@ import BtnLogReg from './btnLogReg';
 import FormLogReg from './formLogReg';
 import TopBar from './topBar';
 import BottomBar from './bottomBar';
-
-export {BtnLogReg, FormLogReg, TopBar, BottomBar};
+import DrawerBar from './drawerBar';
+export {BtnLogReg, FormLogReg, TopBar, BottomBar, DrawerBar};

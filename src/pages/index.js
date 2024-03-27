@@ -33,6 +33,9 @@ import MainStatistik from './Statistik/mainStastistik';
 import LoginPage from './Login/loginPage';
 import RegisterPage from './Register/registerPage';
 
+//+++++ Account +++++
+import CompanyAccount from './Account/companyAccount';
+
 export {
   MainBisnis,
   MainDashboard,
@@ -53,4 +56,5 @@ export {
   RegisterPage,
   MainLaporan,
   MainStatistik,
+  CompanyAccount,
 };

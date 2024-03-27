@@ -2,7 +2,8 @@ import {StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 
 import {Appbar} from 'react-native-paper';
-const TopBar = () => {
+import {DrawerBar} from '.';
+const TopBar = ({navigation}) => {
   return (
     <Appbar.Header dark={true} elevated={true}>
       <Appbar.Action icon="menu" isLeading={true} color={'#000'} />

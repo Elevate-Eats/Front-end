@@ -1,14 +1,29 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import {StyleSheet} from 'react-native';
+import React from 'react';
 
-const FormLogReg = () => {
+import {Text, TextInput, HelperText} from 'react-native-paper';
+import {Colors} from '../utils/colors';
+
+const FormLogReg = props => {
   return (
-    <View>
-      <Text>FormLogReg</Text>
-    </View>
-  )
-}
+    <TextInput
+      style={{marginVertical: 5}}
+      mode="outlined"
+      label={props.label} //{'Email'}
+      placeholder={props.placeholder} //"email-address"
+      secureTextEntry={props.secureTextEntry}
+      keyboardType={props.keyboardType} //"email-address"
+      right={<TextInput.Icon icon={props.right} />} //eye
+      left={<TextInput.Icon icon={props.left} size={30} color={'grey'} />}
+      outlineColor={'#878787'}
+      activeOutlineColor={Colors.btnColor}
+      outlineStyle={{borderWidth: 1.5}}
+      value={props.value}
+      onChangeText={props.onChangeText}
+    />
+  );
+};
 
-export default FormLogReg
+export default FormLogReg;
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({});

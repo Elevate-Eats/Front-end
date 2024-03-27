@@ -14,6 +14,7 @@ const Tab = createBottomTabNavigator();
 const BottomBar = () => {
   return (
     <Tab.Navigator
+      initialRouteName="Dashboard"
       tabBar={({navigation, state, descriptors, insets}) => (
         <BottomNavigation.Bar
           shifting={true}
