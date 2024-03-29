@@ -6,7 +6,13 @@ import {BottomNavigation} from 'react-native-paper';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
-import {MainDashboard, MainBisnis, MainLaporan, MainStatistik} from '../pages';
+import {
+  MainDashboard,
+  MainBisnis,
+  MainLaporan,
+  MainStatistik,
+  PilihCabang,
+} from '../pages';
 import {Colors} from '../utils/colors';
 
 const Tab = createBottomTabNavigator();

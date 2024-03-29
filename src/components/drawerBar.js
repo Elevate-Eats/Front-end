@@ -1,7 +1,14 @@
 import {StyleSheet, Text, View} from 'react-native';
 import React, {useState} from 'react';
 import {createDrawerNavigator} from '@react-navigation/drawer';
-import {CompanyAccount, LoginPage, MainDashboard, RegisterPage} from '../pages';
+import {
+  CompanyAccount,
+  LoginPage,
+  MainBisnis,
+  MainDashboard,
+  PilihCabang,
+  RegisterPage,
+} from '../pages';
 import {BottomBar} from '.';
 import Route from '../routes/route';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -11,9 +18,9 @@ const Drawer = createDrawerNavigator();
 const DrawerBar = () => {
   const [active, setActive] = useState('');
   return (
-    <Drawer.Navigator initialRouteName="Home Stack">
+    <Drawer.Navigator initialRouteName="Home">
       <Drawer.Screen
-        name="Home Stack"
+        name="Home"
         component={HomeStackNavigator}
         options={{headerShown: false}}
       />
@@ -44,6 +51,11 @@ function HomeStackNavigator(params) {
         component={RegisterPage}
         options={{headerShown: false}}
       />
+
+      {/* BISNIS */}
+      <Stack.Group>
+        <Stack.Screen name="Pilih Cabang" component={PilihCabang} />
+      </Stack.Group>
     </Stack.Navigator>
   );
 }

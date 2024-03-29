@@ -3,7 +3,7 @@ import React from 'react';
 
 import {Appbar} from 'react-native-paper';
 import {DrawerBar} from '.';
-const TopBar = ({navigation}) => {
+const TopBar = ({navigation, title}) => {
   return (
     <Appbar.Header dark={true} elevated={true}>
       <Appbar.Action
@@ -13,7 +13,7 @@ const TopBar = ({navigation}) => {
         onPress={() => navigation.openDrawer()}
       />
       <Appbar.Content
-        title="Dashboard"
+        title={title}
         color={'#000'}
         titleStyle={{
           fontWeight: '800',

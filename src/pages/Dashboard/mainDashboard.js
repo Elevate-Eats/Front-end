@@ -9,7 +9,7 @@ import {ItemDashboard, TopBar, TitleDashboard} from '../../components';
 const MainDashboard = ({navigation}) => {
   return (
     <View style={styles.container}>
-      <TopBar navigation={navigation} />
+      <TopBar navigation={navigation} title={'Dashboard'} />
 
       <View style={styles.blueLayer}>
         <View style={styles.account}>
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginTop: 10,
     marginBottom: 5,
-    borderRadius: 10,
+    borderRadius: 5,
     elevation: 3,
     flexDirection: 'row',
     alignItems: 'center',
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   whiteLayer: {
     backgroundColor: 'white',
     flex: 4 / 5,
-    borderRadius: 10,
+    borderRadius: 5,
     marginHorizontal: 10,
     marginTop: 5,
     marginBottom: 10,
@@ -122,6 +122,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.btnColor,
     width: 320,
     height: 160,
-    borderRadius: 10,
+    borderRadius: 5,
   },
 });

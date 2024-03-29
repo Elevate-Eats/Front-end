@@ -30,6 +30,7 @@ const LoginPage = ({navigation}) => {
         })
         .then(async res => {
           await AsyncStorage.setItem('userToken', res.data.token);
+          console.log('Token: ', await AsyncStorage.getItem('userToken'));
         });
       navigation.replace('Bottom Tab');
     } catch (error) {
