@@ -28,7 +28,7 @@ const DrawerBar = () => {
 
 function HomeStackNavigator(params) {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator initialRouteName="Login">
       <Stack.Screen
         name="Bottom Tab"
         component={BottomBar}

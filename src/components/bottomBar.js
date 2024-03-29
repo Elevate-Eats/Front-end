@@ -67,7 +67,8 @@ const BottomBar = () => {
           tabBarIcon: ({focused}) => {
             const iconSize = focused ? 27 : 23;
             const iconColor = focused ? Colors.btnColor : Colors.btnOpacity;
-            return <Icon name="home" size={iconSize} color={iconColor} />;
+            const iconName = focused ? 'home' : 'home-outline';
+            return <Icon name={iconName} size={iconSize} color={iconColor} />;
           },
         }}
       />
@@ -80,7 +81,8 @@ const BottomBar = () => {
           tabBarIcon: ({focused}) => {
             const iconSize = focused ? 27 : 23;
             const iconColor = focused ? Colors.btnColor : Colors.btnOpacity;
-            return <Icon name="clipboard" size={iconSize} color={iconColor} />;
+            const iconName = focused ? 'newspaper' : 'newspaper-outline';
+            return <Icon name={iconName} size={iconSize} color={iconColor} />;
           },
         }}
       />
@@ -93,9 +95,8 @@ const BottomBar = () => {
           tabBarIcon: ({focused}) => {
             const iconSize = focused ? 27 : 23;
             const iconColor = focused ? Colors.btnColor : Colors.btnOpacity;
-            return (
-              <Icon name="stats-chart" size={iconSize} color={iconColor} />
-            );
+            const iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+            return <Icon name={iconName} size={iconSize} color={iconColor} />;
           },
         }}
       />
@@ -108,7 +109,8 @@ const BottomBar = () => {
           tabBarIcon: ({focused}) => {
             const iconSize = focused ? 27 : 23;
             const iconColor = focused ? Colors.btnColor : Colors.btnOpacity;
-            return <Icon name="business" size={iconSize} color={iconColor} />;
+            const iconName = focused ? 'business' : 'business-outline';
+            return <Icon name={iconName} size={iconSize} color={iconColor} />;
           },
         }}
       />

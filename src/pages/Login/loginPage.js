@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import {Colors} from '../../utils/colors';
-import {TextInput, Text, Button} from 'react-native-paper';
+import {Text} from 'react-native-paper';
 import {BtnLogReg, FormLogReg} from '../../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
