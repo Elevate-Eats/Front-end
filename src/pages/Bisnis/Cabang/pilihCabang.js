@@ -1,19 +1,16 @@
-import {
-  StyleSheet,
-  View,
-  KeyboardAvoidingView,
-  FlatList,
-  TouchableOpacity,
-} from 'react-native';
+import {StyleSheet, View, KeyboardAvoidingView} from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {Colors} from '../../../utils/colors';
-import {BtnAdd, SearchBox, LoadingIndicator} from '../../../components';
+import {
+  BtnAdd,
+  SearchBox,
+  LoadingIndicator,
+  ListRow,
+  DataError,
+} from '../../../components';
 import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
 import {BRANCH_ENDPOINT} from '@env';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {Text} from 'react-native-paper';
-import {Item} from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
 
 const PilihCabang = () => {
   const [branch, setBranch] = useState([]);
@@ -49,41 +46,7 @@ const PilihCabang = () => {
       <View style={styles.whiteLayer}>
         <SearchBox search="Cari cabang ..." />
         <View style={{flex: 1, marginVertical: 10}}>
-          {error ? (
-            <View style={styles.ifError}>
-              <Text variant="headlineMedium" style={{fontWeight: '700'}}>
-                {error}
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={branch}
-              keyExtractor={item => item.id.toString()}
-              renderItem={({item}) => {
-                const initials = item.name
-                  .split(' ')
-                  .map(word => word[0])
-                  .join('');
-                return (
-                  <View style={{marginVertical: 10}}>
-                    <View style={styles.item}>
-                      <View style={styles.icon}>
-                        <Text variant="headlineMedium">{initials}</Text>
-                      </View>
-                      <TouchableOpacity style={{flex: 1}}>
-                        <View style={{marginHorizontal: 15}}>
-                          <Text variant="titleLarge">{item.name}</Text>
-                          <Text variant="labelLarge" style={{color: 'grey'}}>
-                            {item.address}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              }}
-            />
-          )}
+          {error ? <DataError data={error} /> : <ListRow data={branch} />}
         </View>
       </View>
       <BtnAdd />

@@ -9,7 +9,11 @@ import ItemBisnis from './itemBisnis';
 import SearchBox from './searchBox';
 import BtnAdd from './btnAdd';
 import LoadingIndicator from './loadingIndicator';
+import ListRow from './listRow';
+import DataError from './dataError';
 export {
+  DataError,
+  ListRow,
   LoadingIndicator,
   BtnAdd,
   SearchBox,

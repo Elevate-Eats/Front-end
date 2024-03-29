@@ -24,8 +24,8 @@ export default BtnAdd;
 const styles = StyleSheet.create({
   btn: {
     backgroundColor: Colors.secondaryColor,
-    width: 50,
-    height: 50,
+    width: 55,
+    height: 55,
     borderRadius: 50,
     position: 'absolute',
     bottom: 25,
