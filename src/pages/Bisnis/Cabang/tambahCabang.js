@@ -1,9 +1,4 @@
-import {
-  KeyboardAvoidingView,
-  StyleSheet,
-  View,
-  ScrollView,
-} from 'react-native';
+import {KeyboardAvoidingView, StyleSheet, View, ScrollView} from 'react-native';
 import React, {useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {AddPhoto, ConstButton, FormInput} from '../../../components';
@@ -52,7 +47,7 @@ const TambahCabang = () => {
         </ScrollView>
         <ConstButton
           title="Tambah Cabang"
-          onPress={() => console.log('Pressed')}
+          // onPress={() => console.log('Pressed')}
         />
       </View>
     </KeyboardAvoidingView>
