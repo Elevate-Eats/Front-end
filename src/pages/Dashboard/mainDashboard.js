@@ -4,7 +4,12 @@ import {Colors} from '../../utils/colors';
 import {Text, Button} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-import {ItemDashboard, TopBar, TitleDashboard} from '../../components';
+import {
+  ItemDashboard,
+  TopBar,
+  TitleDashboard,
+  ConstButton,
+} from '../../components';
 
 const MainDashboard = ({navigation}) => {
   return (
@@ -57,14 +62,7 @@ const MainDashboard = ({navigation}) => {
           </View>
         </ScrollView>
         <View style={{marginTop: 10}}>
-          <Button
-            mode="elevated"
-            buttonColor={Colors.btnColor}
-            style={{paddingVertical: 5, borderRadius: 5}}>
-            <Text variant="titleMedium" style={{color: 'white'}}>
-              Transaksi
-            </Text>
-          </Button>
+          <ConstButton title="Transaksi" />
         </View>
       </View>
     </View>

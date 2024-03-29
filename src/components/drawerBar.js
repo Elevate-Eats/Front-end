@@ -8,6 +8,7 @@ import {
   MainDashboard,
   PilihCabang,
   RegisterPage,
+  TambahCabang,
 } from '../pages';
 import {BottomBar} from '.';
 import Route from '../routes/route';
@@ -16,7 +17,6 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 const DrawerBar = () => {
-  const [active, setActive] = useState('');
   return (
     <Drawer.Navigator initialRouteName="Home">
       <Drawer.Screen
@@ -55,6 +55,7 @@ function HomeStackNavigator(params) {
       {/* BISNIS */}
       <Stack.Group>
         <Stack.Screen name="Pilih Cabang" component={PilihCabang} />
+        <Stack.Screen name="Tambah Cabang" component={TambahCabang} />
       </Stack.Group>
     </Stack.Navigator>
   );

@@ -11,7 +11,13 @@ import BtnAdd from './btnAdd';
 import LoadingIndicator from './loadingIndicator';
 import ListRow from './listRow';
 import DataError from './dataError';
+import AddPhoto from './addPhoto';
+import FormInput from './formInput';
+import ConstButton from './btn';
 export {
+  ConstButton,
+  FormInput,
+  AddPhoto,
   DataError,
   ListRow,
   LoadingIndicator,

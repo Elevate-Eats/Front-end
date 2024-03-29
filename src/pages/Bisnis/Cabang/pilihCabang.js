@@ -12,7 +12,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
 import {BRANCH_ENDPOINT} from '@env';
 
-const PilihCabang = () => {
+const PilihCabang = ({navigation}) => {
   const [branch, setBranch] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,7 +49,7 @@ const PilihCabang = () => {
           {error ? <DataError data={error} /> : <ListRow data={branch} />}
         </View>
       </View>
-      <BtnAdd />
+      <BtnAdd onPress={() => navigation.navigate('Tambah Cabang')} />
     </KeyboardAvoidingView>
   );
 };
