@@ -49,7 +49,10 @@ const PilihCabang = ({navigation}) => {
           {error ? (
             <DataError data={error} />
           ) : (
-            <ListRow data={branch} navigation={navigation} />
+            <ListRow
+              data={branch}
+              onPress={item => navigation.navigate('Edit Cabang', {item})}
+            />
           )}
         </View>
       </View>

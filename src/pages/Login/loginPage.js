@@ -34,7 +34,7 @@ const LoginPage = ({navigation}) => {
         });
       navigation.replace('Bottom Tab');
     } catch (error) {
-      // Alert.alert('Email atau Password Salah');
+      Alert.alert('Email atau Password Salah');
     }
     // console.log(token);
   };
@@ -74,8 +74,8 @@ const LoginPage = ({navigation}) => {
           />
 
           <BtnLogReg
-            // onPress={PostLogin}
-            onPress={() => navigation.replace('Bottom Tab')}
+            onPress={PostLogin}
+            // onPress={() => navigation.replace('Bottom Tab')}
             disabled={false}
             name="Log In"
           />

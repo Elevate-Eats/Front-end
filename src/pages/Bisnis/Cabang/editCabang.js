@@ -24,7 +24,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import {BRANCH_ENDPOINT, EMPLOYEE_ENDPOINT} from '@env';
 
 const EditCabang = ({route, navigation}) => {
-  const {data} = route.params;
+  const {item} = route.params;
   const [branch, setBranch] = useState({});
   const [employee, setEmployee] = useState({});
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ const EditCabang = ({route, navigation}) => {
           const dataBranch = await PostData({
             operation: BRANCH_ENDPOINT,
             endpoint: 'showSingleBranch',
-            payload: {id: data.id},
+            payload: {id: item.id},
           });
           setBranch(dataBranch.branchData);
 

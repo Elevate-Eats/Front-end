@@ -4,12 +4,15 @@ import {createDrawerNavigator} from '@react-navigation/drawer';
 import {
   CompanyAccount,
   EditCabang,
+  EditPegawai,
   LoginPage,
   MainBisnis,
   MainDashboard,
   PilihCabang,
+  PilihPegawai,
   RegisterPage,
   TambahCabang,
+  TambahPegawai,
 } from '../pages';
 import {BottomBar} from '.';
 import Route from '../routes/route';
@@ -58,6 +61,11 @@ function HomeStackNavigator(params) {
         <Stack.Screen name="Pilih Cabang" component={PilihCabang} />
         <Stack.Screen name="Tambah Cabang" component={TambahCabang} />
         <Stack.Screen name="Edit Cabang" component={EditCabang} />
+      </Stack.Group>
+      <Stack.Group>
+        <Stack.Screen name="Pilih Pegawai" component={PilihPegawai} />
+        <Stack.Screen name="Tambah Pegawai" component={TambahPegawai} />
+        <Stack.Screen name="Edit Pegawai" component={EditPegawai} />
       </Stack.Group>
     </Stack.Navigator>
   );

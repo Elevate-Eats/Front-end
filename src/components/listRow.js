@@ -2,13 +2,15 @@ import {FlatList, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native-paper';
 import React from 'react';
 
-const ListRow = ({navigation, data}) => {
+const ListRow = props => {
   return (
     <View>
       <FlatList
-        data={data}
+        data={props.data}
         keyExtractor={item => item.id.toString()}
         renderItem={({item}) => {
+          const handlePress = () => props.onPress(item);
+
           const initials = item.name
             .split(' ')
             .map(word => word[0])
@@ -19,10 +21,7 @@ const ListRow = ({navigation, data}) => {
                 <View style={styles.icon}>
                   <Text variant="headlineMedium">{initials}</Text>
                 </View>
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate('Edit Cabang', {data: item})
-                  }>
+                <TouchableOpacity onPress={handlePress}>
                   <View style={{marginHorizontal: 15}}>
                     <Text variant="titleLarge">{item.name}</Text>
                     <Text

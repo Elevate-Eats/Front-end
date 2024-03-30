@@ -16,7 +16,9 @@ import FormInput from './formInput';
 import ConstButton from './btn';
 import DeleteButton from './deleteBtn';
 import ModalContent from './modalContent';
+import ListColumn from './listColumn';
 export {
+  ListColumn,
   ModalContent,
   DeleteButton,
   ConstButton,

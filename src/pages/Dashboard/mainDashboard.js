@@ -1,8 +1,10 @@
 import {StyleSheet, View, TouchableOpacity, ScrollView} from 'react-native';
-import React from 'react';
+import React, {useCallback, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text, Button} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+
+import {MANAGER_ENDPOINT} from '@env';
 
 import {
   ItemDashboard,
@@ -10,8 +12,28 @@ import {
   TitleDashboard,
   ConstButton,
 } from '../../components';
+import {useFocusEffect} from '@react-navigation/native';
+import GetData from '../../utils/getData';
 
 const MainDashboard = ({navigation}) => {
+  const [manager, setManager] = useState({});
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        try {
+          const dataManager = await GetData({
+            operation: MANAGER_ENDPOINT,
+            endpoint: 'showManagers',
+            resultKey: 'managerData',
+          });
+          setManager(dataManager);
+        } catch (error) {}
+      };
+      fetchData();
+    }, []),
+  );
+
   return (
     <View style={styles.container}>
       <TopBar navigation={navigation} title={'Dashboard'} />

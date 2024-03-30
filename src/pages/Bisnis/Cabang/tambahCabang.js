@@ -68,7 +68,7 @@ const TambahCabang = ({navigation}) => {
             />
           </View>
         </ScrollView>
-        <ConstButton title="Tambah Cabang" onPress={() => addBranch()} />
+        <ConstButton title="Tambah" onPress={() => addBranch()} />
       </View>
     </KeyboardAvoidingView>
   );
