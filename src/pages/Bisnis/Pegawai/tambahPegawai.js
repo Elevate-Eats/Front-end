@@ -54,8 +54,6 @@ const TambahPegawai = ({navigation}) => {
 
     return rupiah;
   };
-
-  console.log('Emp : ', employee);
   return (
     <KeyboardAvoidingView enabled style={styles.container}>
       <View style={styles.whiteLayer}>
