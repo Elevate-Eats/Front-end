@@ -2,11 +2,11 @@ import {FlatList, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native-paper';
 import React from 'react';
 
-const ListRow = props => {
+const ListRow = ({navigation, data}) => {
   return (
     <View>
       <FlatList
-        data={props.data}
+        data={data}
         keyExtractor={item => item.id.toString()}
         renderItem={({item}) => {
           const initials = item.name
@@ -19,7 +19,10 @@ const ListRow = props => {
                 <View style={styles.icon}>
                   <Text variant="headlineMedium">{initials}</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('Edit Cabang', {data: item})
+                  }>
                   <View style={{marginHorizontal: 15}}>
                     <Text variant="titleLarge">{item.name}</Text>
                     <Text

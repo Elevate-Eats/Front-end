@@ -3,6 +3,7 @@ import React, {useState} from 'react';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import {
   CompanyAccount,
+  EditCabang,
   LoginPage,
   MainBisnis,
   MainDashboard,
@@ -56,6 +57,7 @@ function HomeStackNavigator(params) {
       <Stack.Group>
         <Stack.Screen name="Pilih Cabang" component={PilihCabang} />
         <Stack.Screen name="Tambah Cabang" component={TambahCabang} />
+        <Stack.Screen name="Edit Cabang" component={EditCabang} />
       </Stack.Group>
     </Stack.Navigator>
   );

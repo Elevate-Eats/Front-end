@@ -1,15 +1,38 @@
-import {KeyboardAvoidingView, StyleSheet, View, ScrollView} from 'react-native';
+import {
+  KeyboardAvoidingView,
+  StyleSheet,
+  View,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import React, {useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {AddPhoto, ConstButton, FormInput} from '../../../components';
 import {Text} from 'react-native-paper';
+import PostData from '../../../utils/postData';
+import {BRANCH_ENDPOINT} from '@env';
 
-const TambahCabang = () => {
+const TambahCabang = ({navigation}) => {
   const [branch, setBranch] = useState({
     name: '',
     address: '',
     phone: '',
   });
+
+  async function addBranch(params) {
+    try {
+      const action = PostData({
+        operation: BRANCH_ENDPOINT,
+        endpoint: 'addBranch',
+        payload: branch,
+      });
+      Alert.alert('Branch Added', `${branch.name} successfully added!`, [
+        {text: 'OK', onPress: () => navigation.goBack()},
+      ]);
+    } catch (error) {
+      Alert.alert('Failed to Add Branch');
+    }
+  }
   return (
     <KeyboardAvoidingView enabled style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -45,10 +68,7 @@ const TambahCabang = () => {
             />
           </View>
         </ScrollView>
-        <ConstButton
-          title="Tambah Cabang"
-          // onPress={() => console.log('Pressed')}
-        />
+        <ConstButton title="Tambah Cabang" onPress={() => addBranch()} />
       </View>
     </KeyboardAvoidingView>
   );

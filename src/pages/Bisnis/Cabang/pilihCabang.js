@@ -46,7 +46,11 @@ const PilihCabang = ({navigation}) => {
       <View style={styles.whiteLayer}>
         <SearchBox search="Cari cabang ..." />
         <View style={{flex: 1, marginVertical: 10}}>
-          {error ? <DataError data={error} /> : <ListRow data={branch} />}
+          {error ? (
+            <DataError data={error} />
+          ) : (
+            <ListRow data={branch} navigation={navigation} />
+          )}
         </View>
       </View>
       <BtnAdd onPress={() => navigation.navigate('Tambah Cabang')} />

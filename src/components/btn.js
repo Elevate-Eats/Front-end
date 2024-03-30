@@ -3,6 +3,12 @@ import React from 'react';
 import {Text, Button} from 'react-native-paper';
 import {Colors} from '../utils/colors';
 
+/*
+USE: 
+- Edit Cabang
+- Tambah Cabang
+*/
+
 const ConstButton = props => {
   return (
     <Button

@@ -14,7 +14,11 @@ import DataError from './dataError';
 import AddPhoto from './addPhoto';
 import FormInput from './formInput';
 import ConstButton from './btn';
+import DeleteButton from './deleteBtn';
+import ModalContent from './modalContent';
 export {
+  ModalContent,
+  DeleteButton,
   ConstButton,
   FormInput,
   AddPhoto,
