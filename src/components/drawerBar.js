@@ -5,14 +5,17 @@ import {
   CompanyAccount,
   EditCabang,
   EditPegawai,
+  EditProduk,
   LoginPage,
   MainBisnis,
   MainDashboard,
   PilihCabang,
   PilihPegawai,
+  PilihProduk,
   RegisterPage,
   TambahCabang,
   TambahPegawai,
+  TambahProduk,
 } from '../pages';
 import {BottomBar} from '.';
 import Route from '../routes/route';
@@ -66,6 +69,13 @@ function HomeStackNavigator(params) {
         <Stack.Screen name="Pilih Pegawai" component={PilihPegawai} />
         <Stack.Screen name="Tambah Pegawai" component={TambahPegawai} />
         <Stack.Screen name="Edit Pegawai" component={EditPegawai} />
+      </Stack.Group>
+
+      {/* DASHBOARD*/}
+      <Stack.Group>
+        <Stack.Screen name="Pilih Produk" component={PilihProduk} />
+        <Stack.Screen name="Edit Produk" component={EditProduk} />
+        <Stack.Screen name="Tambah Produk" component={TambahProduk} />
       </Stack.Group>
     </Stack.Navigator>
   );

@@ -74,8 +74,8 @@ const LoginPage = ({navigation}) => {
           />
 
           <BtnLogReg
-            onPress={PostLogin}
-            // onPress={() => navigation.replace('Bottom Tab')}
+            // onPress={PostLogin}
+            onPress={() => navigation.replace('Bottom Tab')}
             disabled={false}
             name="Log In"
           />

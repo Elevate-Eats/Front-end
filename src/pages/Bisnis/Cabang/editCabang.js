@@ -14,9 +14,10 @@ import {
   DeleteButton,
   FormInput,
   LoadingIndicator,
+  ModalContent,
 } from '../../../components';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {Text, Modal, PaperProvider, Portal} from 'react-native-paper';
+import {Text} from 'react-native-paper';
 import PostData from '../../../utils/postData';
 import GetData from '../../../utils/getData';
 import {useFocusEffect} from '@react-navigation/native';
@@ -24,11 +25,14 @@ import {useFocusEffect} from '@react-navigation/native';
 import {BRANCH_ENDPOINT, EMPLOYEE_ENDPOINT} from '@env';
 
 const EditCabang = ({route, navigation}) => {
-  const {item} = route.params;
-  const [branch, setBranch] = useState({});
-  const [employee, setEmployee] = useState({});
+  const {item} = route.params; // prev page
+  const [branch, setBranch] = useState({}); // dari database
+  const [modal, setModal] = useState(false); // open Modal content
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [employee, setEmployee] = useState({}); // dari database
+  const [selectID, setSelectID] = useState([]); // dari recive key Modal Content
+  const [selectedEmp, setSelectedEmp] = useState([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -48,6 +52,9 @@ const EditCabang = ({route, navigation}) => {
             resultKey: 'employeeData',
           });
           setEmployee(dataEmployee);
+          setSelectedEmp(
+            Object.values(dataEmployee).filter(emp => emp.branchid === item.id),
+          );
         } catch (error) {
           setError('Data Not Found !');
           console.log('Error');
@@ -59,13 +66,25 @@ const EditCabang = ({route, navigation}) => {
     }, []),
   );
 
-  const filteredID = Object.values(employee).filter(
-    emp => emp.branchid === branch.id,
-  );
+  // console.log('isi selected Emp: ', selectedEmp);
+  async function reciveID(key) {
+    // console.log(branch.id);
+    // console.log('key:', key);
+    const newEmp = key.map(k => {
+      // console.log({...k, branchid: branch.id});
+      return {...k, branchid: branch.id};
+    });
+    // console.log(selectedEmp.concat(newEmp));
+    // console.log('new EMp:', newEmp);
+    setSelectedEmp(selectedEmp.concat(newEmp));
+  }
+
+  // console.log('isi selected emp: ', selectedEmp);
+
   // FINAL UPDATE
   const updateBranch = async () => {
     const payloadUpdate = {
-      id: data.id,
+      id: item.id,
       name: branch.name,
       phone: branch.phone,
       address: branch.address,
@@ -85,8 +104,8 @@ const EditCabang = ({route, navigation}) => {
     }
   };
 
-  async function deleteBranch(params) {
-    async function handleDelete(params) {
+  async function deleteBranch() {
+    async function handleDelete() {
       try {
         const action = await PostData({
           operation: BRANCH_ENDPOINT,
@@ -106,8 +125,17 @@ const EditCabang = ({route, navigation}) => {
     );
   }
 
-  if (loading) {
-    return <LoadingIndicator />;
+  async function deleteEmployee(emp) {
+    console.log(`clik: ${emp.name} - ${emp.id}`);
+    console.log('select Emp: ', selectedEmp);
+    const delEmp = Object.values(selectedEmp).map(k => {
+      if (k.id === emp.id) {
+        return {...k, branchid: null};
+      }
+      return k;
+    });
+    // console.log(delEmp);
+    setSelectedEmp(delEmp);
   }
 
   return (
@@ -153,33 +181,45 @@ const EditCabang = ({route, navigation}) => {
               Pegawai
             </Text>
             <TouchableOpacity
-              // onPress={() => ModalContent(true)}
+              onPress={() => setModal(true)}
               style={{borderWidth: 1.3, borderColor: 'grey', borderRadius: 5}}>
               <Text variant="labelLarge" style={styles.btnListEmp}>
                 Pilih Pegawai
               </Text>
             </TouchableOpacity>
+            <ModalContent
+              open={modal}
+              close={() => setModal(false)}
+              data={employee}
+              id={item}
+              onClose={reciveID}
+            />
           </View>
-          {filteredID.map(emp => (
-            <View
-              key={emp.id}
-              style={{
-                flexDirection: 'row',
-                marginVertical: 10,
-                alignItems: 'center',
-              }}>
-              <Text variant="titleMedium" style={{flex: 1, fontWeight: '700'}}>
-                {emp.name}
-              </Text>
-              <TouchableOpacity>
-                <Ionicons
-                  name="trash-bin"
-                  color={Colors.deleteColor}
-                  size={25}
-                />
-              </TouchableOpacity>
-            </View>
-          ))}
+          {selectedEmp
+            .filter(emp => emp.branchid === branch.id)
+            .map(emp => {
+              console.log(
+                'UI: ',
+                selectedEmp
+                  .filter(emp => emp.branchid === branch.id)
+                  .map(emp => emp),
+              );
+              return (
+                <View key={emp.id} style={styles.itemEmp}>
+                  <Text variant="titleMedium" style={{flex: 1}}>
+                    {emp.name}
+                  </Text>
+                  <TouchableOpacity onPress={() => deleteEmployee(emp)}>
+                    <Ionicons
+                      name="trash-bin"
+                      color={Colors.deleteColor}
+                      size={25}
+                    />
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+
         </ScrollView>
         <View style={{flexDirection: 'row', columnGap: 10}}>
           <DeleteButton onPress={() => deleteBranch()} />
@@ -215,6 +255,11 @@ const styles = StyleSheet.create({
   listEmp: {
     marginVertical: 20,
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemEmp: {
+    flexDirection: 'row',
+    marginVertical: 10,
     alignItems: 'center',
   },
 });

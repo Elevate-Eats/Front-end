@@ -16,7 +16,6 @@ import {
   LoadingIndicator,
 } from '../../../components';
 import {useFocusEffect} from '@react-navigation/native';
-import GetData from '../../../utils/getData';
 
 import {EMPLOYEE_ENDPOINT} from '@env';
 import PostData from '../../../utils/postData';
@@ -96,7 +95,9 @@ const EditPegawai = ({route, navigation}) => {
         Alert.alert(action.message, `${employee.name} successfully deleted`, [
           {text: 'OK', onPress: () => navigation.goBack()},
         ]);
-      } catch (error) {}
+      } catch (error) {
+        Alert.alert('Failed to Delete Employee')
+      }
     }
 
     Alert.alert(

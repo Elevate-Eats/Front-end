@@ -3,37 +3,14 @@ import React, {useCallback, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text, Button} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
-import {MANAGER_ENDPOINT} from '@env';
-
 import {
   ItemDashboard,
   TopBar,
   TitleDashboard,
   ConstButton,
 } from '../../components';
-import {useFocusEffect} from '@react-navigation/native';
-import GetData from '../../utils/getData';
 
 const MainDashboard = ({navigation}) => {
-  const [manager, setManager] = useState({});
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchData = async () => {
-        try {
-          const dataManager = await GetData({
-            operation: MANAGER_ENDPOINT,
-            endpoint: 'showManagers',
-            resultKey: 'managerData',
-          });
-          setManager(dataManager);
-        } catch (error) {}
-      };
-      fetchData();
-    }, []),
-  );
-
   return (
     <View style={styles.container}>
       <TopBar navigation={navigation} title={'Dashboard'} />
@@ -64,7 +41,11 @@ const MainDashboard = ({navigation}) => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={{flexDirection: 'row', marginBottom: 10}}>
             {/* <ScrollView horizontal showsHorizontalScrollIndicator={false}>? */}
-            <ItemDashboard iconName="logo-dropbox" name="Produk" />
+            <ItemDashboard
+              iconName="fast-food"
+              name="Menu"
+              onPress={() => navigation.navigate('Pilih Produk')}
+            />
             <ItemDashboard iconName="clipboard-outline" name="History" />
             {/* </ScrollView> */}
           </View>

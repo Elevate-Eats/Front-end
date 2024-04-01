@@ -7,6 +7,7 @@ import React from 'react';
 const ItemDashboard = props => {
   return (
     <TouchableOpacity
+      onPress={props.onPress}
       style={{
         rowGap: 4,
         borderWidth: 0.8,
