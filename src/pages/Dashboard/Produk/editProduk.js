@@ -60,7 +60,6 @@ const EditProduk = ({navigation, route}) => {
       basePrice: menu.baseprice,
       baseOnlinePrice: menu.baseonlineprice,
     };
-
     try {
       const action = await PostData({
         operation: MENU_COMPANY_ENDPOINT,
@@ -170,7 +169,7 @@ const EditProduk = ({navigation, route}) => {
         <View style={{flexDirection: 'row', columnGap: 10}}>
           <DeleteButton onPress={() => deleteMenu()} />
           <View style={{flex: 1}}>
-            <ConstButton title="Simpan" onPress={updateMenu} />
+            <ConstButton title="Simpan" onPress={() => updateMenu()} />
           </View>
         </View>
       </View>
