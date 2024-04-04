@@ -1,16 +1,20 @@
 import {StyleSheet, Text, View} from 'react-native';
-import React from 'react';
+import React, {createContext, useContext, useState} from 'react';
 import Route from './src/routes/route';
 import {PaperProvider} from 'react-native-paper';
 import {NavigationContainer} from '@react-navigation/native';
 
-const App = () => {
+const DataContext = createContext();
+
+const App = ({children}) => {
+  const [globalData, setGlobalData] = useState(null);
   return (
-    <PaperProvider>
-      <NavigationContainer>
+    <DataContext.Provider value={{globalData, setGlobalData}}>
+      {children}
+      <PaperProvider>
         <Route />
-      </NavigationContainer>
-    </PaperProvider>
+      </PaperProvider>
+    </DataContext.Provider>
   );
 };
 

@@ -126,8 +126,6 @@ const EditCabang = ({route, navigation}) => {
   }
 
   async function deleteEmployee(emp) {
-    console.log(`clik: ${emp.name} - ${emp.id}`);
-    console.log('select Emp: ', selectedEmp);
     const delEmp = Object.values(selectedEmp).map(k => {
       if (k.id === emp.id) {
         return {...k, branchid: null};
@@ -198,12 +196,12 @@ const EditCabang = ({route, navigation}) => {
           {selectedEmp
             .filter(emp => emp.branchid === branch.id)
             .map(emp => {
-              console.log(
-                'UI: ',
-                selectedEmp
-                  .filter(emp => emp.branchid === branch.id)
-                  .map(emp => emp),
-              );
+              // console.log(
+              //   'UI: ',
+              //   selectedEmp
+              //     .filter(emp => emp.branchid === branch.id)
+              //     .map(emp => emp),
+              // );
               return (
                 <View key={emp.id} style={styles.itemEmp}>
                   <Text variant="titleMedium" style={{flex: 1}}>
@@ -219,7 +217,6 @@ const EditCabang = ({route, navigation}) => {
                 </View>
               );
             })}
-
         </ScrollView>
         <View style={{flexDirection: 'row', columnGap: 10}}>
           <DeleteButton onPress={() => deleteBranch()} />

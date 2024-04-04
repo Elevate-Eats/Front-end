@@ -9,7 +9,11 @@ import {BottomBar, DrawerBar} from '../components';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const Route = () => {
-  return <DrawerBar />;
+  return (
+    <NavigationContainer>
+      <DrawerBar />
+    </NavigationContainer>
+  );
 };
 
 export default Route;

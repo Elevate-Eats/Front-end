@@ -1,26 +1,61 @@
-import {StyleSheet, View, TouchableOpacity, ScrollView} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import React, {useCallback, useContext, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text, Button} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {MANAGER_ENDPOINT} from '@env';
 import {
   ItemDashboard,
   TopBar,
   TitleDashboard,
   ConstButton,
 } from '../../components';
+import {useFocusEffect} from '@react-navigation/native';
+import PostData from '../../utils/postData';
 
-const MainDashboard = ({navigation}) => {
+const MainDashboard = ({navigation, route}) => {
+  const {id} = route.params;
+  const [manager, setManager] = useState({});
+
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        try {
+          const data = await PostData({
+            operation: MANAGER_ENDPOINT,
+            endpoint: 'showSingleManager',
+            payload: {id: id},
+          });
+          // console.log(data.managerData);
+          setManager(data.managerData);
+        } catch (error) {
+          // Alert.alert('Failed to Fetch Data !');
+        }
+      }
+      fetchData();
+    }, []),
+  );
+
   return (
     <View style={styles.container}>
       <TopBar navigation={navigation} title={'Dashboard'} />
 
       <View style={styles.blueLayer}>
         <View style={styles.account}>
-          <Ionicons name="person-circle-outline" size={60} color={'white'} />
+          <Ionicons name="person-circle-outline" size={80} color={'white'} />
           <View style={{justifyContent: 'center', rowGap: 5}}>
-            <Text variant="titleLarge">Fullname</Text>
-            <Text variant="titleMedium">Role</Text>
+            <Text variant="titleMedium" style={{fontSize: 18}}>
+              {manager.name ? manager.name : 'Name'}
+            </Text>
+            <Text variant="titleMedium">
+              {manager.role ? manager.role : 'role'}
+            </Text>
           </View>
         </View>
         <View style={styles.employee}>
@@ -65,7 +100,10 @@ const MainDashboard = ({navigation}) => {
           </View>
         </ScrollView>
         <View style={{marginTop: 10}}>
-          <ConstButton title="Transaksi" />
+          <ConstButton
+            title="Transaksi"
+            onPress={() => navigation.navigate('Transaksi')}
+          />
         </View>
       </View>
     </View>
@@ -108,7 +146,7 @@ const styles = StyleSheet.create({
   },
   account: {
     marginHorizontal: 10,
-    columnGap: 10,
+    columnGap: 2,
     flexDirection: 'row',
     flex: 1,
   },

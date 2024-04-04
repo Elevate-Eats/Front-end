@@ -17,7 +17,8 @@ import {Colors} from '../utils/colors';
 
 const Tab = createBottomTabNavigator();
 
-const BottomBar = () => {
+const BottomBar = ({route}) => {
+  const item = route.params;
   return (
     <Tab.Navigator
       initialRouteName="Dashboard"
@@ -65,6 +66,7 @@ const BottomBar = () => {
         />
       )}>
       <Tab.Screen
+        initialParams={item}
         name="Dashboard"
         component={MainDashboard}
         options={{

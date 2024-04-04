@@ -14,30 +14,54 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {API_KEY, API_URL, LOGIN_ENDPOINT} from '@env';
 
-const LoginPage = ({navigation}) => {
+const LoginPage = ({navigation, route}) => {
   const [login, setLogin] = useState({
     email: '',
     password: '',
   });
+  const [id, setID] = useState('');
   const PostLogin = async () => {
     try {
-      await axios
-        .post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: API_KEY,
-          },
-        })
-        .then(async res => {
-          await AsyncStorage.setItem('userToken', res.data.token);
-          console.log('Token: ', await AsyncStorage.getItem('userToken'));
+      const action = await axios.post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: API_KEY,
+        },
+      });
+      // console.log('data: ', action.data.nickname);
+      if (action.data && action.data.token) {
+        await AsyncStorage.setItem('userToken', action.data.token);
+        console.log(`${action.data.id} - ${action.data.nickname}`);
+        navigation.replace('Bottom Tab', {
+          nickname: action.data.nickname,
+          id: action.data.id,
         });
-      navigation.replace('Bottom Tab');
+        // setNickname(action.data.nickname);
+        setID(action.data.id);
+      }
     } catch (error) {
-      Alert.alert('Email atau Password Salah');
+      Alert.alert('Login Error', 'Check your email or password!');
     }
-    // console.log(token);
   };
+  // try {
+  //   const action = await axios
+  //     .post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         apikey: API_KEY,
+  //       },
+  //     })
+  //     .then(async res => {
+  //       await AsyncStorage.setItem('userToken', res.data.token);
+  //       // console.log('Token: ', await AsyncStorage.getItem('userToken'));
+  //     });
+  //   console.log('isi action: ', action);
+  //   // navigation.replace('Bottom Tab');
+  // } catch (error) {
+  //   Alert.alert('Email atau Password Salah');
+  // }
+  // console.log(token);
+  // };
 
   return (
     <KeyboardAvoidingView style={styles.KeyboardAvoidingView} enabled={true}>
@@ -75,7 +99,7 @@ const LoginPage = ({navigation}) => {
 
           <BtnLogReg
             // onPress={PostLogin}
-            onPress={() => navigation.replace('Bottom Tab')}
+            onPress={() => navigation.replace('Bottom Tab', {id: id})}
             disabled={false}
             name="Log In"
           />

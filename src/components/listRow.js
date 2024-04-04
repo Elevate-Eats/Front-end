@@ -22,7 +22,7 @@ const ListRow = props => {
                     {initials}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={handlePress}>
+                <TouchableOpacity onPress={handlePress} style={{flex: 1}}>
                   <View style={{marginHorizontal: 15}}>
                     <Text variant="titleLarge">{item.name}</Text>
                     <Text
