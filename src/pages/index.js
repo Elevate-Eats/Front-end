@@ -25,6 +25,7 @@ import PilihProduk from './Dashboard/Produk/pilihProduk';
 //Transaksi
 import MainTransaksi from './Dashboard/Transaksi/mainTransaksi';
 import Transaksi from './Dashboard/Transaksi/transaksi';
+import DetailTransaksi from './Dashboard/Transaksi/detailTransaksi';
 
 // +++++ LAPORAN +++++
 import MainLaporan from './Laporan/mainLaporan';
@@ -38,6 +39,7 @@ import RegisterPage from './Register/registerPage';
 import CompanyAccount from './Account/companyAccount';
 
 export {
+  DetailTransaksi,
   Transaksi,
   MainBisnis,
   MainDashboard,

@@ -18,7 +18,11 @@ import DeleteButton from './deleteBtn';
 import ModalContent from './modalContent';
 import ListColumn from './listColumn';
 import ListMenu from './listMenu';
+import BottomSheet from './bottomSheet';
+import ListTransaction from './listTransaction';
 export {
+  ListTransaction,
+  BottomSheet,
   ListMenu,
   ListColumn,
   ModalContent,

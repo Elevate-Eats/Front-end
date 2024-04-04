@@ -8,6 +8,7 @@ import {
 } from '@react-navigation/drawer';
 import {
   CompanyAccount,
+  DetailTransaksi,
   EditCabang,
   EditPegawai,
   EditProduk,
@@ -158,6 +159,7 @@ function HomeStackNavigator(params) {
       <Stack.Group>
         <Stack.Screen name="Transaksi" component={MainTransaksi} />
         <Stack.Screen name="Transaksi 2" component={Transaksi} />
+        <Stack.Screen name="Detail Transaksi" component={DetailTransaksi} />
       </Stack.Group>
     </Stack.Navigator>
   );

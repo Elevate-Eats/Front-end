@@ -26,6 +26,7 @@ const PilihProduk = ({navigation}) => {
   const [menu, setMenu] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -56,10 +57,14 @@ const PilihProduk = ({navigation}) => {
       <View style={styles.whiteLayer}>
         <View style={styles.wrapSearch}>
           <View style={{flex: 1}}>
-            <SearchBox search="Cari produk ..." />
+            <SearchBox
+              search="Cari produk ..."
+              value={query}
+              onChangeText={text => setQuery(text)}
+            />
           </View>
           <TouchableOpacity style={styles.receipt}>
-            <Ionicons name="menu" size={28} />
+            <Ionicons name="options" size={28} />
           </TouchableOpacity>
         </View>
         <View style={{flex: 1, marginVertical: 10}}>

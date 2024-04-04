@@ -1,30 +1,99 @@
-import {SafeAreaView, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {
+  InputAccessoryView,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useMemo, useRef} from 'react';
-import BottomSheet from '@gorhom/bottom-sheet';
+import React, {useCallback, useState} from 'react';
+import {
+  BottomSheet,
+  ConstButton,
+  ListTransaction,
+  LoadingIndicator,
+  SearchBox,
+} from '../../../components';
 import {Colors} from '../../../utils/colors';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useFocusEffect} from '@react-navigation/native';
+import GetData from '../../../utils/getData';
+import {MENU_COMPANY_ENDPOINT} from '@env';
 
 const MainTransaksi = ({navigation}) => {
-  const snapPoints = useMemo(() => ['10%', '100%'], []);
+  const [status, setStatus] = useState(false);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [menu, setMenu] = useState({});
 
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        setLoading(true);
+        try {
+          const data = await GetData({
+            operation: MENU_COMPANY_ENDPOINT,
+            endpoint: 'showMenus',
+            resultKey: 'menuData',
+          });
+          setMenu(data);
+        } catch (error) {
+          setError('Menu Not Found !');
+        } finally {
+          setLoading(false);
+        }
+      }
+      fetchData();
+    }, []),
+  );
+
+  // if (loading) {
+  //   return <LoadingIndicator />
+  // }
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.whiteLayer}></View>
-      <BottomSheet snapPoints={snapPoints} index={0}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Transaksi 2')}
-          style={{
-            backgroundColor: Colors.btnColor,
-            padding: 10,
-            alignItems: 'center',
-            marginHorizontal: 30,
-          }}>
-          <Text style={{color: 'white'}}>Total</Text>
-        </TouchableOpacity>
-      </BottomSheet>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <View style={styles.whiteLayer}>
+        {/* ////////////////// */}
+        <View style={styles.wrapSearch}>
+          <View style={{flex: 1}}>
+            <SearchBox
+              search="Cari produk ..."
+              value={query}
+              onChangeText={text => setQuery(text)}
+            />
+          </View>
+          <TouchableOpacity style={styles.receipt}>
+            <Ionicons name="options" size={28} />
+          </TouchableOpacity>
+        </View>
+        {/* ///////////////// */}
+
+        <View style={{flex: 1, marginVertical: 10}}>
+          <ListTransaction
+            data={menu}
+            onPress={item => navigation.navigate('Detail Transaksi', {item})}
+          />
+        </View>
+        <ConstButton onPress={() => setStatus(true)} />
+      </View>
+      {status && <BottomSheet condition={setStatus} />}
+    </View>
   );
 };
+
+/* <TouchableOpacity
+        onPress={() => setStatus(true)}
+        style={{
+          marginHorizontal: 30,
+          marginTop: 30,
+          padding: 20,
+          backgroundColor: 'red',
+          alignItems: 'center',
+        }}>
+        <Text>Press</Text>
+      </TouchableOpacity> */
 
 export default MainTransaksi;
 
@@ -34,11 +103,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   whiteLayer: {
-    flex: 9 / 10,
+    flex: 1,
     backgroundColor: 'white',
     margin: 10,
     borderRadius: 5,
     elevation: 1,
     padding: 10,
+  },
+  wrapSearch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 10,
+  },
+  receipt: {
+    backgroundColor: '#e8e8e8',
+    padding: 14,
+    borderRadius: 5,
   },
 });

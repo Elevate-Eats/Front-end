@@ -17,5 +17,3 @@ const SearchBox = props => {
 };
 
 export default SearchBox;
-
-const styles = StyleSheet.create({});
