@@ -159,7 +159,11 @@ function HomeStackNavigator(params) {
       <Stack.Group>
         <Stack.Screen name="Transaksi" component={MainTransaksi} />
         <Stack.Screen name="Transaksi 2" component={Transaksi} />
-        <Stack.Screen name="Detail Transaksi" component={DetailTransaksi} />
+        <Stack.Screen
+          name="Detail Transaksi"
+          component={DetailTransaksi}
+          options={{headerShown: false}}
+        />
       </Stack.Group>
     </Stack.Navigator>
   );

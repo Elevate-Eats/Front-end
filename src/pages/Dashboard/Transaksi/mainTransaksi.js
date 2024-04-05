@@ -1,11 +1,4 @@
-import {
-  InputAccessoryView,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native-paper';
 import React, {useCallback, useState} from 'react';
 import {
@@ -21,7 +14,8 @@ import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
 import {MENU_COMPANY_ENDPOINT} from '@env';
 
-const MainTransaksi = ({navigation}) => {
+const MainTransaksi = ({navigation, route}) => {
+  const items = route.params;
   const [status, setStatus] = useState(false);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,9 +43,9 @@ const MainTransaksi = ({navigation}) => {
     }, []),
   );
 
-  // if (loading) {
-  //   return <LoadingIndicator />
-  // }
+  if (loading) {
+    return <LoadingIndicator />;
+  }
   return (
     <View style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -76,25 +70,12 @@ const MainTransaksi = ({navigation}) => {
             onPress={item => navigation.navigate('Detail Transaksi', {item})}
           />
         </View>
-        <ConstButton onPress={() => setStatus(true)} />
+        <ConstButton onPress={() => setStatus(true)} title="Checkout" />
       </View>
-      {status && <BottomSheet condition={setStatus} />}
+      {status && <BottomSheet condition={setStatus} items={items} />}
     </View>
   );
 };
-
-/* <TouchableOpacity
-        onPress={() => setStatus(true)}
-        style={{
-          marginHorizontal: 30,
-          marginTop: 30,
-          padding: 20,
-          backgroundColor: 'red',
-          alignItems: 'center',
-        }}>
-        <Text>Press</Text>
-      </TouchableOpacity> */
-
 export default MainTransaksi;
 
 const styles = StyleSheet.create({

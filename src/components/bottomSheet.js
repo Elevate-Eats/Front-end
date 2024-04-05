@@ -6,13 +6,25 @@ import {
   Animated,
   Image,
 } from 'react-native';
-import React, {useEffect, useRef} from 'react';
-
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Text} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Sale from '../assets/icons/sale.svg';
 import NoData from '../assets/icons/noData.svg';
+import {useFocusEffect} from '@react-navigation/native';
 const BottomSheet = props => {
+  // console.log(props.items.items);
+  const [product, setProduct] = useState({});
+  useFocusEffect(
+    useCallback(() => {
+      if (props.items) {
+        console.log('props.items: ', props.items.items);
+        setProduct(Object.values(product).concat(props.items.items));
+      }
+    }, []),
+  );
+  console.log('product: ', product);
+
   const slide = useRef(new Animated.Value(700)).current;
 
   function slideUp(params) {
