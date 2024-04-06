@@ -15,7 +15,6 @@ import GetData from '../../../utils/getData';
 import {MENU_COMPANY_ENDPOINT} from '@env';
 
 const MainTransaksi = ({navigation, route}) => {
-  const items = route.params;
   const [status, setStatus] = useState(false);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,7 +71,7 @@ const MainTransaksi = ({navigation, route}) => {
         </View>
         <ConstButton onPress={() => setStatus(true)} title="Checkout" />
       </View>
-      {status && <BottomSheet condition={setStatus} items={items} />}
+      {status && <BottomSheet condition={setStatus} />}
     </View>
   );
 };

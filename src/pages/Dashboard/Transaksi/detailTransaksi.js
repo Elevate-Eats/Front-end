@@ -17,9 +17,13 @@ import PostData from '../../../utils/postData';
 import {MENU_COMPANY_ENDPOINT} from '@env';
 import {ConstButton} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
+import {useDispatch} from 'react-redux';
+import {addItem} from '../../../redux/cartSlice';
 
 const DetailTransaksi = ({route, navigation}) => {
   const {item} = route.params;
+  const dispatch = useDispatch();
+  // console.log(item.id);
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
@@ -28,14 +32,22 @@ const DetailTransaksi = ({route, navigation}) => {
   const [menu, setMenu] = useState({});
   const [count, setCount] = useState(0);
   const [product, setProduct] = useState({
+    id: item.id,
     name: item.name,
     count: count,
     price: checked.price,
     disc: discount,
   });
 
-  function handleCart() {
-    navigation.navigate('Transaksi', {items: product});
+  function handleCart(prod) {
+    if (prod.count <= 0) {
+      return Alert.alert('Tambahkan Jumlah Barang');
+    } else {
+      dispatch(addItem(prod)); // action redux untuk menyimpan
+      Alert.alert('Menu Added', `${prod.name} berhasil ditambahkan`, [
+        {text: 'OK', onPress: () => navigation.navigate('Transaksi')},
+      ]);
+    }
   }
 
   function countAdd() {
@@ -219,7 +231,7 @@ const DetailTransaksi = ({route, navigation}) => {
           )}`}</Text>
           <ConstButton
             title="Simpan ke keranjang"
-            onPress={() => handleCart()}
+            onPress={() => handleCart(product)}
           />
         </View>
       </View>

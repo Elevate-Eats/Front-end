@@ -12,6 +12,7 @@ USE:
 const ConstButton = props => {
   return (
     <Button
+      disabled={props.disabled}
       onPress={props.onPress}
       mode="elevated"
       buttonColor={Colors.btnColor}
