@@ -22,6 +22,7 @@ import TambahMenu from './Bisnis/MenuCompany/tambahMenu';
 
 // +++++ DASHBOARD +++++
 import MainDashboard from './Dashboard/mainDashboard';
+import PendingTransaction from './Dashboard/Pending/pendingTransaction';
 // Produk
 import EditProduk from './Dashboard/Produk/editProduk';
 import TambahProduk from './Dashboard/Produk/tambahProduk';
@@ -44,6 +45,7 @@ import RegisterPage from './Register/registerPage';
 import CompanyAccount from './Account/companyAccount';
 
 export {
+  PendingTransaction,
   EditMenu,
   TambahMenu,
   PilihMenu,

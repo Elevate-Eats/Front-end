@@ -27,6 +27,7 @@ import {
   TambahPegawai,
   TambahProduk,
   Transaksi,
+  PendingTransaction,
 } from '../pages';
 import {BottomBar} from '.';
 import Route from '../routes/route';
@@ -172,6 +173,9 @@ function HomeStackNavigator(params) {
           component={DetailTransaksi}
           options={{headerShown: false}}
         />
+      </Stack.Group>
+      <Stack.Group>
+        <Stack.Screen name="Pending" component={PendingTransaction} />
       </Stack.Group>
     </Stack.Navigator>
   );

@@ -107,6 +107,11 @@ const MainDashboard = ({navigation, route}) => {
               onPress={() => navigation.navigate('Pilih Produk')}
             />
             <ItemDashboard iconName="clipboard-outline" name="History" />
+            <ItemDashboard
+              iconName="hourglass-outline"
+              name="On Going"
+              onPress={() => navigation.navigate('Pending')}
+            />
             {/* </ScrollView> */}
           </View>
           <View style={{rowGap: 10}}>

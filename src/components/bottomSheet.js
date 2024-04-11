@@ -31,6 +31,7 @@ const BottomSheet = props => {
   const [edit, setEdit] = useState(false);
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
+  console.log(cartItems);
   // console.log('cart: ', cartItems);
   const [subtotal, setSubtotal] = useState('');
   const [disabled, setDisabled] = useState({

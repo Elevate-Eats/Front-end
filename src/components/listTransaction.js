@@ -16,7 +16,7 @@ const ListTransaction = props => {
   return (
     <FlatList
       data={menu}
-      keyExtractor={item => item.id.toString()}
+      keyExtractor={item => (item.id || item.menuid).toString()}
       renderItem={({item}) => {
         const handlePress = () => props.onPress(item);
         return (

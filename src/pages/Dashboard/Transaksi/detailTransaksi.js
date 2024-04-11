@@ -15,71 +15,87 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useFocusEffect} from '@react-navigation/native';
 import PostData from '../../../utils/postData';
-import {MENU_COMPANY_ENDPOINT} from '@env';
+import {MENU_COMPANY_ENDPOINT, MENU_BRANCH_ENDPOINT} from '@env';
 import {ConstButton} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
 import {useDispatch} from 'react-redux';
 import cartSlice, {addItem} from '../../../redux/cartSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import uuid from 'react-native-uuid';
+import {useSelector} from 'react-redux';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const DetailTransaksi = ({route, navigation}) => {
   const {item} = route.params;
+  console.log('item: ', item);
+  const customer = useSelector(s => s.customer.customerInfo);
+  const transaction = useSelector(s => s.transaction.transactionId);
   const dispatch = useDispatch();
+
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        try {
+          const data = await PostData({
+            operation: MENU_BRANCH_ENDPOINT,
+            endpoint: 'showSingleMenu',
+            payload: {menuId: item.menuid, branchId: item.branchid},
+          });
+          console.log(data.menuData);
+          setMenu(data.menuData);
+        } catch (error) {}
+      }
+      fetchData();
+    }, []),
+  );
   const [menu, setMenu] = useState({});
   const [count, setCount] = useState(0);
   const [product, setProduct] = useState({
-    name: item.name,
     count: count,
-    menuId: item.id,
+    menuId: item.menuid,
     pricingCategory: '',
-    transactionId: null,
+    transactionId: transaction,
     price: checked.price,
-    totalPrice: null,
+    totalPrice: 0,
     category: item.category,
+    name: item.name,
     disc: 0,
   });
-  function getNextTransactionId() {
-    return AsyncStorage.getItem('lastTransactionId').then(lastID => {
-      const nextId = (parseInt(lastID, 10) || 0) + 1;
-      return AsyncStorage.setItem('lastTransactionId', nextId.toString()).then(
-        () => nextId,
-      );
-    });
-  }
 
-  function handleCart(prod) {
-    console.log(prod);
-    if (prod.count <= 0 || prod.price === null) {
+  useEffect(() => {
+    const totalPrice = product.price * product.count - product.disc;
+    setProduct(e => ({
+      ...e,
+      totalPrice: totalPrice,
+    }));
+  }, [product.price, product.count, product.disc]);
+
+  function handleCart(params) {
+    if (product.count <= 0 || product.price === null) {
       return Alert.alert(
         'Failed to Add Menu',
-        'Tambahkan jumlah barang atau Harga',
+        'Tambahkan jumlah barang atau harga',
       );
     } else {
-      getNextTransactionId().then(transactionId => {
-        const productWithId = {...prod, transactionId: transactionId};
-        console.log('isi: ', productWithId);
-        dispatch(addItem(productWithId));
-        ToastAndroid.show(
-          `${item.name} successfully added to cart`,
-          ToastAndroid.SHORT,
-        );
-        navigation.navigate('Transaksi');
-      });
+      dispatch(addItem(product));
+      ToastAndroid.show(
+        `${product.name} successfully added to cart`,
+        ToastAndroid.SHORT,
+      );
+      navigation.navigate('Transaksi');
+      // console.log(product);
     }
   }
-
   function countAdd() {
     setCount(prev => {
       setProduct({...product, count: prev + 1});
       return prev + 1;
     });
   }
-
   function countSub() {
     if (count > 0) {
       setCount(prev => {
@@ -89,29 +105,6 @@ const DetailTransaksi = ({route, navigation}) => {
     }
   }
 
-  useEffect(() => {
-    const totalPrice = product.price * product.count - product.disc;
-    setProduct(e => ({
-      ...e,
-      totalPrice: totalPrice,
-    }));
-  }, [product.price, product.count, product.discount]);
-
-  useEffect(() => {}, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      async function fetchData() {
-        const data = await PostData({
-          operation: MENU_COMPANY_ENDPOINT,
-          endpoint: 'showSingleMenu',
-          payload: {id: item.id},
-        });
-        setMenu(data.menuData);
-      }
-      fetchData();
-    }, []),
-  );
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: Colors.backgroundColor}}>
       <Appbar.Header mode="small" style={styles.appHeader}>
@@ -126,7 +119,6 @@ const DetailTransaksi = ({route, navigation}) => {
           titleStyle={{fontWeight: '700', fontSize: 18}}
         />
       </Appbar.Header>
-
       <View style={styles.whiteLayer}>
         <ScrollView>
           <View style={styles.wrapIcon}>
@@ -139,59 +131,57 @@ const DetailTransaksi = ({route, navigation}) => {
             <Text variant="titleMedium" style={{fontSize: 18}}>
               Harga
             </Text>
-            <View>
-              <View style={styles.harga}>
-                <RadioButton
-                  value={menu.baseprice}
-                  color={Colors.btnColor}
-                  status={
-                    checked.price === menu.baseprice ? 'checked' : 'unchecked'
-                  }
-                  onPress={() => {
-                    setChecked({...checked, price: menu.baseprice}),
-                      setProduct({
-                        ...product,
-                        price: menu.baseprice,
-                        pricingCategory: 'base',
-                      });
-                  }}
-                />
-                <View>
-                  <Text variant="titleMedium">Reguler</Text>
-                  <Text
-                    variant="titleSmall"
-                    style={{
-                      color: 'rgba(0,0,0,0.4)',
-                    }}>{`Rp. ${menu.baseprice}`}</Text>
-                </View>
+            <View style={styles.harga}>
+              <RadioButton
+                value={item.baseprice}
+                color={Colors.btnColor}
+                status={
+                  checked.price === item.baseprice ? 'checked' : 'unchecked'
+                }
+                onPress={() => {
+                  setChecked({...checked, price: item.baseprice}),
+                    setProduct({
+                      ...product,
+                      price: item.baseprice,
+                      pricingCategory: 'base',
+                    });
+                }}
+              />
+              <View>
+                <Text variant="titleMedium">Reguler</Text>
+                <Text
+                  variant="titleSmall"
+                  style={{
+                    color: 'rgba(0,0,0,0.4)',
+                  }}>{`Rp. ${item.baseprice}`}</Text>
               </View>
+            </View>
 
-              <View style={styles.harga}>
-                <RadioButton
-                  value={menu.baseonlineprice}
-                  color={Colors.btnColor}
-                  status={
-                    checked.price === menu.baseonlineprice
-                      ? 'checked'
-                      : 'unchecked'
-                  }
-                  onPress={() => {
-                    setChecked({...checked, price: menu.baseonlineprice}),
-                      setProduct({
-                        ...product,
-                        price: menu.baseonlineprice,
-                        pricingCategory: 'online',
-                      });
-                  }}
-                />
-                <View>
-                  <Text variant="titleMedium">Online</Text>
-                  <Text
-                    variant="titleSmall"
-                    style={{
-                      color: 'rgba(0,0,0,0.4)',
-                    }}>{`Rp. ${menu.baseonlineprice}`}</Text>
-                </View>
+            <View style={styles.harga}>
+              <RadioButton
+                value={item.baseonlineprice}
+                color={Colors.btnColor}
+                status={
+                  checked.price === item.baseonlineprice
+                    ? 'checked'
+                    : 'unchecked'
+                }
+                onPress={() => {
+                  setChecked({...checked, price: item.baseonlineprice}),
+                    setProduct({
+                      ...product,
+                      price: item.baseonlineprice,
+                      pricingCategory: 'online',
+                    });
+                }}
+              />
+              <View>
+                <Text variant="titleMedium">Online</Text>
+                <Text
+                  variant="titleSmall"
+                  style={{
+                    color: 'rgba(0,0,0,0.4)',
+                  }}>{`Rp. ${item.baseonlineprice}`}</Text>
               </View>
             </View>
           </View>
@@ -201,65 +191,66 @@ const DetailTransaksi = ({route, navigation}) => {
             <Text variant="titleMedium" style={{fontSize: 18}}>
               Diskon
             </Text>
-            <View>
-              <View style={styles.harga}>
-                <RadioButton
-                  value="No"
-                  color={Colors.btnColor}
-                  status={checked.disc === 'No' ? 'checked' : 'unchecked'}
-                  onPress={() => {
-                    setChecked({...checked, disc: 'No'});
-                  }}
-                />
-                <Text variant="titleMedium">Tanpa Diskon</Text>
-              </View>
-              <View style={styles.harga}>
-                <RadioButton
-                  value="Yes"
-                  color={Colors.btnColor}
-                  status={checked.disc === 'Yes' ? 'checked' : 'unchecked'}
-                  onPress={() => setChecked({...checked, disc: 'Yes'})}
-                />
+            <View style={styles.harga}>
+              <RadioButton
+                value="No"
+                color={Colors.btnColor}
+                status={checked.disc === 'No' ? 'checked' : 'unchecked'}
+                onPress={() => {
+                  setChecked({...checked, disc: 'No'});
+                }}
+              />
+              <Text variant="titleMedium">Tanpa Diskon</Text>
+            </View>
+            <View style={styles.harga}>
+              <RadioButton
+                value="Yes"
+                color={Colors.btnColor}
+                status={checked.disc === 'Yes' ? 'checked' : 'unchecked'}
+                onPress={() => {
+                  setChecked({...checked, disc: 'Yes'});
+                }}
+              />
+              <Text variant="titleMedium">Diskon</Text>
+            </View>
 
-                <Text variant="titleMedium">Diskon</Text>
-              </View>
-              {/* DISKON */}
-              <View style={{marginLeft: 10}}>
-                {checked.disc === 'Yes' ? (
-                  <View style={{flexDirection: 'row'}}>
-                    <TextInput
-                      mode="outlined"
-                      style={{height: 50, width: 100}}
-                      keyboardType="numeric"
-                      label={'Diskon'}
-                      activeOutlineColor={Colors.btnColor}
-                      outlineStyle={{borderWidth: 1}}
-                      value={product.disc ? product.disc.toString() : ''}
-                      onChangeText={text =>
-                        setProduct({
-                          ...product,
-                          disc: parseInt(text) || 0,
-                        })
-                      }
-                    />
-                  </View>
-                ) : null}
-              </View>
+            <View style={{marginLeft: 10}}>
+              {checked.disc === 'Yes' ? (
+                <View style={{flexDirection: 'row'}}>
+                  <TextInput
+                    mode="outlined"
+                    style={{height: 50, width: 100}}
+                    keyboardType="numeric"
+                    label={'Diskon'}
+                    activeOutlineColor={Colors.btnColor}
+                    outlineStyle={{borderWidth: 1}}
+                    value={product.disc ? product.disc.toString() : ''}
+                    onChangeText={text => {
+                      setProduct({
+                        ...product,
+                        disc: parseInt(text) || 0,
+                      });
+                    }}
+                  />
+                </View>
+              ) : null}
             </View>
           </View>
           <View style={styles.separator} />
           <View style={styles.wrapJumlahBarang}>
             <Text variant="titleMedium" style={{fontSize: 18, flex: 1}}>
-              Jumlah barang
+              Jumlah Barang
             </Text>
             <View style={styles.jumlahBarang}>
               <TouchableOpacity
                 style={styles.btnCounterPlus}
-                onPress={countSub}>
+                onPress={() => countSub()}>
                 <Icon name="minus" size={25} color="white" />
               </TouchableOpacity>
               <Text variant="titleMedium">{count}</Text>
-              <TouchableOpacity style={styles.btnCounterMin} onPress={countAdd}>
+              <TouchableOpacity
+                style={styles.btnCounterMin}
+                onPress={() => countAdd()}>
                 <Icon name="plus" size={25} color="white" />
               </TouchableOpacity>
             </View>
@@ -267,14 +258,16 @@ const DetailTransaksi = ({route, navigation}) => {
           <View style={styles.separator} />
         </ScrollView>
         <View style={{rowGap: 20}}>
-          <Text>{`${FormatRP(product.price)} x  ${product.count} - ${FormatRP(
-            product.disc,
-          )} = Total = ${FormatRP(
-            product.price * product.count - product.disc,
-          )}`}</Text>
+          <Text>
+            {`${FormatRP(product.price)} x ${product.count} - ${
+              product.disc
+            } = ${FormatRP(product.totalPrice)} `}
+          </Text>
           <ConstButton
-            title="Simpan ke keranjang"
-            onPress={() => handleCart(product)}
+            title="Tambah ke keranjang"
+            onPress={() => {
+              handleCart();
+            }}
           />
         </View>
       </View>
