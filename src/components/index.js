@@ -20,7 +20,13 @@ import ListColumn from './listColumn';
 import ListMenu from './listMenu';
 import BottomSheet from './bottomSheet';
 import ListTransaction from './listTransaction';
+import ModalBranch from './modalBranch';
+import ModalBranchCheckBox from './modalBranchCheckBox';
+import ModalMenu from './modalMenu';
 export {
+  ModalMenu,
+  ModalBranchCheckBox,
+  ModalBranch,
   ListTransaction,
   BottomSheet,
   ListMenu,

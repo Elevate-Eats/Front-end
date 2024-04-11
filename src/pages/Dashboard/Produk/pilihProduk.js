@@ -3,55 +3,63 @@ import {
   View,
   KeyboardAvoidingView,
   TouchableOpacity,
+  InputAccessoryView,
 } from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {
   BtnAdd,
   DataError,
   ListMenu,
-  ListRow,
-  LoadingIndicator,
+  ModalBranchCheckBox,
   SearchBox,
 } from '../../../components';
-
-import {MENU_COMPANY_ENDPOINT, API_URL} from '@env';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {MENU_COMPANY_ENDPOINT, BRANCH_ENDPOINT} from '@env';
 import {useFocusEffect} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import PostData from '../../../utils/postData';
+import {MENU_BRANCH_ENDPOINT, API_URL} from '@env';
 import GetData from '../../../utils/getData';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {Item} from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import getDataQuery from '../../../utils/getDataQuery';
 
 const PilihProduk = ({navigation}) => {
+  const [modal, setModal] = useState(false);
   const [menu, setMenu] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
 
+  // branch dari dashboard
+  const selectBranch = useSelector(state => state.branch.selectedBranch);
+  const branch = useSelector(state => state.branch.allBranch);
+  const menuCompany = useSelector(state => state.menu.allMenu);
+
   useFocusEffect(
     useCallback(() => {
-      const fetchData = async () => {
-        setLoading(true);
+      async function fetchData(params) {
         try {
-          const data = await GetData({
-            operation: MENU_COMPANY_ENDPOINT,
+          const data = await getDataQuery({
+            operation: MENU_BRANCH_ENDPOINT,
             endpoint: 'showMenus',
             resultKey: 'menuData',
+            query: `branchid=${selectBranch.id}`,
           });
           setMenu(data);
         } catch (error) {
-          setError('Menu Not Found');
-        } finally {
-          setLoading(false);
+          setError('Menu not Found');
         }
-      };
+      }
       fetchData();
     }, []),
   );
 
-  if (loading) {
-    return <LoadingIndicator />;
-  }
+  // if (loading) {
+  //   return <LoadingIndicator />;
+  // }
   return (
     <KeyboardAvoidingView enabled style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -63,8 +71,11 @@ const PilihProduk = ({navigation}) => {
               onChangeText={text => setQuery(text)}
             />
           </View>
-          <TouchableOpacity style={styles.receipt}>
-            <Ionicons name="options" size={28} />
+          <TouchableOpacity
+            style={styles.receipt}
+            onPress={() => setModal(true)}>
+            <Icon name="options" size={28} />
+            <ModalBranchCheckBox open={modal} close={() => setModal(false)} />
           </TouchableOpacity>
         </View>
         <View style={{flex: 1, marginVertical: 10}}>
@@ -96,7 +107,7 @@ const styles = StyleSheet.create({
     margin: 10,
     borderRadius: 5,
     elevation: 1,
-    padding: 10,
+    padding: 15,
   },
   receipt: {
     backgroundColor: '#e8e8e8',
@@ -107,5 +118,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 10,
+  },
+  boxStyles: {
+    borderColor: '#878787',
+    borderWidth: 1.5,
+    borderRadius: 5,
+    paddingVertical: 18,
+  },
+  dropdownStyles: {
+    borderRadius: 5,
+    borderWidth: 1.5,
   },
 });

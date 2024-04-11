@@ -19,6 +19,10 @@ const MainBisnis = ({navigation}) => {
           title="Pegawai"
           onPress={() => navigation.navigate('Pilih Pegawai')}
         />
+        <ItemBisnis
+          title="Menu Company"
+          onPress={() => navigation.navigate('Pilih Menu')}
+        />
       </View>
     </View>
   );

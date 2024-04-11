@@ -13,6 +13,7 @@ const FormInput = props => {
   return (
     <View style={{marginTop: 10}}>
       <TextInput
+        disabled={props.disabled}
         mode="outlined"
         label={props.label} // Nama Cabang
         placeholder={props.placeholder} // Masukkan nama cabang ...

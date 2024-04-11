@@ -21,7 +21,7 @@ const TambahCabang = ({navigation}) => {
 
   async function addBranch(params) {
     try {
-      const action = PostData({
+      const action = await PostData({
         operation: BRANCH_ENDPOINT,
         endpoint: 'addBranch',
         payload: branch,

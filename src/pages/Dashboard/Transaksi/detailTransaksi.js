@@ -3,10 +3,11 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Appbar, RadioButton, Text, TextInput} from 'react-native-paper';
 import {Colors} from '../../../utils/colors';
 
@@ -18,35 +19,57 @@ import {MENU_COMPANY_ENDPOINT} from '@env';
 import {ConstButton} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
 import {useDispatch} from 'react-redux';
-import {addItem} from '../../../redux/cartSlice';
+import cartSlice, {addItem} from '../../../redux/cartSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import uuid from 'react-native-uuid';
 
 const DetailTransaksi = ({route, navigation}) => {
   const {item} = route.params;
   const dispatch = useDispatch();
-  // console.log(item.id);
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
   });
-  const [discount, setDiscount] = useState(0);
   const [menu, setMenu] = useState({});
   const [count, setCount] = useState(0);
   const [product, setProduct] = useState({
-    id: item.id,
     name: item.name,
     count: count,
+    menuId: item.id,
+    pricingCategory: '',
+    transactionId: null,
     price: checked.price,
-    disc: discount,
+    totalPrice: null,
+    category: item.category,
+    disc: 0,
   });
+  function getNextTransactionId() {
+    return AsyncStorage.getItem('lastTransactionId').then(lastID => {
+      const nextId = (parseInt(lastID, 10) || 0) + 1;
+      return AsyncStorage.setItem('lastTransactionId', nextId.toString()).then(
+        () => nextId,
+      );
+    });
+  }
 
   function handleCart(prod) {
-    if (prod.count <= 0) {
-      return Alert.alert('Tambahkan Jumlah Barang');
+    console.log(prod);
+    if (prod.count <= 0 || prod.price === null) {
+      return Alert.alert(
+        'Failed to Add Menu',
+        'Tambahkan jumlah barang atau Harga',
+      );
     } else {
-      dispatch(addItem(prod)); // action redux untuk menyimpan
-      Alert.alert('Menu Added', `${prod.name} berhasil ditambahkan`, [
-        {text: 'OK', onPress: () => navigation.navigate('Transaksi')},
-      ]);
+      getNextTransactionId().then(transactionId => {
+        const productWithId = {...prod, transactionId: transactionId};
+        console.log('isi: ', productWithId);
+        dispatch(addItem(productWithId));
+        ToastAndroid.show(
+          `${item.name} successfully added to cart`,
+          ToastAndroid.SHORT,
+        );
+        navigation.navigate('Transaksi');
+      });
     }
   }
 
@@ -65,6 +88,16 @@ const DetailTransaksi = ({route, navigation}) => {
       });
     }
   }
+
+  useEffect(() => {
+    const totalPrice = product.price * product.count - product.disc;
+    setProduct(e => ({
+      ...e,
+      totalPrice: totalPrice,
+    }));
+  }, [product.price, product.count, product.discount]);
+
+  useEffect(() => {}, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -116,7 +149,11 @@ const DetailTransaksi = ({route, navigation}) => {
                   }
                   onPress={() => {
                     setChecked({...checked, price: menu.baseprice}),
-                      setProduct({...product, price: menu.baseprice});
+                      setProduct({
+                        ...product,
+                        price: menu.baseprice,
+                        pricingCategory: 'base',
+                      });
                   }}
                 />
                 <View>
@@ -140,7 +177,11 @@ const DetailTransaksi = ({route, navigation}) => {
                   }
                   onPress={() => {
                     setChecked({...checked, price: menu.baseonlineprice}),
-                      setProduct({...product, price: menu.baseonlineprice});
+                      setProduct({
+                        ...product,
+                        price: menu.baseonlineprice,
+                        pricingCategory: 'online',
+                      });
                   }}
                 />
                 <View>
@@ -193,11 +234,13 @@ const DetailTransaksi = ({route, navigation}) => {
                       label={'Diskon'}
                       activeOutlineColor={Colors.btnColor}
                       outlineStyle={{borderWidth: 1}}
-                      value={discount ? discount.toString() : ''}
-                      onChangeText={text => {
-                        setDiscount(parseInt(text) || 0),
-                          setProduct({...product, disc: parseInt(text) || 0});
-                      }}
+                      value={product.disc ? product.disc.toString() : ''}
+                      onChangeText={text =>
+                        setProduct({
+                          ...product,
+                          disc: parseInt(text) || 0,
+                        })
+                      }
                     />
                   </View>
                 ) : null}

@@ -1,54 +1,64 @@
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
+import {SafeAreaView, StyleSheet, View} from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useSelector, useDispatch} from 'react-redux';
 import {
-  BottomSheet,
-  ConstButton,
-  ListTransaction,
+  BtnAdd,
+  DataError,
+  ListMenu,
   LoadingIndicator,
   SearchBox,
 } from '../../../components';
 import {Colors} from '../../../utils/colors';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import {allMenu} from '../../../redux/menuSlice';
 import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
 import {MENU_COMPANY_ENDPOINT} from '@env';
 
-const MainTransaksi = ({navigation, route}) => {
-  const [status, setStatus] = useState(false);
+const PilihMenu = ({navigation}) => {
+  const dispatch = useDispatch();
   const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [menu, setMenu] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
         setLoading(true);
         try {
-          const data = await GetData({
+          const action = await GetData({
             operation: MENU_COMPANY_ENDPOINT,
             endpoint: 'showMenus',
             resultKey: 'menuData',
           });
-          setMenu(data);
+          if (Array.isArray(action)) {
+            dispatch(allMenu(action));
+          }
         } catch (error) {
-          setError('Menu Not Found !');
         } finally {
           setLoading(false);
         }
       }
       fetchData();
-    }, []),
+    }, [dispatch]),
   );
+  const menu = Object.values(useSelector(s => s.menu.allMenu)).sort((a, b) => {
+    a.name.localeCompare(b.name);
+  });
+
+  useEffect(() => {
+    if (!menu.length) {
+      setError('Menu not Found');
+    }
+  });
 
   if (loading) {
     return <LoadingIndicator />;
   }
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>
-        {/* ////////////////// */}
         <View style={styles.wrapSearch}>
           <View style={{flex: 1}}>
             <SearchBox
@@ -57,26 +67,24 @@ const MainTransaksi = ({navigation, route}) => {
               onChangeText={text => setQuery(text)}
             />
           </View>
-          <TouchableOpacity style={styles.receipt}>
-            <Ionicons name="options" size={28} />
-          </TouchableOpacity>
         </View>
-        {/* ///////////////// */}
-
         <View style={{flex: 1, marginVertical: 10}}>
-          <ListTransaction
-            data={menu}
-            onPress={item => navigation.navigate('Detail Transaksi', {item})}
-            // onPress={item => console.log('item: (mainTransaksi)', item)}
-          />
+          {error ? (
+            <DataError data={error} />
+          ) : (
+            <ListMenu
+              data={menu}
+              onPress={item => navigation.navigate('Edit Menu', {item})}
+            />
+          )}
         </View>
-        <ConstButton onPress={() => setStatus(true)} title="Checkout" />
       </View>
-      {status && <BottomSheet condition={setStatus} />}
-    </View>
+      <BtnAdd onPress={() => navigation.navigate('Tambah Menu')} />
+    </SafeAreaView>
   );
 };
-export default MainTransaksi;
+
+export default PilihMenu;
 
 const styles = StyleSheet.create({
   container: {
@@ -89,16 +97,11 @@ const styles = StyleSheet.create({
     margin: 10,
     borderRadius: 5,
     elevation: 1,
-    padding: 10,
+    padding: 15,
   },
   wrapSearch: {
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 10,
-  },
-  receipt: {
-    backgroundColor: '#e8e8e8',
-    padding: 14,
-    borderRadius: 5,
   },
 });

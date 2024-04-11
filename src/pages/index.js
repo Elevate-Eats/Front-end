@@ -15,6 +15,11 @@ import EditPegawai from './Bisnis/Pegawai/editPegawai';
 import PilihPegawai from './Bisnis/Pegawai/pilihPegawai';
 import TambahPegawai from './Bisnis/Pegawai/tambahPegawai';
 
+// Menu Company
+import PilihMenu from './Bisnis/MenuCompany/pilihMenu';
+import EditMenu from './Bisnis/MenuCompany/editMenu';
+import TambahMenu from './Bisnis/MenuCompany/tambahMenu';
+
 // +++++ DASHBOARD +++++
 import MainDashboard from './Dashboard/mainDashboard';
 // Produk
@@ -39,6 +44,9 @@ import RegisterPage from './Register/registerPage';
 import CompanyAccount from './Account/companyAccount';
 
 export {
+  EditMenu,
+  TambahMenu,
+  PilihMenu,
   DetailTransaksi,
   Transaksi,
   MainBisnis,

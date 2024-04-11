@@ -1,77 +1,62 @@
-import {
-  Alert,
-  KeyboardAvoidingView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import {Alert, SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {Text} from 'react-native-paper';
-import {MENU_COMPANY_ENDPOINT, MENU_BRANCH_ENDPOINT} from '@env';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
-import PostData from '../../../utils/postData';
 import {
   AddPhoto,
-  ConstButton,
-  DeleteButton,
   FormInput,
-  LoadingIndicator,
+  DeleteButton,
+  ConstButton,
 } from '../../../components';
-import {Colors} from '../../../utils/colors';
 import {SelectList} from 'react-native-dropdown-select-list';
-
-const EditProduk = ({navigation, route}) => {
+import {Colors} from '../../../utils/colors';
+import {useSelector} from 'react-redux';
+import PostData from '../../../utils/postData';
+import {MENU_COMPANY_ENDPOINT} from '@env';
+import {useDispatch} from 'react-redux';
+import {deleteMenu as Del} from '../../../redux/menuSlice';
+import {updateMenu as Up} from '../../../redux/menuSlice';
+const EditMenu = ({navigation, route}) => {
+  const dispatch = useDispatch();
   const {item} = route.params;
   const [menu, setMenu] = useState({});
-  const [loading, setLoading] = useState(false);
-
   const kategori = [
     {key: 'foods', value: 'Makanan'},
     {key: 'drinks', value: 'Minuman'},
     {key: 'others', value: 'Lainnya'},
   ];
 
-  useFocusEffect(
-    useCallback(() => {
-      async function fetchData(params) {
-        setLoading(true);
-        try {
-          const dataMenu = await PostData({
-            operation: MENU_BRANCH_ENDPOINT,
-            endpoint: 'showSingleMenu',
-            payload: {menuId: item.menuid, branchId: item.branchid},
-          });
-          setMenu(dataMenu.menuData);
-        } catch (error) {
-          Alert.alert('Failed to Fetch Data !');
-        } finally {
-          setLoading(false);
-        }
-      }
-      fetchData();
-    }, []),
-  );
-
   async function updateMenu(params) {
-    const payloadUpdate = {
-      menuId: item.menuid,
-      branchId: item.branchid,
+    const payload = {
+      id: item.id,
       name: menu.name,
       category: menu.category,
       basePrice: menu.baseprice,
       baseOnlinePrice: menu.baseonlineprice,
     };
+    // console.log(payload);
     try {
       const action = await PostData({
-        operation: MENU_BRANCH_ENDPOINT,
+        operation: MENU_COMPANY_ENDPOINT,
         endpoint: 'updateMenu',
-        payload: payloadUpdate,
+        payload: payload,
       });
-      Alert.alert(action.message, `${menu.name} successfully updated`, [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      Alert.alert(
+        action.message,
+        `${menu.name} has been successfully updated`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              dispatch(Up(payload));
+              navigation.goBack();
+            },
+          },
+        ],
+      );
     } catch (error) {
       Alert.alert('Failed to Update Menu');
+      console.log(error);
     }
   }
 
@@ -79,32 +64,49 @@ const EditProduk = ({navigation, route}) => {
     async function handleDelete(params) {
       try {
         const action = await PostData({
-          operation: MENU_BRANCH_ENDPOINT,
+          operation: MENU_COMPANY_ENDPOINT,
           endpoint: 'deleteMenu',
-          payload: {menuId: item.menuid, branchId: item.branchid},
+          payload: {id: item.id},
         });
-        Alert.alert(action.message, `${menu.name} successfully deleted`, [
-          {text: 'OK', onPress: () => navigation.goBack()},
+        Alert.alert(action.message, `${menu.name} successfully deteled`, [
+          {
+            text: 'OK',
+            onPress: () => {
+              dispatch(Del({id: item.id}));
+              navigation.goBack();
+            },
+          },
         ]);
       } catch (error) {
         Alert.alert('Failed to Delete Menu');
       }
     }
     Alert.alert(
-      'Menu Deleted',
+      `Delete Menu`,
       `Delete ${menu.name} ?`,
       [{text: 'Cancel'}, {text: 'OK', onPress: () => handleDelete()}],
       {cancelable: true},
     );
   }
 
-  // console.log(payloadUpdate);
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        try {
+          const menuCompany = await PostData({
+            operation: MENU_COMPANY_ENDPOINT,
+            endpoint: 'showSingleMenu',
+            payload: {id: item.id},
+          });
+          setMenu(menuCompany.menuData);
+        } catch (error) {}
+      }
+      fetchData();
+    }, []),
+  );
 
-  if (loading) {
-    return <LoadingIndicator />;
-  }
   return (
-    <KeyboardAvoidingView enabled style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>
         <ScrollView>
           <AddPhoto icon="fast-food" />
@@ -114,7 +116,6 @@ const EditProduk = ({navigation, route}) => {
             </Text>
 
             <FormInput
-              disabled={true}
               label="Nama menu"
               placeholder="masukkan nama menu ..."
               keyboardType="default"
@@ -122,7 +123,6 @@ const EditProduk = ({navigation, route}) => {
               value={menu.name}
               onChangeText={text => setMenu({...menu, name: text})}
             />
-
             <FormInput
               label="Harga reguler"
               placeholder="masukkan harga reguler ..."
@@ -176,11 +176,11 @@ const EditProduk = ({navigation, route}) => {
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
-export default EditProduk;
+export default EditMenu;
 
 const styles = StyleSheet.create({
   container: {

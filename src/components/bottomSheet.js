@@ -8,6 +8,7 @@ import {
   FlatList,
   ScrollView,
   ToastAndroid,
+  Alert,
 } from 'react-native';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Text} from 'react-native-paper';
@@ -19,13 +20,50 @@ import {useSelector} from 'react-redux';
 import FormatRP from '../utils/formatRP';
 import ConstButton from './btn';
 import {Colors} from '../utils/colors';
+import PostData from '../utils/postData';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {ITEM_ENDPOINT, API_URL} from '@env';
+import {saveItem} from '../redux/cartSlice';
+import {useDispatch} from 'react-redux';
+
 const BottomSheet = props => {
   const [edit, setEdit] = useState(false);
+  const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
-  // console.log(cartItems);
+  // console.log('cart: ', cartItems);
   const [subtotal, setSubtotal] = useState('');
-  const [disabled, setDisabled] = useState(true);
+  const [disabled, setDisabled] = useState({
+    button: true,
+    disc: true,
+  });
   const slide = useRef(new Animated.Value(700)).current;
+
+  // console.log('noName: ', payloadItems);
+
+  async function handlePay(params) {
+    const payloadItems = cartItems.map(({name, disc, ...e}) => e);
+    // console.log(JSON.stringify(payloadItems));
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      // console.log(token);
+      const res = await axios.post(
+        `${API_URL}/${ITEM_ENDPOINT}/addItems`,
+        JSON.stringify(payloadItems),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      console.log(res);
+    } catch (error) {
+      console.log('err: ', error);
+    }
+  }
+
+  function handleSave(params) {}
 
   function calculateSubtotal(items) {
     useEffect(() => {
@@ -42,7 +80,7 @@ const BottomSheet = props => {
     Animated.timing(slide, {
       toValue: 0,
       duration: 500,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }
 
@@ -50,7 +88,7 @@ const BottomSheet = props => {
     Animated.timing(slide, {
       toValue: 1000,
       duration: 500,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }
 
@@ -63,18 +101,18 @@ const BottomSheet = props => {
 
   useEffect(() => {
     slideUp();
-    setDisabled(cartItems.length === 0);
+    // setDisabled(cartItems.length === 0);
+    setDisabled({
+      ...disabled,
+      button: cartItems.length === 0,
+    });
   }, [cartItems]);
 
   return (
     <Pressable onPress={closeModal} style={styles.backdrop}>
       <Pressable style={{width: '100%', height: '100%'}}>
         <Animated.View
-          style={[
-            styles.bottomSheet,
-            {transform: [{translateY: slide}]},
-            // {flex: 1},
-          ]}>
+          style={[styles.bottomSheet, {transform: [{translateY: slide}]}]}>
           <View
             style={{
               flexDirection: 'row',
@@ -101,7 +139,7 @@ const BottomSheet = props => {
               scrollToOverflowEnabled
               contentContainerStyle={{flexGrow: 1}}
               data={cartItems}
-              keyExtractor={item => item.id.toString()}
+              keyExtractor={item => item.menuId.toString()}
               renderItem={({item}) => {
                 return (
                   <View style={styles.cartItem}>
@@ -116,14 +154,15 @@ const BottomSheet = props => {
                       <Text>
                         {FormatRP(item.price)} x {item.count}
                       </Text>
-                      <Text style={{fontWeight: '700'}}>
-                        {FormatRP(item.price * item.count - item.disc)}
+                      <Text style={{fontWeight: '700', fontSize: 18}}>
+                        {FormatRP(item.totalPrice)}
                       </Text>
                     </View>
-                    {item.disc !== 0 ? (
+                    {item.disc ? (
                       <View>
                         <Text style={{color: 'rgba(0,0,0,0.4)'}}>
-                          Diskon ( - {FormatRP(item.disc)})
+                          Diskon (-
+                          {FormatRP(item.disc)})
                         </Text>
                       </View>
                     ) : null}
@@ -138,17 +177,29 @@ const BottomSheet = props => {
             </View>
           )}
 
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginVertical: 10,
+            }}>
+            <Text variant="titleMedium" style={{fontWeight: '700'}}>
+              Subtotal
+            </Text>
+            <Text variant="titleMedium">{FormatRP(subtotal)}</Text>
+          </View>
+
           <View style={{flexDirection: 'row', columnGap: 10}}>
             <TouchableOpacity
               style={
-                disabled
+                disabled.button
                   ? [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
                   : [styles.simpan, {borderColor: Colors.btnColor}]
               }
-              disabled={disabled}>
+              disabled={disabled.button}>
               <Text
                 style={
-                  disabled
+                  disabled.button
                     ? [styles.texSimpan, {color: 'rgba(0,0,0,0.4)'}]
                     : [styles.texSimpan, {color: Colors.btnColor}]
                 }>
@@ -157,9 +208,9 @@ const BottomSheet = props => {
             </TouchableOpacity>
             <View style={{flex: 1}}>
               <ConstButton
-                disabled={disabled}
+                disabled={disabled.button}
                 title={`Bayar ${FormatRP(calculateSubtotal(cartItems))}`}
-                onPress={() => console.warn(FormatRP(subtotal))}
+                onPress={handlePay}
               />
             </View>
           </View>

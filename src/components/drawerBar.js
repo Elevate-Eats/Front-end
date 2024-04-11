@@ -10,6 +10,7 @@ import {
   CompanyAccount,
   DetailTransaksi,
   EditCabang,
+  EditMenu,
   EditPegawai,
   EditProduk,
   LoginPage,
@@ -17,10 +18,12 @@ import {
   MainDashboard,
   MainTransaksi,
   PilihCabang,
+  PilihMenu,
   PilihPegawai,
   PilihProduk,
   RegisterPage,
   TambahCabang,
+  TambahMenu,
   TambahPegawai,
   TambahProduk,
   Transaksi,
@@ -155,6 +158,11 @@ function HomeStackNavigator(params) {
         <Stack.Screen name="Pilih Produk" component={PilihProduk} />
         <Stack.Screen name="Edit Produk" component={EditProduk} />
         <Stack.Screen name="Tambah Produk" component={TambahProduk} />
+      </Stack.Group>
+      <Stack.Group>
+        <Stack.Screen name="Pilih Menu" component={PilihMenu} />
+        <Stack.Screen name="Edit Menu" component={EditMenu} />
+        <Stack.Screen name="Tambah Menu" component={TambahMenu} />
       </Stack.Group>
       <Stack.Group>
         <Stack.Screen name="Transaksi" component={MainTransaksi} />

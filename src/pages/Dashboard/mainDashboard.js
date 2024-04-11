@@ -1,45 +1,64 @@
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import React, {useCallback, useContext, useState} from 'react';
+import {StyleSheet, View, TouchableOpacity, ScrollView} from 'react-native';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {Colors} from '../../utils/colors';
-import {Text, Button} from 'react-native-paper';
+import {Text} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {MANAGER_ENDPOINT} from '@env';
+import {MANAGER_ENDPOINT, BRANCH_ENDPOINT, MENU_COMPANY_ENDPOINT} from '@env';
 import {
   ItemDashboard,
   TopBar,
   TitleDashboard,
   ConstButton,
+  ModalBranch,
 } from '../../components';
 import {useFocusEffect} from '@react-navigation/native';
-import PostData from '../../utils/postData';
+import {useSelector, useDispatch} from 'react-redux';
+import GetData from '../../utils/getData';
+import {allBranch} from '../../redux/branchSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {allMenu} from '../../redux/menuSlice';
 
 const MainDashboard = ({navigation, route}) => {
-  const {id} = route.params;
-  const [manager, setManager] = useState({});
+  const dispatch = useDispatch();
+  const selectBranch = useSelector(state => state.branch.selectedBranch);
+  const branch = useSelector(state => state.branch.allBranch);
+  const menu = useSelector(state => state.menu.allMenu);
+
+  const [modal, setModal] = useState(false);
+  const [branchName, setBranchName] = useState('');
+
+  useEffect(() => {
+    async function fetchBranchName(params) {
+      const name = await AsyncStorage.getItem('branchName');
+      setBranchName(name);
+    }
+    fetchBranchName();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
         try {
-          const data = await PostData({
-            operation: MANAGER_ENDPOINT,
-            endpoint: 'showSingleManager',
-            payload: {id: id},
+          const branch = await GetData({
+            operation: BRANCH_ENDPOINT,
+            endpoint: 'showBranches',
+            resultKey: 'branchData',
           });
-          // console.log(data.managerData);
-          setManager(data.managerData);
+          const menuCompany = await GetData({
+            operation: MENU_COMPANY_ENDPOINT,
+            endpoint: 'showMenus',
+            resultKey: 'menuData',
+          });
+          if (Array.isArray(branch) && Array.isArray(menuCompany)) {
+            dispatch(allBranch(branch));
+            dispatch(allMenu(menuCompany));
+          }
         } catch (error) {
-          // Alert.alert('Failed to Fetch Data !');
+          console.log('Error useFocus');
         }
       }
       fetchData();
-    }, []),
+    }, [dispatch]),
   );
 
   return (
@@ -51,10 +70,12 @@ const MainDashboard = ({navigation, route}) => {
           <Ionicons name="person-circle-outline" size={80} color={'white'} />
           <View style={{justifyContent: 'center', rowGap: 5}}>
             <Text variant="titleMedium" style={{fontSize: 18}}>
-              {manager.name ? manager.name : 'Name'}
+              {/* {manager.name ? manager.name : 'Name'} */}
+              name
             </Text>
             <Text variant="titleMedium">
-              {manager.role ? manager.role : 'role'}
+              {/* {manager.role ? manager.role : 'role'} */}
+              role
             </Text>
           </View>
         </View>
@@ -64,11 +85,15 @@ const MainDashboard = ({navigation, route}) => {
             <Ionicons name="people-outline" size={25} color="black" />
             <Text variant="titleLarge">10</Text>
           </View>
-          <TouchableOpacity style={styles.pilihCabang}>
+          <TouchableOpacity
+            style={styles.pilihCabang}
+            onPress={() => setModal(true)}>
             <Text style={{color: 'white'}} variant="bodyMedium">
-              Pilih Cabang
+              {selectBranch ? selectBranch.name : 'Pilih Cabang'}
+              {/* {branchName ? branchName : 'Pilih Cabang'} */}
             </Text>
           </TouchableOpacity>
+          <ModalBranch open={modal} close={() => setModal(false)} />
         </View>
       </View>
 

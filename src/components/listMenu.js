@@ -9,8 +9,9 @@ const ListMenu = props => {
   return (
     <View>
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={menu}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={item => (item.id || item.menuid).toString()}
         renderItem={({item}) => {
           const handlePress = () => props.onPress(item);
           const initials = item.name

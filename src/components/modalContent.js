@@ -66,7 +66,7 @@ const ModalContent = props => {
               }}
             />
             <TouchableOpacity onPress={handleOK}>
-              <Text variant="titleLarge" style={styles.ok}>
+              <Text variant="titleMedium" style={styles.ok}>
                 OK
               </Text>
             </TouchableOpacity>
