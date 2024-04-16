@@ -23,6 +23,7 @@ import TambahMenu from './Bisnis/MenuCompany/tambahMenu';
 // +++++ DASHBOARD +++++
 import MainDashboard from './Dashboard/mainDashboard';
 import PendingTransaction from './Dashboard/Pending/pendingTransaction';
+import Pembayaran from './Dashboard/Pembayaran/pembayaran';
 // Produk
 import EditProduk from './Dashboard/Produk/editProduk';
 import TambahProduk from './Dashboard/Produk/tambahProduk';
@@ -32,6 +33,7 @@ import PilihProduk from './Dashboard/Produk/pilihProduk';
 import MainTransaksi from './Dashboard/Transaksi/mainTransaksi';
 import Transaksi from './Dashboard/Transaksi/transaksi';
 import DetailTransaksi from './Dashboard/Transaksi/detailTransaksi';
+import DetailItemsCart from './Dashboard/Transaksi/detailItemsCart';
 
 // +++++ LAPORAN +++++
 import MainLaporan from './Laporan/mainLaporan';
@@ -45,6 +47,8 @@ import RegisterPage from './Register/registerPage';
 import CompanyAccount from './Account/companyAccount';
 
 export {
+  DetailItemsCart,
+  Pembayaran,
   PendingTransaction,
   EditMenu,
   TambahMenu,

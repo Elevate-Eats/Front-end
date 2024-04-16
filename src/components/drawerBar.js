@@ -28,6 +28,8 @@ import {
   TambahProduk,
   Transaksi,
   PendingTransaction,
+  Pembayaran,
+  DetailItemsCart,
 } from '../pages';
 import {BottomBar} from '.';
 import Route from '../routes/route';
@@ -173,10 +175,16 @@ function HomeStackNavigator(params) {
           component={DetailTransaksi}
           options={{headerShown: false}}
         />
+        <Stack.Screen
+          name="Detail Items Cart"
+          component={DetailItemsCart}
+          options={{headerShown: false}}
+        />
       </Stack.Group>
       <Stack.Group>
         <Stack.Screen name="Pending" component={PendingTransaction} />
       </Stack.Group>
+      <Stack.Screen name="Pembayaran" component={Pembayaran} />
     </Stack.Navigator>
   );
 }

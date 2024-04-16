@@ -3,33 +3,52 @@ import {createSlice} from '@reduxjs/toolkit';
 export const cartSlice = createSlice({
   name: 'cart',
   initialState: {
-    items: [],
+    items: {},
+    newItems: [],
+    allItems: {},
   },
 
   reducers: {
     addItem: (state, action) => {
-      const existingItems = state.items.find(
-        item => item.id === action.payload.menuid,
+      const transactionId = parseInt(action.payload.transactionId, 10);
+      const {...newItems} = action.payload;
+      if (!state.items[transactionId]) {
+        state.items[transactionId] = [];
+        // state.allItems[transactionId] = [];
+      }
+      const index = state.items[transactionId].findIndex(
+        item => item.menuId === newItems.menuId,
       );
-      if (existingItems) {
-        existingItems.count += action.payload.count;
-        existingItems.totalPrice += action.payload.totalPrice;
-        existingItems.disc += action.payload.disc;
+      if (index >= 0) {
+        state.items[transactionId][index].count += newItems.count;
+        state.items[transactionId][index].totalPrice += newItems.totalPrice;
+        if (newItems.disc !== undefined) {
+          state.items[transactionId][index].disc += newItems.disc;
+        }
       } else {
-        state.items.push(action.payload);
+        state.items[transactionId].push(newItems);
       }
     },
     removeItem: (state, action) => {
-      state.items = state.items.filter(
-        item => item.id !== action.payload.menuid,
-      );
+      const {transactionId, menuId} = action.payload;
+      if (state.items[transactionId]) {
+        state.items[transactionId] = state.items[transactionId].filter(
+          item => item.menuId !== menuId,
+        );
+      }
+    },
+    removeTransaction: (state, action) => {
+      const {transactionId} = action.payload;
+      delete state.items[transactionId.toString()];
+      // delete state.allItems[transactionId.toString()];
     },
 
     saveItem: (state, action) => {
-      state.items.push(action.payload);
+      state.newItems = action.payload;
     },
   },
 });
 
-export const {addItem, removeItem, saveItem} = cartSlice.actions;
+export const {addItem, removeItem, saveItem, removeTransaction} =
+  cartSlice.actions;
 export default cartSlice.reducer;

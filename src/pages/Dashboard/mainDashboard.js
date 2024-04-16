@@ -17,23 +17,13 @@ import GetData from '../../utils/getData';
 import {allBranch} from '../../redux/branchSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {allMenu} from '../../redux/menuSlice';
+import {listColumns} from '../../database/listColumn';
 
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
-  const branch = useSelector(state => state.branch.allBranch);
-  const menu = useSelector(state => state.menu.allMenu);
 
   const [modal, setModal] = useState(false);
-  const [branchName, setBranchName] = useState('');
-
-  useEffect(() => {
-    async function fetchBranchName(params) {
-      const name = await AsyncStorage.getItem('branchName');
-      setBranchName(name);
-    }
-    fetchBranchName();
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -50,8 +40,8 @@ const MainDashboard = ({navigation, route}) => {
             resultKey: 'menuData',
           });
           if (Array.isArray(branch) && Array.isArray(menuCompany)) {
-            dispatch(allBranch(branch));
-            dispatch(allMenu(menuCompany));
+            dispatch(allBranch(branch)); // !save branch to redux
+            dispatch(allMenu(menuCompany)); //! save menu Company to redux
           }
         } catch (error) {
           console.log('Error useFocus');

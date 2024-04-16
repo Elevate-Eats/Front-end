@@ -1,45 +1,99 @@
 import {
+  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import PostData from '../../../utils/postData';
-import {TRANSACTION_ENDPOINT} from '@env';
+import {TRANSACTION_ENDPOINT, ITEM_ENDPOINT} from '@env';
 import getDataQuery from '../../../utils/getDataQuery';
 import {Colors} from '../../../utils/colors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {SearchBox} from '../../../components';
-import {teal100} from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
+import {LoadingIndicator, SearchBox} from '../../../components';
+import FormatRP from '../../../utils/formatRP';
+import {removeTransaction} from '../../../redux/cartSlice';
+import {deleteTransaction} from '../../../database/deleteTransaction';
+import {showTransaction} from '../../../database/showTransaction';
 
-const PendingTransaction = () => {
+const PendingTransaction = ({navigation}) => {
+  const dispatch = useDispatch();
   const branch = useSelector(s => s.branch.selectedBranch);
   const [menu, setMenu] = useState({});
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [trans, setTrans] = useState({});
+
+  async function fetchData(branch, setMenu, setError, setLoading) {
+    setLoading(true);
+    try {
+      const data = await getDataQuery({
+        operation: TRANSACTION_ENDPOINT,
+        endpoint: 'showTransactions',
+        resultKey: 'transactionData',
+        query: `branch=${branch.id}`,
+      });
+      setMenu(data);
+    } catch (error) {
+      setError('Transaction not Found !');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  console.log('menu transaction: ', menu);
+  async function showItems(params) {
+    console.log('params: ', params);
+    try {
+      const data = await getDataQuery({
+        operation: ITEM_ENDPOINT,
+        endpoint: 'showItems',
+        resultKey: 'itemData',
+        query: `transactionId=${params.id}`,
+      });
+      navigation.navigate('Transaksi', {
+        item: data,
+        name: params.customername,
+        id: params.id,
+      });
+    } catch (error) {}
+  }
   useFocusEffect(
     useCallback(() => {
-      async function fetchData(params) {
-        try {
-          const data = await getDataQuery({
-            operation: TRANSACTION_ENDPOINT,
-            endpoint: 'showTransactions',
-            resultKey: 'transactionData',
-            query: `branch=${branch.id}`,
-          });
-          setMenu(data);
-        } catch (error) {
-          setError('Transaction not Found !');
-        }
+      if (!branch) {
+        Alert.alert('Failed', 'Silakan pilih cabang terlebih dahulu', [
+          {text: 'OK', onPress: () => navigation.goBack()},
+        ]);
       }
-      fetchData();
+      fetchData(branch, setMenu, setError, setLoading);
     }, []),
   );
+
+  async function handleDelete(params) {
+    try {
+      const action = await PostData({
+        operation: TRANSACTION_ENDPOINT,
+        endpoint: 'deleteTransaction',
+        payload: {id: params.id},
+      });
+      fetchData(branch, setMenu, setError, setLoading);
+      await deleteTransaction(params.id);
+      dispatch(removeTransaction(params.id));
+      ToastAndroid.show(`${action.message}`, ToastAndroid.SHORT);
+    } catch (error) {}
+  }
+
+  if (loading) {
+    return <LoadingIndicator />;
+  }
+  const pendingMenu = Object.values(menu).filter(item => item.status === 1);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -52,10 +106,10 @@ const PendingTransaction = () => {
             />
           </View>
         </View>
-        {menu ? (
+        {pendingMenu.length > 0 ? (
           <View style={{flex: 1, marginTop: 10, marginBottom: 5}}>
             <FlatList
-              data={menu}
+              data={pendingMenu}
               keyExtractor={item => item.id.toString()}
               renderItem={({item}) => {
                 return (
@@ -65,7 +119,19 @@ const PendingTransaction = () => {
                         <Ionicons name="receipt-outline" size={40} />
                       </View>
                       <View style={{marginHorizontal: 15, flex: 1}}>
-                        <TouchableOpacity style={{rowGap: 3}}>
+                        <TouchableOpacity
+                          onLongPress={() => {
+                            console.log('long press: ', item.id);
+                            Alert.alert('Actions', 'Hapus transaksi? ', [
+                              {text: 'Batal'},
+                              {
+                                text: 'OK',
+                                onPress: () => handleDelete(item),
+                              },
+                            ]);
+                          }}
+                          style={{rowGap: 3}}
+                          onPress={() => showItems(item)}>
                           <Text variant="titleMedium" style={{fontSize: 18}}>
                             {`${item.customername}`}
                           </Text>
@@ -93,7 +159,9 @@ const PendingTransaction = () => {
                               {item.transactiondate}
                             </Text>
                             <Text variant="titleMedium">
-                              {item.totalprice ? item.totalprice : 'Rp. 25.000'}
+                              {item.totalprice
+                                ? FormatRP(item.totalprice)
+                                : 'Rp. 0'}
                             </Text>
                           </View>
                         </TouchableOpacity>
@@ -104,7 +172,12 @@ const PendingTransaction = () => {
               }}
             />
           </View>
-        ) : null}
+        ) : (
+          <View
+            style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            <Text>Tidak Ada Transaksi</Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );

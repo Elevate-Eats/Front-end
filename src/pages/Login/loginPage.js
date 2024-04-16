@@ -19,16 +19,18 @@ const LoginPage = ({navigation, route}) => {
     email: '',
     password: '',
   });
+  console.log(login);
   const [id, setID] = useState('');
   const PostLogin = async () => {
     try {
       const action = await axios.post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
         headers: {
           'Content-Type': 'application/json',
-          apikey: API_KEY,
+          apikey: API_KEY, // Ensure header keys are correctly expected by your backend
         },
       });
-      // console.log('data: ', action.data.nickname);
+
+      console.log('data: ', action.data.nickname);
       if (action.data && action.data.token) {
         await AsyncStorage.setItem('userToken', action.data.token);
         console.log(`${action.data.id} - ${action.data.nickname}`);
@@ -37,9 +39,10 @@ const LoginPage = ({navigation, route}) => {
           id: action.data.id,
         });
         // setNickname(action.data.nickname);
-        setID(action.data.id);
+        // setID(action.data.id);
       }
     } catch (error) {
+      console.error(error);
       Alert.alert('Login Error', 'Check your email or password!');
     }
   };

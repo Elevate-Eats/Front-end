@@ -14,6 +14,7 @@ import {
   ListMenu,
   ModalBranchCheckBox,
   SearchBox,
+  LoadingIndicator,
 } from '../../../components';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {MENU_COMPANY_ENDPOINT, BRANCH_ENDPOINT} from '@env';
@@ -41,6 +42,7 @@ const PilihProduk = ({navigation}) => {
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
+        setLoading(true);
         try {
           const data = await getDataQuery({
             operation: MENU_BRANCH_ENDPOINT,
@@ -51,15 +53,17 @@ const PilihProduk = ({navigation}) => {
           setMenu(data);
         } catch (error) {
           setError('Menu not Found');
+        } finally {
+          setLoading(false);
         }
       }
       fetchData();
     }, []),
   );
 
-  // if (loading) {
-  //   return <LoadingIndicator />;
-  // }
+  if (loading) {
+    return <LoadingIndicator />;
+  }
   return (
     <KeyboardAvoidingView enabled style={styles.container}>
       <View style={styles.whiteLayer}>

@@ -1,5 +1,4 @@
 import {
-  Alert,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -7,48 +6,78 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {Text, RadioButton, Appbar, TextInput} from 'react-native-paper';
 import React, {useCallback, useEffect, useState} from 'react';
-import {Appbar, RadioButton, Text, TextInput} from 'react-native-paper';
 import {Colors} from '../../../utils/colors';
-
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {ITEM_ENDPOINT} from '@env';
-import {ConstButton} from '../../../components';
+import {useFocusEffect} from '@react-navigation/native';
+import PostData from '../../../utils/postData';
+import {MENU_BRANCH_ENDPOINT} from '@env';
+import {useSelector, useDispatch} from 'react-redux';
 import FormatRP from '../../../utils/formatRP';
-import {useDispatch} from 'react-redux';
-import cartSlice, {addItem, saveItem} from '../../../redux/cartSlice';
+import {ConstButton, LoadingIndicator} from '../../../components';
+import {addItem, updateItem} from '../../../redux/cartSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useSelector} from 'react-redux';
-import getDataQuery from '../../../utils/getDataQuery';
 import {addItems} from '../../../database/addItems';
 
-const DetailTransaksi = ({route, navigation}) => {
+const DetailItemsCart = ({navigation, route}) => {
   const {item} = route.params;
   console.log('items: ', item);
-  const customer = useSelector(s => s.customer.customerInfo);
-  const transaction = useSelector(s => s.transaction.transactionId);
-  const dispatch = useDispatch();
-
-  const [allItems, setAllItems] = useState({});
+  const branch = useSelector(state => state.branch.selectedBranch);
+  const transactionId = useSelector(state => state.transaction.transactionId);
+  const [loading, setLoading] = useState(false);
+  const [menu, setMenu] = useState({});
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
   });
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(item.count);
   const [product, setProduct] = useState({
-    // *req payload addItems
+    disc: checked.disc,
+    id: item.id,
     count: count,
     menuId: item.menuid,
-    pricingCategory: '',
-    transactionId: transaction ? transaction : 0,
+    pricingCategory: item.pricingcategory,
+    transactionId: transactionId,
     price: checked.price,
-    totalPrice: 0,
+    totalPrice: item.totalprice,
     category: item.category,
     name: item.name,
-    disc: 0,
-    id: null,
   });
+  function countAdd(params) {
+    setCount(prev => {
+      setProduct({...product, count: prev + 1});
+      return prev + 1;
+    });
+  }
+
+  function countSub(params) {
+    if (count > 0) {
+      setCount(prev => {
+        setProduct({...product, count: prev - 1});
+        return prev - 1;
+      });
+    }
+  }
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        setLoading(true);
+        try {
+          const data = await PostData({
+            operation: MENU_BRANCH_ENDPOINT,
+            endpoint: 'showSingleMenu',
+            payload: {menuId: item.menuid, branchId: branch.id},
+          });
+          setMenu(data.menuData);
+        } catch (error) {
+        } finally {
+          setLoading(false);
+        }
+      }
+      fetchData();
+    }, []),
+  );
 
   useEffect(() => {
     const totalPrice = product.price * product.count - product.disc;
@@ -58,58 +87,52 @@ const DetailTransaksi = ({route, navigation}) => {
     }));
   }, [product.price, product.count, product.disc]);
 
-  function handleCart(params) {
-    console.log('====HANDLE CART====');
-    console.log('product: ', product);
+  useEffect(() => {
+    setChecked({
+      price: item.price,
+      disc: item.disc ? 'Yes' : 'No',
+    });
+    setProduct({
+      ...product,
+      price: item.price,
+      disc: item.disc || 0,
+    });
+  }, [menu, item]);
+
+  async function handlePress(params) {
+    // console.log('Produk: ', product);
     const dbPayload = {
       id: null,
-      name: product.name,
-      discount: product.disc,
+      disc: product.disc,
       count: product.count,
       menuid: product.menuId,
       pricingcategory: product.pricingCategory,
       transactionid: product.transactionId,
       price: product.price,
-      totalprice: product.totalPrice,
       category: product.category,
+      totalprice: product.count * product.price,
+      name: product.name,
     };
-    console.log('DB payload:', dbPayload);
-    if (product.count <= 0 || product.price === null) {
-      return Alert.alert(
-        'Failed to Add Menu',
-        'Tambahkan jumlah barang atau harga',
-      );
-    } else {
-      addItems(dbPayload)
-        .then(() => {
-          ToastAndroid.show(
-            `${product.name} successfully added to cart`,
-            ToastAndroid.SHORT,
-          );
-          navigation.navigate('Transaksi');
-        })
-        .catch(error => {
-          console.error(error);
-        });
-    }
-  }
-  function countAdd() {
-    setCount(prev => {
-      setProduct({...product, count: prev + 1});
-      return prev + 1;
-    });
-  }
-  function countSub() {
-    if (count > 0) {
-      setCount(prev => {
-        setProduct({...product, count: prev - 1});
-        return prev - 1;
+    console.log('db payload: ', dbPayload);
+    addItems(dbPayload)
+      .then(() => {
+        ToastAndroid.show(
+          `${product.name} successfully updated `,
+          ToastAndroid.SHORT,
+        );
+        navigation.goBack();
+      })
+      .catch(error => {
+        console.error(error);
       });
-    }
+  }
+
+  if (loading) {
+    return <LoadingIndicator />;
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: Colors.backgroundColor}}>
+    <SafeAreaView style={styles.container}>
       <Appbar.Header mode="small" style={styles.appHeader}>
         <Appbar.Action
           icon={'window-close'}
@@ -117,8 +140,8 @@ const DetailTransaksi = ({route, navigation}) => {
           color={Colors.deleteColor}
         />
         <Appbar.Content
-          title={`${item.name}, ${item.category}`}
-          color={'black'}
+          title={`${menu.name}, ${item.category}`}
+          color="black"
           titleStyle={{fontWeight: '700', fontSize: 18}}
         />
       </Appbar.Header>
@@ -126,7 +149,7 @@ const DetailTransaksi = ({route, navigation}) => {
         <ScrollView>
           <View style={styles.wrapIcon}>
             <View style={styles.icon}>
-              <Ionicons name="fast-food" size={50} />
+              <Icon name="food" size={50} />
             </View>
           </View>
 
@@ -136,60 +159,55 @@ const DetailTransaksi = ({route, navigation}) => {
             </Text>
             <View style={styles.harga}>
               <RadioButton
-                value={item.baseprice}
+                value={menu.baseprice}
                 color={Colors.btnColor}
                 status={
-                  checked.price === item.baseprice ? 'checked' : 'unchecked'
+                  checked.price === menu.baseprice ? 'checked' : 'unchecked'
                 }
                 onPress={() => {
-                  setChecked({...checked, price: item.baseprice}),
+                  setChecked({...checked, price: menu.baseprice}),
                     setProduct({
                       ...product,
-                      price: item.baseprice,
+                      price: menu.baseprice,
                       pricingCategory: 'base',
                     });
                 }}
               />
               <View>
                 <Text variant="titleMedium">Reguler</Text>
-                <Text
-                  variant="titleSmall"
-                  style={{
-                    color: 'rgba(0,0,0,0.4)',
-                  }}>{`Rp. ${item.baseprice}`}</Text>
+                <Text variant="titleSmall" style={{color: 'rgba(0,0,0,0.4)'}}>
+                  {FormatRP(menu.baseprice)}
+                </Text>
               </View>
             </View>
 
             <View style={styles.harga}>
               <RadioButton
-                value={item.baseonlineprice}
+                value={menu.baseonlineprice}
                 color={Colors.btnColor}
                 status={
-                  checked.price === item.baseonlineprice
+                  checked.price === menu.baseonlineprice
                     ? 'checked'
                     : 'unchecked'
                 }
                 onPress={() => {
-                  setChecked({...checked, price: item.baseonlineprice}),
+                  setChecked({...checked, price: menu.baseonlineprice}),
                     setProduct({
                       ...product,
-                      price: item.baseonlineprice,
+                      price: menu.baseonlineprice,
                       pricingCategory: 'online',
                     });
                 }}
               />
               <View>
                 <Text variant="titleMedium">Online</Text>
-                <Text
-                  variant="titleSmall"
-                  style={{
-                    color: 'rgba(0,0,0,0.4)',
-                  }}>{`Rp. ${item.baseonlineprice}`}</Text>
+                <Text variant="titleSmall" style={{color: 'rgba(0,0,0,0.4)'}}>
+                  {FormatRP(menu.baseonlineprice)}
+                </Text>
               </View>
             </View>
           </View>
           <View style={styles.separator} />
-
           <View style={{marginVertical: 10, padding: 10}}>
             <Text variant="titleMedium" style={{fontSize: 18}}>
               Diskon
@@ -201,6 +219,10 @@ const DetailTransaksi = ({route, navigation}) => {
                 status={checked.disc === 'No' ? 'checked' : 'unchecked'}
                 onPress={() => {
                   setChecked({...checked, disc: 'No'});
+                  setProduct({
+                    ...product,
+                    disc: 0,
+                  });
                 }}
               />
               <Text variant="titleMedium">Tanpa Diskon</Text>
@@ -216,7 +238,6 @@ const DetailTransaksi = ({route, navigation}) => {
               />
               <Text variant="titleMedium">Diskon</Text>
             </View>
-
             <View style={{marginLeft: 10}}>
               {checked.disc === 'Yes' ? (
                 <View style={{flexDirection: 'row'}}>
@@ -261,26 +282,25 @@ const DetailTransaksi = ({route, navigation}) => {
           <View style={styles.separator} />
         </ScrollView>
         <View style={{rowGap: 20}}>
-          <Text>
-            {`${FormatRP(product.price)} x ${product.count} - ${
-              product.disc
-            } = ${FormatRP(product.totalPrice)} `}
-          </Text>
-          <ConstButton
-            title="Tambah ke keranjang"
-            onPress={() => {
-              handleCart();
-            }}
-          />
+          <Text>{`${FormatRP(product.price)} X ${product.count} = ${FormatRP(
+            product.totalPrice,
+          )}`}</Text>
+          <ConstButton title="Simpan" onPress={() => handlePress()} />
         </View>
       </View>
     </SafeAreaView>
   );
 };
 
-export default DetailTransaksi;
+export default DetailItemsCart;
 
 const styles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: Colors.backgroundColor},
+  appHeader: {
+    backgroundColor: 'white',
+    elevation: 4,
+    columnGap: 20,
+  },
   whiteLayer: {
     flex: 1,
     backgroundColor: 'white',
@@ -288,11 +308,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     elevation: 1,
     padding: 10,
-  },
-  appHeader: {
-    backgroundColor: 'white',
-    elevation: 4,
-    columnGap: 20,
   },
   icon: {
     width: 100,
@@ -319,16 +334,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.2)',
     borderRadius: 5,
   },
-  jumlahBarang: {
-    flexDirection: 'row',
-    // columnGap: 25,
-    width: 120,
-    borderWidth: 1,
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderColor: 'rgba(0,0,0,0.2)',
-  },
   wrapJumlahBarang: {
     marginVertical: 10,
     padding: 10,
@@ -346,5 +351,15 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 5,
     borderBottomRightRadius: 5,
     padding: 5,
+  },
+  jumlahBarang: {
+    flexDirection: 'row',
+    // columnGap: 25,
+    width: 120,
+    borderWidth: 1,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderColor: 'rgba(0,0,0,0.2)',
   },
 });

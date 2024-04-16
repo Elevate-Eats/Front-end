@@ -21,7 +21,7 @@ import {Colors} from '../../../utils/colors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
-import {MENU_BRANCH_ENDPOINT, TRANSACTION_ENDPOINT, API_URL} from '@env';
+import {MENU_BRANCH_ENDPOINT, TRANSACTION_ENDPOINT, ITEM_ENDPOINT} from '@env';
 
 import {useSelector, useDispatch} from 'react-redux';
 import {allMenu} from '../../../redux/menuSlice';
@@ -30,21 +30,36 @@ import getDataQuery from '../../../utils/getDataQuery';
 import PostData from '../../../utils/postData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {setTransactionId} from '../../../redux/transactionSlice';
+import {
+  setTransactionId,
+  setTransactionList,
+} from '../../../redux/transactionSlice';
+import {addItem} from '../../../redux/cartSlice';
+import {addTransaction as addTrans} from '../../../database/addTransactions';
+import {showTransaction} from '../../../database/showTransaction';
+import {showItems} from '../../../database/showItems';
+import {asyncThunkCreator} from '@reduxjs/toolkit';
 
 const MainTransaksi = ({navigation, route}) => {
+  const prevData = route.params;
+  // console.log('prevData dari pending: ', prevData);
   const dispatch = useDispatch();
   const selectBranch = useSelector(s => s.branch.selectedBranch);
+  const transactionId = useSelector(s => s.transaction.transactionId);
+  // const menuSlice = useSelector()
   const [status, setStatus] = useState(false);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [menu, setMenu] = useState({});
+  const [allItems, setAllItems] = useState({});
 
   const [customer, setCustomer] = useState({
-    name: '',
-    table: '',
+    name: prevData ? prevData.name : '',
+    table: prevData ? '0' : '',
   });
+
   const [prompt, setPrompt] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
@@ -60,12 +75,17 @@ const MainTransaksi = ({navigation, route}) => {
           setError('Menu Not Found !');
         }
       }
-      fetchData();
+      fetchData(transactionId);
     }, []),
   );
 
   useEffect(() => {
-    setPrompt(true);
+    if (customer.name && customer.table) {
+      dispatch(setTransactionId(prevData.id));
+      setPrompt(false); //default true
+    } else {
+      setPrompt(true);
+    }
     // generateTransactionId();
   }, []);
 
@@ -87,18 +107,32 @@ const MainTransaksi = ({navigation, route}) => {
       customername: customer.name,
       tableNumber: parseInt(customer.table, 10),
     };
-    console.log(payloadAdd);
     try {
       const data = await PostData({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'addTransaction',
         payload: payloadAdd,
       });
-      console.log(data.id);
-      dispatch(setTransactionId(data.id));
-      dispatch(setCustomerInfo(customer));
-      setPrompt(false);
-    } catch (error) {}
+      if (data && data.id) {
+        const {tableNumber, ...restOfPayloadAdd} = payloadAdd;
+        const payload = {
+          ...restOfPayloadAdd, // spread the remaining properties of payloadAdd
+          tablenumber: tableNumber, // add the renamed key with its value
+          id: data.id,
+        };
+        dispatch(setTransactionId(parseInt(data.id, 10)));
+        dispatch(setCustomerInfo(customer));
+        dispatch(setTransactionList(payloadAdd));
+        setPrompt(false);
+        await addTrans(payload);
+        // const mytrans = await showTransaction(); // Ensuring this is only called if data.id is valid
+        // console.log('my Trans: ', mytrans);
+      } else {
+        console.error('Invalid transaction data received:', data);
+      }
+    } catch (error) {
+      console.error('Error during transaction addition:', error);
+    }
   }
 
   function openPrompt(params) {
@@ -128,8 +162,10 @@ const MainTransaksi = ({navigation, route}) => {
                 left="table-furniture"
                 label="Nomor meja"
                 placeholder="Meja"
-                value={customer.table}
-                onChangeText={text => setCustomer({...customer, table: text})}
+                value={customer.table ? customer.table.toString() : ''}
+                onChangeText={text =>
+                  setCustomer({...customer, table: parseInt(text, 10 || 0)})
+                }
                 keyboardType="numeric"
               />
               <View style={{marginTop: 25}}>
@@ -137,6 +173,7 @@ const MainTransaksi = ({navigation, route}) => {
                   title="Submit"
                   onPress={async () => {
                     if (!customer.name || !customer.table) {
+                      //edit
                       let errorMessage = customer.name
                         ? 'Masukkan nama customer'
                         : 'Masukkan nomor meja';
@@ -159,14 +196,12 @@ const MainTransaksi = ({navigation, route}) => {
     );
   }
 
-  const menuCompany = useSelector(state => state.menu.allMenu);
-
   return (
     <View style={styles.container}>
       <View style={styles.whiteLayer}>
         {openPrompt(prompt)}
         {/* ////////////////// */}
-        {customer.name && customer.table ? (
+        {customer.name && customer.table ? ( // edit
           <View style={{flex: 1}}>
             <View style={styles.wrapSearch}>
               <View style={{flex: 1}}>
@@ -196,7 +231,9 @@ const MainTransaksi = ({navigation, route}) => {
         ) : null}
         <ConstButton onPress={() => setStatus(true)} title="Checkout" />
       </View>
-      {status && <BottomSheet condition={setStatus} />}
+      {status && (
+        <BottomSheet condition={setStatus} transactionId={transactionId} />
+      )}
     </View>
   );
 };
