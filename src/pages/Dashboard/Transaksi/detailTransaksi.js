@@ -20,77 +20,53 @@ import {useDispatch} from 'react-redux';
 import cartSlice, {addItem, saveItem} from '../../../redux/cartSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
-import getDataQuery from '../../../utils/getDataQuery';
-import {addItems} from '../../../database/addItems';
 
 const DetailTransaksi = ({route, navigation}) => {
   const {item} = route.params;
-  console.log('items: ', item);
   const customer = useSelector(s => s.customer.customerInfo);
-  const transaction = useSelector(s => s.transaction.transactionId);
+  const transactionId = useSelector(s => s.transaction.transactionId);
   const dispatch = useDispatch();
+  const showItems = useSelector(state => state.allItems.allItems);
+  console.log('show Items: ', showItems);
 
-  const [allItems, setAllItems] = useState({});
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
   });
+
   const [count, setCount] = useState(0);
   const [product, setProduct] = useState({
     // *req payload addItems
     count: count,
-    menuId: item.menuid,
-    pricingCategory: '',
-    transactionId: transaction ? transaction : 0,
+    menuid: item.menuid,
+    pricingcategory: '',
+    transactionId: transactionId ? transactionId : 0,
     price: checked.price,
-    totalPrice: 0,
+    totalprice: 0,
     category: item.category,
     name: item.name,
     disc: 0,
-    id: null,
   });
 
   useEffect(() => {
-    const totalPrice = product.price * product.count - product.disc;
+    const totalprice = product.price * product.count - product.disc;
     setProduct(e => ({
       ...e,
-      totalPrice: totalPrice,
+      totalprice: totalprice,
     }));
   }, [product.price, product.count, product.disc]);
 
   function handleCart(params) {
     console.log('====HANDLE CART====');
-    console.log('product: ', product);
-    const dbPayload = {
-      id: null,
-      name: product.name,
-      discount: product.disc,
-      count: product.count,
-      menuid: product.menuId,
-      pricingcategory: product.pricingCategory,
-      transactionid: product.transactionId,
-      price: product.price,
-      totalprice: product.totalPrice,
-      category: product.category,
-    };
-    console.log('DB payload:', dbPayload);
+    console.log('PRODUK: ', product);
     if (product.count <= 0 || product.price === null) {
-      return Alert.alert(
-        'Failed to Add Menu',
-        'Tambahkan jumlah barang atau harga',
-      );
+      let message = product.count ? 'Pilih harga' : 'Masukkan pesanan';
+      ToastAndroid.show(message, ToastAndroid.SHORT);
     } else {
-      addItems(dbPayload)
-        .then(() => {
-          ToastAndroid.show(
-            `${product.name} successfully added to cart`,
-            ToastAndroid.SHORT,
-          );
-          navigation.navigate('Transaksi');
-        })
-        .catch(error => {
-          console.error(error);
-        });
+      dispatch(addItem(product));
+      console.log('add To Redux cartSlice');
+      ToastAndroid.show(`${product.name} added to Cart`, ToastAndroid.SHORT);
+      navigation.goBack();
     }
   }
   function countAdd() {
@@ -146,7 +122,7 @@ const DetailTransaksi = ({route, navigation}) => {
                     setProduct({
                       ...product,
                       price: item.baseprice,
-                      pricingCategory: 'base',
+                      pricingcategory: 'base',
                     });
                 }}
               />
@@ -174,7 +150,7 @@ const DetailTransaksi = ({route, navigation}) => {
                     setProduct({
                       ...product,
                       price: item.baseonlineprice,
-                      pricingCategory: 'online',
+                      pricingcategory: 'online',
                     });
                 }}
               />
@@ -264,7 +240,7 @@ const DetailTransaksi = ({route, navigation}) => {
           <Text>
             {`${FormatRP(product.price)} x ${product.count} - ${
               product.disc
-            } = ${FormatRP(product.totalPrice)} `}
+            } = ${FormatRP(product.totalprice)} `}
           </Text>
           <ConstButton
             title="Tambah ke keranjang"

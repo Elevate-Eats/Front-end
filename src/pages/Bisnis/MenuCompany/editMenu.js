@@ -1,4 +1,11 @@
-import {Alert, SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  ToastAndroid,
+  View,
+} from 'react-native';
 import {Text} from 'react-native-paper';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
@@ -19,6 +26,7 @@ import {updateMenu as Up} from '../../../redux/menuSlice';
 const EditMenu = ({navigation, route}) => {
   const dispatch = useDispatch();
   const {item} = route.params;
+  console.log('items: ', item);
   const [menu, setMenu] = useState({});
   const kategori = [
     {key: 'foods', value: 'Makanan'},
@@ -41,44 +49,36 @@ const EditMenu = ({navigation, route}) => {
         endpoint: 'updateMenu',
         payload: payload,
       });
-      Alert.alert(
-        action.message,
+      ToastAndroid.show(
         `${menu.name} has been successfully updated`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              dispatch(Up(payload));
-              navigation.goBack();
-            },
-          },
-        ],
+        ToastAndroid.SHORT,
       );
+      navigation.goBack();
     } catch (error) {
-      Alert.alert('Failed to Update Menu');
+      ToastAndroid.show(`Failed to delete ${menu.name}`);
       console.log(error);
     }
   }
 
   async function deleteMenu(params) {
     async function handleDelete(params) {
+      const payloadDel = {
+        id: item.id,
+      };
       try {
         const action = await PostData({
           operation: MENU_COMPANY_ENDPOINT,
           endpoint: 'deleteMenu',
           payload: {id: item.id},
         });
-        Alert.alert(action.message, `${menu.name} successfully deteled`, [
-          {
-            text: 'OK',
-            onPress: () => {
-              dispatch(Del({id: item.id}));
-              navigation.goBack();
-            },
-          },
-        ]);
+        console.log('payload: ', payloadDel);
+        ToastAndroid.show(
+          `${menu.name} successfully deleted`,
+          ToastAndroid.SHORT,
+        );
+        navigation.goBack();
       } catch (error) {
-        Alert.alert('Failed to Delete Menu');
+        ToastAndroid.show(`Faild to Delete ${menu.name}`, ToastAndroid.SHORT);
       }
     }
     Alert.alert(

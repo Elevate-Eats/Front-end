@@ -18,82 +18,99 @@ import {Colors} from '../../../utils/colors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {LoadingIndicator, SearchBox} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
-import {removeTransaction} from '../../../redux/cartSlice';
+import {addItem, removeTransaction} from '../../../redux/cartSlice';
 import {deleteTransaction} from '../../../database/deleteTransaction';
-import {showTransaction} from '../../../database/showTransaction';
+import Receipt from '../../../assets/icons/receipt.svg';
+import {selectBranch} from '../../../redux/branchSlice';
+import transactionSlice from '../../../redux/transactionSlice';
+import {get} from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import {addItemsInfo, addPcsInfo} from '../../../redux/pcsSlice';
 
 const PendingTransaction = ({navigation}) => {
   const dispatch = useDispatch();
+  const allTransaction = useSelector(
+    state => state.showTransaction.allTransaction,
+  );
   const branch = useSelector(s => s.branch.selectedBranch);
-  const [menu, setMenu] = useState({});
-  const [error, setError] = useState('');
+  const menuCompany = useSelector(state => state.menu.allMenu);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [trans, setTrans] = useState({});
 
-  async function fetchData(branch, setMenu, setError, setLoading) {
-    setLoading(true);
-    try {
-      const data = await getDataQuery({
-        operation: TRANSACTION_ENDPOINT,
-        endpoint: 'showTransactions',
-        resultKey: 'transactionData',
-        query: `branch=${branch.id}`,
-      });
-      setMenu(data);
-    } catch (error) {
-      setError('Transaction not Found !');
-    } finally {
-      setLoading(false);
-    }
-  }
+  const filteredTransaction = allTransaction.filter(
+    item => item.branchid === branch.id,
+  );
+  console.log('filtered:', filteredTransaction);
 
-  console.log('menu transaction: ', menu);
-  async function showItems(params) {
-    console.log('params: ', params);
+  filteredTransaction.map(async item => {
+    let transactionId = item.id;
+    console.log('id: ', transactionId);
     try {
       const data = await getDataQuery({
         operation: ITEM_ENDPOINT,
         endpoint: 'showItems',
         resultKey: 'itemData',
-        query: `transactionId=${params.id}`,
+        query: `transactionId=${item.id}`,
       });
-      navigation.navigate('Transaksi', {
-        item: data,
-        name: params.customername,
-        id: params.id,
-      });
-    } catch (error) {}
-  }
-  useFocusEffect(
-    useCallback(() => {
-      if (!branch) {
-        Alert.alert('Failed', 'Silakan pilih cabang terlebih dahulu', [
-          {text: 'OK', onPress: () => navigation.goBack()},
-        ]);
+      if (data) {
+        console.log('menuCom: ', menuCompany);
+        function getName(params) {
+          return data.map(item => {
+            const menu = menuCompany.find(menu => menu.id === item.menuid);
+            return menu
+              ? {...item, name: menu.name}
+              : {...item, name: 'Unknown'};
+          });
+        }
+        const newData = getName(data);
+        console.log('new: ', newData);
+        dispatch(addItemsInfo(newData));
       }
-      fetchData(branch, setMenu, setError, setLoading);
-    }, []),
-  );
-
+    } catch (error) {}
+  });
+  // async function showItems(params) {
+  //   let data;
+  //   console.log('params: ', params);
+  //   try {
+  //     setLoading(true);
+  //     data = await getDataQuery({
+  //       operation: ITEM_ENDPOINT,
+  //       endpoint: 'showItems',
+  //       resultKey: 'itemData',
+  //       query: `transactionId=${params.id}`,
+  //     });
+  //   } catch (error) {
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  //   navigation.navigate('Transaksi', {
+  //     // item: data,
+  //     name: params.customername,
+  //     id: params.id,
+  //   });
+  // }
   async function handleDelete(params) {
     try {
+      setLoading(true);
       const action = await PostData({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'deleteTransaction',
         payload: {id: params.id},
       });
-      fetchData(branch, setMenu, setError, setLoading);
       await deleteTransaction(params.id);
-      dispatch(removeTransaction(params.id));
-      ToastAndroid.show(`${action.message}`, ToastAndroid.SHORT);
-    } catch (error) {}
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+    dispatch(removeTransaction(params.id));
+    ToastAndroid.show(`${action.message}`, ToastAndroid.SHORT);
   }
 
   if (loading) {
     return <LoadingIndicator />;
   }
-  const pendingMenu = Object.values(menu).filter(item => item.status === 1);
+  const pendingMenu = Object.values(filteredTransaction).filter(
+    item => item.status === 1,
+  );
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -131,7 +148,13 @@ const PendingTransaction = ({navigation}) => {
                             ]);
                           }}
                           style={{rowGap: 3}}
-                          onPress={() => showItems(item)}>
+                          // onPress={() => showItems(item)}
+                          onPress={() => {
+                            navigation.navigate('Transaksi', {
+                              name: item.customername,
+                              id: item.id,
+                            });
+                          }}>
                           <Text variant="titleMedium" style={{fontSize: 18}}>
                             {`${item.customername}`}
                           </Text>
@@ -175,7 +198,8 @@ const PendingTransaction = ({navigation}) => {
         ) : (
           <View
             style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-            <Text>Tidak Ada Transaksi</Text>
+            <Receipt width={200} height={200} />
+            <Text variant="titleMedium">Tidak Ada Transaksi</Text>
           </View>
         )}
       </View>

@@ -42,7 +42,7 @@ const LoginPage = ({navigation, route}) => {
         // setID(action.data.id);
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
       Alert.alert('Login Error', 'Check your email or password!');
     }
   };

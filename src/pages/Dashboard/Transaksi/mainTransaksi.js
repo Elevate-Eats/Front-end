@@ -3,6 +3,7 @@ import {
   Modal,
   SafeAreaView,
   StyleSheet,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -20,119 +21,143 @@ import {
 import {Colors} from '../../../utils/colors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useFocusEffect} from '@react-navigation/native';
-import GetData from '../../../utils/getData';
 import {MENU_BRANCH_ENDPOINT, TRANSACTION_ENDPOINT, ITEM_ENDPOINT} from '@env';
 
 import {useSelector, useDispatch} from 'react-redux';
-import {allMenu} from '../../../redux/menuSlice';
 import {setCustomerInfo} from '../../../redux/customerSlice';
 import getDataQuery from '../../../utils/getDataQuery';
 import PostData from '../../../utils/postData';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import {
   setTransactionId,
   setTransactionList,
 } from '../../../redux/transactionSlice';
-import {addItem} from '../../../redux/cartSlice';
-import {addTransaction as addTrans} from '../../../database/addTransactions';
-import {showTransaction} from '../../../database/showTransaction';
-import {showItems} from '../../../database/showItems';
-import {asyncThunkCreator} from '@reduxjs/toolkit';
 
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
-  // console.log('prevData dari pending: ', prevData);
+  console.log('prev: ', prevData);
   const dispatch = useDispatch();
   const selectBranch = useSelector(s => s.branch.selectedBranch);
   const transactionId = useSelector(s => s.transaction.transactionId);
-  // const menuSlice = useSelector()
+  const itemsInfo = useSelector(state => state.pcs.itemsInfo); // ! item backend
+  const cartSlice = useSelector(state => state.cart.items);
+  console.log('item ifno: ', itemsInfo);
+  const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(false);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [menu, setMenu] = useState({});
-  const [allItems, setAllItems] = useState({});
 
   const [customer, setCustomer] = useState({
     name: prevData ? prevData.name : '',
     table: prevData ? '0' : '',
   });
 
-  const [prompt, setPrompt] = useState(false);
+  const [disabled, setDisabled] = useState(true);
 
+  const [prompt, setPrompt] = useState(false);
   useFocusEffect(
     useCallback(() => {
-      async function fetchData(params) {
+      const fetchData = async () => {
+        setLoading(true);
         try {
-          const data = await getDataQuery({
-            operation: MENU_BRANCH_ENDPOINT,
-            endpoint: 'showMenus',
-            resultKey: 'menuData',
-            query: `branchid=${selectBranch.id}`,
-          });
-          setMenu(data);
+          const promises = [
+            getDataQuery({
+              operation: MENU_BRANCH_ENDPOINT,
+              endpoint: 'showMenus',
+              resultKey: 'menuData',
+              query: `branchid=${selectBranch.id}`,
+            }),
+            getDataQuery({
+              operation: ITEM_ENDPOINT,
+              endpoint: 'showItems',
+              resultKey: 'itemData',
+              query: `transactionId=${transactionId}`,
+            }),
+          ];
+          const [menuBranch, items] = await Promise.all(promises);
+          if (menuBranch && items) {
+            setMenu(menuBranch);
+          }
         } catch (error) {
-          setError('Menu Not Found !');
+        } finally {
+          setLoading(false);
         }
-      }
-      fetchData(transactionId);
-    }, []),
+      };
+      fetchData();
+    }, [dispatch]),
   );
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     async function fetchData(params) {
+  //       setLoading(true);
+  //       try {
+  //         const data = await getDataQuery({
+  //           operation: MENU_BRANCH_ENDPOINT,
+  //           endpoint: 'showMenus',
+  //           resultKey: 'menuData',
+  //           query: `branchid=${selectBranch.id}`,
+  //         });
+  //         setMenu(data);
+  //       } catch (error) {
+  //         setError('Menu Not Found !');
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     }
+  //     fetchData(transactionId);
+  //   }, []),
+  // );
 
   useEffect(() => {
     if (customer.name && customer.table) {
-      dispatch(setTransactionId(prevData.id));
+      dispatch(setTransactionId(prevData ? prevData.id : null));
       setPrompt(false); //default true
     } else {
       setPrompt(true);
     }
-    // generateTransactionId();
   }, []);
 
-  function generateTransactionId(params) {
+  function transactionDate(params) {
     const now = new Date();
     const transactionId = now.toISOString();
-    console.log(transactionId);
     return transactionId;
   }
 
   async function addTransaction(params) {
     const payloadAdd = {
-      transactiondate: generateTransactionId(),
-      discount: null,
+      transactiondate: transactionDate(),
+      discount: 0,
       status: 1,
       paymentmethod: null,
-      totalprice: null,
+      totalprice: 0,
       branchid: selectBranch.id,
       customername: customer.name,
       tableNumber: parseInt(customer.table, 10),
     };
+    console.log(payloadAdd);
     try {
+      setLoading(true);
       const data = await PostData({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'addTransaction',
         payload: payloadAdd,
       });
-      if (data && data.id) {
-        const {tableNumber, ...restOfPayloadAdd} = payloadAdd;
-        const payload = {
-          ...restOfPayloadAdd, // spread the remaining properties of payloadAdd
-          tablenumber: tableNumber, // add the renamed key with its value
-          id: data.id,
-        };
+      if (data) {
         dispatch(setTransactionId(parseInt(data.id, 10)));
         dispatch(setCustomerInfo(customer));
         dispatch(setTransactionList(payloadAdd));
         setPrompt(false);
-        await addTrans(payload);
-        // const mytrans = await showTransaction(); // Ensuring this is only called if data.id is valid
-        // console.log('my Trans: ', mytrans);
-      } else {
-        console.error('Invalid transaction data received:', data);
       }
     } catch (error) {
-      console.error('Error during transaction addition:', error);
+      console.log('Error during transaction addition:', error);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  if (loading) {
+    return <LoadingIndicator />;
   }
 
   function openPrompt(params) {
@@ -175,13 +200,12 @@ const MainTransaksi = ({navigation, route}) => {
                     if (!customer.name || !customer.table) {
                       //edit
                       let errorMessage = customer.name
-                        ? 'Masukkan nama customer'
-                        : 'Masukkan nomor meja';
-                      Alert.alert(
-                        `Failed !`,
+                        ? 'Masukkan Nomor Meja'
+                        : 'Masukkan Nama Customer';
+                      ToastAndroid.showWithGravity(
                         errorMessage,
-                        [{text: 'OK', onPress: () => setPrompt(true)}],
-                        {cancelable: false},
+                        ToastAndroid.LONG,
+                        ToastAndroid.CENTER,
                       );
                     } else {
                       await addTransaction();
@@ -217,7 +241,9 @@ const MainTransaksi = ({navigation, route}) => {
             </View>
             <View style={{flex: 1, marginVertical: 10}}>
               {!menu ? (
-                <DataError data={error} />
+                <View style={styles.dataError}>
+                  <DataError data={error} />
+                </View>
               ) : (
                 <ListTransaction
                   data={menu}
@@ -229,7 +255,11 @@ const MainTransaksi = ({navigation, route}) => {
             </View>
           </View>
         ) : null}
-        <ConstButton onPress={() => setStatus(true)} title="Checkout" />
+        <ConstButton
+          onPress={() => setStatus(true)}
+          title="Checkout"
+          // disabled={cartSlice[transactionId] ? !disabled : disabled}
+        />
       </View>
       {status && (
         <BottomSheet condition={setStatus} transactionId={transactionId} />
@@ -281,5 +311,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 10,
     shadowRadius: 10,
     elevation: 10,
+  },
+  dataError: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

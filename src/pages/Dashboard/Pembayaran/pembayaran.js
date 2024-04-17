@@ -9,24 +9,25 @@ import {RadioButton, Text} from 'react-native-paper';
 import React, {useCallback, useEffect, useState} from 'react';
 import {ScrollView} from 'react-native-gesture-handler';
 import {Colors} from '../../../utils/colors';
-import {ConstButton} from '../../../components';
+import {ConstButton, LoadingIndicator} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useSelector} from 'react-redux';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import PostData from '../../../utils/postData';
-import {TRANSACTION_ENDPOINT} from '@env';
+import {TRANSACTION_ENDPOINT, API_URL} from '@env';
 import {combineReducers} from 'redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const Pembayaran = ({route}) => {
   const navigation = useNavigation();
   const {data} = route.params;
-  // console.log('data: ', data);
   const {transactionId} = useSelector(state => state.transaction);
-  // console.log('ID: ', transactionId);
   const [singleTrans, setSingleTrans] = useState({});
   const [total, setTotal] = useState(0);
   const [checked, setChecked] = useState(null);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     const total = data.reduce((acc, item) => acc + item.totalprice, 0);
     setTotal(total);
@@ -48,6 +49,7 @@ const Pembayaran = ({route}) => {
       fetchData();
     }, []),
   );
+  console.log('single Trans: ', singleTrans);
 
   async function handleConfirm(params) {
     if (checked === null || checked === undefined) {
@@ -65,24 +67,51 @@ const Pembayaran = ({route}) => {
         status: 0,
         tableNumber: singleTrans.tablenumber,
       };
-      console.log('Init: ', initial);
+      // console.log('Init: ', initial);
       const {tablenumber, ...payloadUpdateTransaction} = initial;
-      console.log('Init: ', payloadUpdateTransaction);
+      // console.log('Init: ', payloadUpdateTransaction);
 
       // ToastAndroid.show('Pembayaran Berhasil !!', ToastAndroid.SHORT);
       try {
-        const data = await PostData({
-          operation: TRANSACTION_ENDPOINT,
-          endpoint: 'updateTransaction',
-          payload: payloadUpdateTransaction,
-        });
-        console.log(data);
-        ToastAndroid.show('Pembayaran Berhasil !!', ToastAndroid.SHORT);
-        navigation.navigate('Dashboard');
+        setLoading(true);
+        const token = await AsyncStorage.getItem('userToken');
+        const res = await axios.post(
+          `${API_URL}/${TRANSACTION_ENDPOINT}/updateTransaction`,
+          payloadUpdateTransaction,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        console.log('res :', res);
+        if (res.status !== 200) {
+          ToastAndroid.show('Pembayaran Berhasil', ToastAndroid.SHORT);
+        } else {
+          ToastAndroid.show('Pembayaran Gagal', ToastAndroid.SHORT);
+        }
+        // setLoading(true);
+        // const data = await PostData({
+        //   operation: TRANSACTION_ENDPOINT,
+        //   endpoint: 'updateTransaction',
+        //   payload: payloadUpdateTransaction,
+        // });
+        // console.log(data);
+        // if (data.status === 200) {
+        //   setLoading(false);
+        //   ToastAndroid.show('Pembayaran Berhasil !!', ToastAndroid.SHORT);
+        //   // navigation.navigate('Dashboard');
+        // }
       } catch (error) {
-        console.log('error Update Transaction');
+        ToastAndroid.show('Pembayaran Gagal', ToastAndroid.SHORT);
+      } finally {
+        setLoading(false);
       }
     }
+  }
+  if (loading) {
+    return <LoadingIndicator />;
   }
 
   return (

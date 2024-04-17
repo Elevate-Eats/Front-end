@@ -24,7 +24,7 @@ const ListRow = props => {
                 </View>
                 <TouchableOpacity onPress={handlePress} style={{flex: 1}}>
                   <View style={{marginHorizontal: 15}}>
-                    <Text variant="titleLarge">{item.name}</Text>
+                    <Text variant="titleMedium">{item.name}</Text>
                     <Text
                       variant="labelLarge"
                       style={{color: 'rgba(0,0,0,0.4)'}}>

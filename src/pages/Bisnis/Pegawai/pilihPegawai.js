@@ -2,7 +2,7 @@ import {KeyboardAvoidingView, StyleSheet, View} from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
-
+import {useSelector} from 'react-redux';
 import {EMPLOYEE_ENDPOINT} from '@env';
 import {Colors} from '../../../utils/colors';
 import {
@@ -12,33 +12,11 @@ import {
   ListRow,
   SearchBox,
 } from '../../../components';
-import {Item} from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
-
 const PilihPegawai = ({navigation}) => {
-  const [employee, setEmployee] = useState({});
+  // const [employee, setEmployee] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchData = async () => {
-        setLoading(true);
-        try {
-          const dataEmployee = await GetData({
-            operation: EMPLOYEE_ENDPOINT,
-            endpoint: 'showEmployees',
-            resultKey: 'employeeData',
-          });
-          setEmployee(dataEmployee);
-        } catch (error) {
-          setError('Employee Not Found !');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchData();
-    }, []),
-  );
+  const employee = useSelector(state => state.employee.allEmployee);
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>

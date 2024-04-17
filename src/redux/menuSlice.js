@@ -6,6 +6,7 @@ export const menuSlice = createSlice({
   initialState: {
     selectedMenu: null,
     allMenu: [],
+    allMenuBranch: [],
   },
 
   reducers: {
@@ -14,6 +15,9 @@ export const menuSlice = createSlice({
     },
     allMenu: (state, action) => {
       state.allMenu = action.payload;
+    },
+    allMenuBranch: (state, action) => {
+      state.allMenuBranch = action.payload;
     },
     updateMenu: (state, action) => {
       const index = state.allMenu.findIndex(
@@ -34,6 +38,12 @@ export const menuSlice = createSlice({
   },
 });
 
-export const {selectedMenu, allMenu, updateMenu, deleteMenu, addMenu} =
-  menuSlice.actions;
+export const {
+  selectedMenu,
+  allMenu,
+  updateMenu,
+  deleteMenu,
+  addMenu,
+  allMenuBranch,
+} = menuSlice.actions;
 export default menuSlice.reducer;

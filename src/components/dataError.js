@@ -14,10 +14,4 @@ const DataError = props => {
 
 export default DataError;
 
-const styles = StyleSheet.create({
-  ifError: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+const styles = StyleSheet.create({});

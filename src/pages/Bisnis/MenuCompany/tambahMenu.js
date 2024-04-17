@@ -1,4 +1,11 @@
-import {Alert, SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  ToastAndroid,
+  View,
+} from 'react-native';
 import {Text} from 'react-native-paper';
 import React, {useState} from 'react';
 import {useSelector} from 'react-redux';
@@ -34,16 +41,10 @@ const TambahMenu = ({navigation}) => {
         payload: menu,
       });
       console.log(action);
-      Alert.alert(action.message, `${menu.name} successfully added`, [
-        {
-          text: 'OK',
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-      ]);
+      ToastAndroid.show(`${menu.name} successfully added`, ToastAndroid.SHORT);
+      navigation.goBack();
     } catch (error) {
-      Alert.alert('Failed to Add Menu');
+      ToastAndroid.show(`Failed to add ${menu.name}`, ToastAndroid.SHORT);
     }
   }
 
@@ -87,7 +88,7 @@ const TambahMenu = ({navigation}) => {
               }
             />
 
-            <View style={{marginTop: 30}}>
+            <View style={{marginVertical: 30}}>
               <Text
                 variant="titleLarge"
                 style={{marginBottom: 10, fontWeight: '700'}}>

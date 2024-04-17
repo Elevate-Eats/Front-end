@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   TouchableOpacity,
   InputAccessoryView,
+  Alert,
 } from 'react-native';
 import {Text} from 'react-native-paper';
 import React, {useCallback, useEffect, useState} from 'react';
@@ -19,15 +20,17 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import {MENU_COMPANY_ENDPOINT, BRANCH_ENDPOINT} from '@env';
 import {useFocusEffect} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
 import PostData from '../../../utils/postData';
 import {MENU_BRANCH_ENDPOINT, API_URL} from '@env';
 import GetData from '../../../utils/getData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import getDataQuery from '../../../utils/getDataQuery';
+import Empty from '../../../assets/icons/empty-menu.svg';
 
 const PilihProduk = ({navigation}) => {
+  const dispatch = useDispatch();
   const [modal, setModal] = useState(false);
   const [menu, setMenu] = useState({});
   const [error, setError] = useState('');
@@ -38,6 +41,16 @@ const PilihProduk = ({navigation}) => {
   const selectBranch = useSelector(state => state.branch.selectedBranch);
   const branch = useSelector(state => state.branch.allBranch);
   const menuCompany = useSelector(state => state.menu.allMenu);
+  const allMenuBranch = useSelector(state => state.menu.allMenuBranch);
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     if (!selectBranch) {
+  //       Alert.alert('Failed', 'Silakan pilih cabang terlebih dahulu', [
+  //         {text: 'OK', onPress: () => navigation.goBack()},
+  //       ]);
+  //     }
+  //   }, []),
+  // );
 
   useFocusEffect(
     useCallback(() => {
@@ -58,7 +71,7 @@ const PilihProduk = ({navigation}) => {
         }
       }
       fetchData();
-    }, []),
+    }, [dispatch]),
   );
 
   if (loading) {
@@ -84,7 +97,10 @@ const PilihProduk = ({navigation}) => {
         </View>
         <View style={{flex: 1, marginVertical: 10}}>
           {error ? (
-            <DataError data={error} />
+            <View style={styles.dataError}>
+              <Empty width={200} height={200} />
+              <DataError data={error} />
+            </View>
           ) : (
             <ListMenu
               data={menu}
@@ -132,5 +148,11 @@ const styles = StyleSheet.create({
   dropdownStyles: {
     borderRadius: 5,
     borderWidth: 1.5,
+  },
+  dataError: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    rowGap: 10,
   },
 });

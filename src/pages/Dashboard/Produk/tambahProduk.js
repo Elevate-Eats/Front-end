@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Alert,
+  ToastAndroid,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {Text} from 'react-native-paper';
@@ -31,7 +32,6 @@ const TambahProduk = ({navigation}) => {
     value: item.id,
     label: item.name,
   }));
-
   const kategori = [
     {key: 'foods', value: 'Makanan'},
     {key: 'drinks', value: 'Minuman'},
@@ -73,9 +73,11 @@ const TambahProduk = ({navigation}) => {
         endpoint: 'addMenu',
         payload: payloadAdd,
       });
-      Alert.alert(data.message, `${menu.name} was successfully added`, [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      ToastAndroid.show(
+        `${menu.name} was successfully added`,
+        ToastAndroid.SHORT,
+      );
+      navigation.goBack();
     } catch (error) {
       Alert.alert('Failed to Add Menu', error);
     }
@@ -109,7 +111,7 @@ const TambahProduk = ({navigation}) => {
             <View style={{marginTop: 30}}>
               {renderLabel()}
               <Dropdown
-                mode="default"
+                mode="modal"
                 style={[
                   styles.dropdown,
                   isFocus && {borderColor: Colors.btnColor},

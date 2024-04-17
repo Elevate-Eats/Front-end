@@ -23,256 +23,302 @@ import FormatRP from '../utils/formatRP';
 import ConstButton from './btn';
 import {Colors} from '../utils/colors';
 import PostData from '../utils/postData';
-import axios, {all} from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ITEM_ENDPOINT, API_URL, TRANSACTION_ENDPOINT} from '@env';
 import {useDispatch} from 'react-redux';
 import getDataQuery from '../utils/getDataQuery';
-import {addItem} from '../redux/cartSlice';
-import {err} from 'react-native-svg';
-import {showItems} from '../database/showItems';
-import LoadingIndicator from './loadingIndicator';
-import {allMenu} from '../redux/menuSlice';
+import {allItems as allitem} from '../redux/allItems';
+import {red} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 
 const BottomSheet = props => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const branch = useSelector(state => state.branch.selectedBranch);
-  const customer = useSelector(state => state.customer.customerInfo);
   const menuCompany = useSelector(s => s.menu.allMenu);
   const transactionId = useSelector(state => state.transaction.transactionId); // Directly from state
-  const cartItems = useSelector(state => state.cart.items);
-  const newItems = useSelector(state => state.cart.newItems);
-  const [cart, setCart] = useState([]);
-  const [allItems, setAllItems] = useState([]);
-  const [single, setSingle] = useState({});
-  const [subtotal, setSubtotal] = useState('');
+  const allTransaction = useSelector(
+    state => state.showTransaction.allTransaction,
+  );
+  const ALITEM = useSelector(state => state.allItems.allItems);
+  const table = useSelector(state => state.customer.customerInfo);
+  const cartSlice = useSelector(state => state.cart.items); // Redux
+  const itemsInfo = useSelector(state => state.pcs.itemsInfo); // ! item backend ke redux
+  console.log('cartSLice: ', cartSlice);
+  console.log('item Info: ', itemsInfo);
+  const [selectedItems, setSelectedItems] = useState([]); // Backend
+  const [combined, setCombined] = useState([]);
   const [combine, setCombine] = useState([]);
   const [loading, setLoading] = useState(false);
   const [disabled, setDisabled] = useState({
     button: true,
     disc: true,
   });
-  useEffect(() => {
-    async function showSingle(params) {
-      const data = await PostData({
-        operation: TRANSACTION_ENDPOINT,
-        endpoint: 'showSingleTransaction',
-        payload: {id: transactionId},
-      });
-      setSingle(data.transactionData);
-    }
-    showSingle();
-  }, []);
+
+  // console.log('all Trans: ', allTransaction);
+  const filtered = allTransaction.filter(item => item.id === transactionId);
 
   useEffect(() => {
-    async function fetchData() {
+    let data;
+    async function fetchData(params) {
       if (transactionId) {
         setLoading(true);
         try {
-          const itemsPromise = getDataQuery({
+          data = await getDataQuery({
             operation: ITEM_ENDPOINT,
             endpoint: 'showItems',
-            resultKey: 'itemData',
+            resultKey: 'itemsData',
             query: `transactionId=${transactionId}`,
           });
-          const cartItemsPromise = showItems(transactionId);
-
-          const [items, cartItems] = await Promise.all([
-            itemsPromise,
-            cartItemsPromise,
-          ]);
-
-          setAllItems(items || []);
-          setCart(cartItems || []);
+          dispatch(allitem(data.itemData));
+          setSelectedItems(data.itemData);
         } catch (error) {
-          ToastAndroid.show('Failed to Fetch Data', ToastAndroid.SHORT);
-          console.error('Error fetching data:', error);
         } finally {
           setLoading(false);
         }
-      } else {
-        console.log('Transaction ID is not available');
       }
     }
-
     fetchData();
-  }, [transactionId]);
+  }, [dispatch]);
 
-  useEffect(() => {
-    const combinedData = combineItems(cart, allItems, menuCompany);
-    setCombine(combinedData);
-  }, [cart, allItems, menuCompany]);
+  function mergeCart(backEnd, redux) {
+    const transactionId = Object.keys(backEnd);
+    const combinedData = [
+      ...(backEnd[transactionId.toString()] || []),
+      ...(redux[transactionId.toString()] || []),
+    ];
 
-  function combineItems(backendData, localData, menuCompany) {
-    const combined = new Map();
-    const menuMap = new Map(menuCompany.map(item => [item.id, item.name]));
-
-    backendData.forEach(item => {
-      const key = `${item.menuid}-${item.transactionId}`;
-      combined.set(key, {...item, name: menuMap.get(item.menuid) || item.name});
-    });
-
-    localData.forEach(item => {
-      const key = `${item.menuid}-${item.transactionid}`; // Pastikan key sesuai
-      if (combined.has(key)) {
-        // Jika sudah ada, kita update dengan data dari local yang mungkin memiliki informasi tambahan
-        const existingItem = combined.get(key);
-        combined.set(key, {
-          ...existingItem,
-          ...item,
-          name: menuMap.get(item.menuid) || item.name,
-        });
+    const mergeResult = combinedData.reduce((sum, item) => {
+      const existingItem = sum.find(
+        i => i.menuid === item.menuid || i.menuId === item.menuId,
+      );
+      if (existingItem) {
+        existingItem.count += item.count;
+        existingItem.totalprice += item.totalprice;
       } else {
-        // Jika tidak ada, tambahkan sebagai item baru
-        combined.set(key, {
-          ...item,
-          name: menuMap.get(item.menuid) || item.name,
-        });
+        sum.push({...item});
       }
-    });
-
-    // Ubah map kembali menjadi array
-    return Array.from(combined.values());
+      return sum;
+    }, []);
+    return {[transactionId]: mergeResult};
   }
-  // console.log('menuCompany: ', menuCompany);
-  console.log('DB: ', cart);
-  console.log('backEnd: ', allItems);
-  console.log('combined: ', combine);
+  const hasilmerge = mergeCart(itemsInfo, cartSlice);
+  console.log('hasil :', hasilmerge);
+  // console.log('HASIL MERGE: ', hasilmerge);
+
+  // useEffect(() => {
+  //   const combinedData = combineItems(selectedItems, cartSlice, menuCompany);
+  //   setCombine(combinedData);
+  // }, [cart, allItems, menuCompany]);
+
+  // function combineItems(backendData, localData, menuCompany) {
+  //   const combined = new Map();
+  //   const menuMap = new Map(menuCompany.map(item => [item.id, item.name]));
+
+  //   backendData.forEach(item => {
+  //     const key = `${item.menuid}-${item.transactionId}`;
+  //     combined.set(key, {...item, name: menuMap.get(item.menuid) || item.name});
+  //   });
+
+  //   localData.forEach(item => {
+  //     const key = `${item.menuid}-${item.transactionid}`; // Pastikan key sesuai
+  //     if (combined.has(key)) {
+  //       // Jika sudah ada, kita update dengan data dari local yang mungkin memiliki informasi tambahan
+  //       const existingItem = combined.get(key);
+  //       combined.set(key, {
+  //         ...existingItem,
+  //         ...item,
+  //         name: menuMap.get(item.menuid) || item.name,
+  //       });
+  //     } else {
+  //       // Jika tidak ada, tambahkan sebagai item baru
+  //       combined.set(key, {
+  //         ...item,
+  //         name: menuMap.get(item.menuid) || item.name,
+  //       });
+  //     }
+  //   });
+
+  //   // Ubah map kembali menjadi array
+  //   return Array.from(combined.values());
+  // }
 
   const slide = useRef(new Animated.Value(700)).current;
 
-  function handlePay(params) {
-    console.log('isi cartItems: ', cartItems);
-    navigation.navigate('Pembayaran', {
-      data: combine,
-    });
+  async function handlePay(params) {
+    console.log(menuCompany);
+    const payloadUpdate = {};
+
+    // try {
+    //   setLoading(true);
+    //   const token = await AsyncStorage.getItem('userToken');
+    //   const res = await axios.post(`${API_URL}/${ITEM_ENDPOINT}/updateItems`);
+    // } catch (error) {}
+    // console.log('isi cartItems: ', cartItems);
+    // navigation.navigate('Pembayaran', {
+    //   data: combine,
+    // });
   }
 
-  async function updateItems(params) {
-    // console.log('<---DATA--->');
-    // console.log('Params Update Items: ', params);
-    const payloadUpdateItems = params.map(item => ({
-      id: item.id,
-      count: item.count,
-      pricingcategory: item.pricingcategory,
-      price: item.price,
-      totalPrice: item.totalprice,
-    }));
-    console.log('UPDATE ITEMS ---> : ', payloadUpdateItems);
-    try {
-      const action = await PostData({
-        operation: ITEM_ENDPOINT,
-        endpoint: 'updateItems',
-        payload: payloadUpdateItems,
+  async function updateItems(selectedItems) {
+    // console.log('params: ', params);
+    const items = [
+      {
+        id: 1,
+        count: 3,
+        price: 5000,
+        totalprice: 15000,
+        menuid: 3,
+        transactionId: 4,
+        category: 'Makanan',
+        pricingcategory: 'base',
+      },
+      {
+        id: 2,
+        count: 2,
+        price: 5000,
+        totalprice: 10000,
+        menuid: 4,
+        transactionId: 4,
+        category: 'Makanan',
+        pricingcategory: 'base',
+      },
+    ];
+
+    const payload = [
+      {
+        id: 2,
+        count: 6,
+        price: 5000,
+        totalprice: 30000,
+        menuid: 4,
+        transactionId: 4,
+        category: 'Menu Utama',
+        pricingcategory: 'base',
+      },
+      {
+        id: 1,
+        count: 3,
+        price: 5000,
+        totalprice: 15000,
+        menuid: 3,
+        transactionId: 4,
+        category: 'Menu Utama',
+        pricingcategory: 'base',
+      },
+    ];
+    // console.log(items);
+    function updateArray(backEnd, payload) {
+      const itemMap = new Map(backEnd.map(item => [item.id, item]));
+
+      payload.forEach(update => {
+        const item = itemMap.get(update.id);
+        if (item) {
+          itemMap.set(update.id, {...item, ...update});
+        } else {
+          itemMap.set(update.id, update);
+        }
       });
-      console.log(action.message);
-      ToastAndroid.show(action.message, ToastAndroid.SHORT);
-    } catch (error) {
-      console.log('error Update ITEMS: ', error);
+
+      return Array.from(itemMap.values());
     }
+    const result = updateArray(items, payload);
+    console.log('result: ', result);
+    // const payloadUpdateItems = params.map(item => ({
+    //   id: item.id,
+    //   count: item.count,
+    //   pricingcategory: item.pricingcategory,
+    //   price: item.price,
+    //   totalPrice: item.totalprice,
+    // }));
+    // console.log('UPDATE ITEMS ---> : ', payloadUpdateItems);
+    // try {
+    //   const action = await PostData({
+    //     operation: ITEM_ENDPOINT,
+    //     endpoint: 'updateItems',
+    //     payload: payloadUpdateItems,
+    //   });
+    //   console.log(action.message);
+    //   ToastAndroid.show(action.message, ToastAndroid.SHORT);
+    // } catch (error) {
+    //   console.log('error Update ITEMS: ', error);
+    // }
   }
 
   async function addItems(params) {
-    // console.log('params addItems: ', params);
-    const payloadAddItems = params.map(({name, discount, id, ...rest}) => rest);
-    // console.log('Payload Add Items: ', payloadAddItems);
-    const initial = payloadAddItems.map(item => ({
-      ...item,
-      pricingCategory: item.pricingcategory,
-      menuId: item.menuid,
-      totalPrice: item.totalprice,
-      transactionId: payloadAddItems[0].transactionid,
-    }));
-    // console.log('initial: ', initial);
-    const payloadAdd = initial.map(item => {
-      const {transactionid, menuid, pricingcategory, totalprice, ...rest} =
-        item;
-      return rest;
-    });
-    // console.log('ADD ITEMS');
-    console.log('ADDITEMS: --->: ', payloadAdd);
+    // console.log('ADDITEMS: --->: ', params);
+    const payloadAdd = params.map(({id, name, disc, ...rest}) => rest);
+    console.log('ADDITEMS2: -->: ', payloadAdd);
     try {
+      setLoading(true);
       const action = await PostData({
         operation: ITEM_ENDPOINT,
         endpoint: 'addItems',
         payload: payloadAdd,
       });
-      ToastAndroid.show(action.message, ToastAndroid.SHORT);
+      if (action) {
+        setLoading(false);
+        ToastAndroid.show(action.message, ToastAndroid.SHORT);
+        navigation.goBack();
+      }
     } catch (error) {
       console.log('Error add Items" ', error);
+    } finally {
+      setLoading(false);
     }
   }
-  async function updateTransaction(params) {
-    function Calculate(params) {
-      const totals = combine.reduce(
-        (acc, i) => {
-          (acc.totalPrice += i.totalprice), (acc.discount += i.discount);
-          return acc;
-        },
-        {totalPrice: 0, discount: 0},
-      );
-      return totals;
-    }
-    const {totalPrice, totalDiscount} = Calculate();
-    const initialPayload = {
-      ...single,
-      id: transactionId,
-      discount: totalDiscount ? totalDiscount : 0,
-      paymentmethod: 0,
-      totalprice: totalPrice,
-      tableNumber: single.tablenumber,
-      tablenumber: single.tablenumber,
+  async function updateTransaction(transaction) {
+    const filtered = transaction.filter(item => item.id === transactionId);
+    const payloadUpdate = {
+      ...filtered[0],
+      discount: calculateDiscount(
+        selectedItems.length > 0
+          ? combined
+          : cartSlice[transactionId.toString()],
+      ),
+      totalprice: calculateSubtotal(
+        selectedItems.length > 0
+          ? combined
+          : cartSlice[transactionId.toString()],
+      ),
+      tableNumber: table.table,
     };
-    // console.log('inital payload: ', initialPayload);
-    const {tablenumber, ...payloadUpdateTransaction} = initialPayload;
-    // console.log('UPDATE TRANS');
-    console.log('UPDATE TRANS --->: ', payloadUpdateTransaction);
+    console.log(payloadUpdate);
     try {
+      setLoading(true);
       const action = await PostData({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'updateTransaction',
-        payload: payloadUpdateTransaction,
+        payload: payloadUpdate,
       });
-      console.log(action.message, 'update Transaction');
+      if (action) {
+        setLoading(false);
+        ToastAndroid.show(action.message, ToastAndroid.SHORT);
+        navigation.goBack();
+      }
     } catch (error) {
       console.log('Error UpdateTrans: ', error);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleSave(params) {
     console.log('==== Handle Save ====');
-    // console.log('combine save: ', params);
-
-    const itemsToAdd = combine.filter(
-      item => item.id === null || item.id === undefined,
-    );
-    const itemsToUpdate = combine.filter(
-      item => item.id !== null || item.id !== undefined,
-    );
-
-    // console.log('item to add: ', itemsToAdd);
-    if (itemsToAdd.length > 0) {
-      await addItems(itemsToAdd);
+    if (cartSlice[transactionId.toString()].length > 0) {
+      console.log('IF cartSLice');
+      // console.log(cartSlice[transactionId.toString()]);
+      await addItems(cartSlice[transactionId.toString()]);
+    } else if (selectedItems.length > 0) {
+      console.log('IF select');
+      await updateItems(selectedItems);
     }
-    if (itemsToUpdate > 0) {
-      await updateItems(itemsToUpdate);
-    }
-
-    await updateTransaction(combine);
-    navigation.goBack();
-    // updateItems(itemsToUpdate);
+    await updateTransaction(allTransaction);
+    // ! ----------------------------------------------------------
   }
 
   function calculateSubtotal(params) {
-    useEffect(() => {
-      const total = combine.reduce(
-        (acc, i) => acc + (i.count * i.price - i.discount),
-        0,
-      );
-      setSubtotal(total);
-    }, [combine]);
-    return subtotal;
+    return params.reduce((sum, item) => sum + item.totalPrice, 0);
+  }
+  function calculateDiscount(params) {
+    return params.reduce((sum, item) => sum + item.disc, 0);
   }
 
   function slideUp(params) {
@@ -300,7 +346,6 @@ const BottomSheet = props => {
 
   useEffect(() => {
     slideUp();
-    // setDisabled(cartItems.length === 0);
     setDisabled({
       ...disabled,
       button: combine.length === undefined ? combine : null,
@@ -318,7 +363,7 @@ const BottomSheet = props => {
               paddingHorizontal: 10,
             }}>
             <Text variant="titleMedium" style={{flex: 1, fontSize: 18}}>
-              {combine ? combine.length : '0'} produk
+              {} produk
             </Text>
             <View style={{flexDirection: 'row', columnGap: 20}}>
               <TouchableOpacity>
@@ -333,10 +378,18 @@ const BottomSheet = props => {
             </View>
           </View>
 
-          {combine.length > 0 ? (
+          {cartSlice[transactionId.toString()].length > 0 ? (
             <FlatList
-              data={combine}
-              keyExtractor={item => (item.id || item.menuid).toString()}
+              //cartSLice = redux
+              // itemsInfo = backend
+              data={
+                mergeCart(itemsInfo, cartSlice).length > 0
+                  ? mergeCart(itemsInfo, cartSlice)
+                  : cartSlice[transactionId.toString()]
+              }
+              keyExtractor={item =>
+                (item.id ? item.id : item.menuid).toString()
+              }
               renderItem={({item}) => {
                 return (
                   <TouchableOpacity
@@ -359,11 +412,11 @@ const BottomSheet = props => {
                           {FormatRP(item.totalprice || item.totalprice)}
                         </Text>
                       </View>
-                      {item.discount ? (
+                      {item.disc ? (
                         <View>
                           <Text style={{color: 'rgba(0,0,0,0.4)'}}>
                             Diskon (-
-                            {FormatRP(item.discount)})
+                            {FormatRP(item.disc)})
                           </Text>
                         </View>
                       ) : null}
@@ -387,7 +440,15 @@ const BottomSheet = props => {
             <Text variant="titleMedium" style={{fontWeight: '700'}}>
               Subtotal
             </Text>
-            <Text variant="titleMedium">{FormatRP(subtotal)}</Text>
+            <Text variant="titleMedium">
+              {/* {FormatRP(
+                calculateSubtotal(
+                  selectedItems > 0
+                    ? combined
+                    : cartSlice[transactionId.toString()],
+                ),
+              )} */}
+            </Text>
           </View>
 
           <View style={{flexDirection: 'row', columnGap: 10}}>
@@ -411,7 +472,13 @@ const BottomSheet = props => {
             <View style={{flex: 1}}>
               <ConstButton
                 disabled={disabled.button}
-                title={`Bayar ${FormatRP(calculateSubtotal(combine))}`}
+                // title={`Bayar ${FormatRP(
+                //   calculateSubtotal(
+                //     selectedItems.length > 0
+                //       ? combined
+                //       : cartSlice[transactionId.toString()],
+                //   ),
+                // )}`}
                 onPress={handlePay}
               />
             </View>

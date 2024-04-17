@@ -27,10 +27,8 @@ const ListTransaction = props => {
               </View>
 
               <View style={{marginHorizontal: 15, flex: 1}}>
-                <TouchableOpacity onPress={handlePress}>
-                  <Text variant="titleMedium" style={{fontSize: 18}}>
-                    {item.name}
-                  </Text>
+                <TouchableOpacity onPress={handlePress} style={{rowGap: 8}}>
+                  <Text variant="titleMedium">{item.name}</Text>
                   <Text
                     variant="labelMedium"
                     style={{color: 'rgba(0,0,0,0.4)'}}>

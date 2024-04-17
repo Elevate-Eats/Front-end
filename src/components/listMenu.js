@@ -22,13 +22,13 @@ const ListMenu = props => {
             <View style={{marginVertical: 10}}>
               <View style={styles.item}>
                 <View style={styles.icon}>
-                  <Text variant="titleLarge" style={{fontWeight: '700'}}>
-                    {initials}
+                  <Text variant="titleMedium" style={{fontWeight: '700'}}>
+                    {initials.substring(0, 2)}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={handlePress}>
                   <View style={{marginHorizontal: 15}}>
-                    <Text variant="titleLarge">{item.name}</Text>
+                    <Text variant="titleMedium">{item.name}</Text>
                     <Text
                       variant="labelLarge"
                       style={{color: 'rgba(0,0,0,0.4)'}}>

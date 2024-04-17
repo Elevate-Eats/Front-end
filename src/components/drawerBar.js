@@ -7,6 +7,7 @@ import {
   DrawerItemList,
 } from '@react-navigation/drawer';
 import {
+  History,
   CompanyAccount,
   DetailTransaksi,
   EditCabang,
@@ -185,6 +186,7 @@ function HomeStackNavigator(params) {
         <Stack.Screen name="Pending" component={PendingTransaction} />
       </Stack.Group>
       <Stack.Screen name="Pembayaran" component={Pembayaran} />
+      <Stack.Screen name="History" component={History} />
     </Stack.Navigator>
   );
 }

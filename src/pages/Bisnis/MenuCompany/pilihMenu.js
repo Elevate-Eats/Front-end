@@ -9,40 +9,17 @@ import {
   LoadingIndicator,
   SearchBox,
 } from '../../../components';
+import Empty from '../../../assets/icons/empty-menu.svg';
 import {Colors} from '../../../utils/colors';
-import {allMenu} from '../../../redux/menuSlice';
-import {useFocusEffect} from '@react-navigation/native';
-import GetData from '../../../utils/getData';
-import {MENU_COMPANY_ENDPOINT} from '@env';
 
 const PilihMenu = ({navigation}) => {
   const dispatch = useDispatch();
+  const menuCompany = useSelector(state => state.menu.allMenu);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      async function fetchData(params) {
-        setLoading(true);
-        try {
-          const action = await GetData({
-            operation: MENU_COMPANY_ENDPOINT,
-            endpoint: 'showMenus',
-            resultKey: 'menuData',
-          });
-          if (Array.isArray(action)) {
-            dispatch(allMenu(action));
-          }
-        } catch (error) {
-        } finally {
-          setLoading(false);
-        }
-      }
-      fetchData();
-    }, [dispatch]),
-  );
-  const menu = Object.values(useSelector(s => s.menu.allMenu)).sort((a, b) => {
+  const menu = Object.values(menuCompany).sort((a, b) => {
     a.name.localeCompare(b.name);
   });
 
@@ -70,7 +47,10 @@ const PilihMenu = ({navigation}) => {
         </View>
         <View style={{flex: 1, marginVertical: 10}}>
           {error ? (
-            <DataError data={error} />
+            <View style={styles.dataError}>
+              <Empty width={200} height={200} />
+              <DataError data={error} />
+            </View>
           ) : (
             <ListMenu
               data={menu}
@@ -103,5 +83,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 10,
+  },
+  dataError: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    rowGap: 20,
   },
 });

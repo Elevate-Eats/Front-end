@@ -11,35 +11,13 @@ import {
 import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
 import {BRANCH_ENDPOINT} from '@env';
+import {useSelector} from 'react-redux';
 
 const PilihCabang = ({navigation}) => {
-  const [branch, setBranch] = useState([]);
+  // const [branch, setBranch] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchData = async () => {
-        setLoading(true);
-        try {
-          const dataBranch = await GetData({
-            operation: BRANCH_ENDPOINT,
-            endpoint: 'showBranches',
-            resultKey: 'branchData',
-          });
-          setBranch(dataBranch);
-        } catch (error) {
-          setError('Branch Not Found !');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchData();
-    }, []),
-  );
-  if (loading) {
-    return <LoadingIndicator />;
-  }
+  const branch = useSelector(state => state.branch.allBranch);
 
   return (
     <KeyboardAvoidingView style={styles.container}>

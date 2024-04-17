@@ -24,6 +24,7 @@ import TambahMenu from './Bisnis/MenuCompany/tambahMenu';
 import MainDashboard from './Dashboard/mainDashboard';
 import PendingTransaction from './Dashboard/Pending/pendingTransaction';
 import Pembayaran from './Dashboard/Pembayaran/pembayaran';
+import History from './Dashboard/History/history';
 // Produk
 import EditProduk from './Dashboard/Produk/editProduk';
 import TambahProduk from './Dashboard/Produk/tambahProduk';
@@ -47,6 +48,7 @@ import RegisterPage from './Register/registerPage';
 import CompanyAccount from './Account/companyAccount';
 
 export {
+  History,
   DetailItemsCart,
   Pembayaran,
   PendingTransaction,

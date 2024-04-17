@@ -110,7 +110,7 @@ const EditCabang = ({route, navigation}) => {
         const action = await PostData({
           operation: BRANCH_ENDPOINT,
           endpoint: 'deleteBranch',
-          payload: {id: data.id},
+          payload: {id: item.id},
         });
         Alert.alert(action.message, `${branch.name} successfully deleted`, [
           {text: 'OK', onPress: () => navigation.goBack()},

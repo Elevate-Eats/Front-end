@@ -4,6 +4,7 @@ import {
   View,
   ScrollView,
   Alert,
+  ToastAndroid,
 } from 'react-native';
 import React, {useState} from 'react';
 import {Colors} from '../../../utils/colors';
@@ -26,9 +27,8 @@ const TambahCabang = ({navigation}) => {
         endpoint: 'addBranch',
         payload: branch,
       });
-      Alert.alert('Branch Added', `${branch.name} successfully added!`, [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      ToastAndroid.show(`${branch.name} successfully added`);
+      navigation.goBack();
     } catch (error) {
       Alert.alert('Failed to Add Branch');
     }

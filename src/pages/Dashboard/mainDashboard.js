@@ -1,55 +1,113 @@
-import {StyleSheet, View, TouchableOpacity, ScrollView} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ToastAndroid,
+} from 'react-native';
 import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {MANAGER_ENDPOINT, BRANCH_ENDPOINT, MENU_COMPANY_ENDPOINT} from '@env';
+import {
+  MANAGER_ENDPOINT,
+  BRANCH_ENDPOINT,
+  MENU_COMPANY_ENDPOINT,
+  EMPLOYEE_ENDPOINT,
+  TRANSACTION_ENDPOINT,
+  MENU_BRANCH_ENDPOINT,
+} from '@env';
 import {
   ItemDashboard,
   TopBar,
   TitleDashboard,
   ConstButton,
   ModalBranch,
+  LoadingIndicator,
 } from '../../components';
 import {useFocusEffect} from '@react-navigation/native';
 import {useSelector, useDispatch} from 'react-redux';
 import GetData from '../../utils/getData';
 import {allBranch} from '../../redux/branchSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {allMenu} from '../../redux/menuSlice';
-import {listColumns} from '../../database/listColumn';
+import {allMenu, allMenuBranch} from '../../redux/menuSlice';
+import {allEmployee} from '../../redux/employee';
+import getDataQuery from '../../utils/getDataQuery';
+import {allTransaction} from '../../redux/showTransaction';
 
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
+  // console.log(selectBranch);
 
   const [modal, setModal] = useState(false);
+  const [loading, setloading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      async function fetchData(params) {
+      const fetchData = async () => {
+        setloading(true);
         try {
-          const branch = await GetData({
-            operation: BRANCH_ENDPOINT,
-            endpoint: 'showBranches',
-            resultKey: 'branchData',
-          });
-          const menuCompany = await GetData({
-            operation: MENU_COMPANY_ENDPOINT,
-            endpoint: 'showMenus',
-            resultKey: 'menuData',
-          });
-          if (Array.isArray(branch) && Array.isArray(menuCompany)) {
-            dispatch(allBranch(branch)); // !save branch to redux
-            dispatch(allMenu(menuCompany)); //! save menu Company to redux
+          const promises = [
+            GetData({
+              operation: BRANCH_ENDPOINT,
+              endpoint: 'showBranches',
+              resultKey: 'branchData',
+            }),
+            GetData({
+              operation: MENU_COMPANY_ENDPOINT,
+              endpoint: 'showMenus',
+              resultKey: 'menuData',
+            }),
+            GetData({
+              operation: EMPLOYEE_ENDPOINT,
+              endpoint: 'showEmployees',
+              resultKey: 'employeeData',
+            }),
+            GetData({
+              operation: MANAGER_ENDPOINT,
+              endpoint: 'showManagers',
+              resultKey: 'managerData',
+            }),
+            getDataQuery({
+              operation: TRANSACTION_ENDPOINT,
+              endpoint: 'showTransactions',
+              resultKey: 'transactionData',
+              query: `branch=${selectBranch ? selectBranch.id : 0}`,
+            }),
+          ];
+          const [branch, menuCompany, dataEmployee, manager, transaction] =
+            await Promise.all(promises);
+
+          if (branch && menuCompany && dataEmployee && manager && transaction) {
+            dispatch(allBranch(branch)); // save branch to redux
+            dispatch(allMenu(menuCompany)); // save menu company to redux
+            dispatch(allEmployee(dataEmployee)); // save employee to redux
+            dispatch(allTransaction(transaction)); // save transaction to redux
           }
         } catch (error) {
-          console.log('Error useFocus');
+          console.log('Error fetching data:', error);
+        } finally {
+          setloading(false);
         }
-      }
+      };
+
       fetchData();
     }, [dispatch]),
   );
+  if (loading) {
+    return <LoadingIndicator message="Please Wait ..." />;
+  }
+  function handlePress(params) {
+    if (!selectBranch) {
+      ToastAndroid.show(
+        'Silakan pilih cabang terlebih dahulu',
+        ToastAndroid.SHORT,
+      );
+    } else {
+      navigation.navigate(params);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -80,7 +138,6 @@ const MainDashboard = ({navigation, route}) => {
             onPress={() => setModal(true)}>
             <Text style={{color: 'white'}} variant="bodyMedium">
               {selectBranch ? selectBranch.name : 'Pilih Cabang'}
-              {/* {branchName ? branchName : 'Pilih Cabang'} */}
             </Text>
           </TouchableOpacity>
           <ModalBranch open={modal} close={() => setModal(false)} />
@@ -94,13 +151,17 @@ const MainDashboard = ({navigation, route}) => {
             <ItemDashboard
               iconName="fast-food"
               name="Menu"
-              onPress={() => navigation.navigate('Pilih Produk')}
+              onPress={() => handlePress('Pilih Produk')}
             />
-            <ItemDashboard iconName="clipboard-outline" name="History" />
+            <ItemDashboard
+              iconName="clipboard-outline"
+              name="History"
+              onPress={() => handlePress('History')}
+            />
             <ItemDashboard
               iconName="hourglass-outline"
               name="On Going"
-              onPress={() => navigation.navigate('Pending')}
+              onPress={() => handlePress('Pending')}
             />
             {/* </ScrollView> */}
           </View>
@@ -122,7 +183,9 @@ const MainDashboard = ({navigation, route}) => {
         <View style={{marginTop: 10}}>
           <ConstButton
             title="Transaksi"
-            onPress={() => navigation.navigate('Transaksi')}
+            onPress={() => {
+              handlePress('Transaksi');
+            }}
           />
         </View>
       </View>
