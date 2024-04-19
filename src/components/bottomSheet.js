@@ -39,10 +39,11 @@ const BottomSheet = props => {
   );
   const ALITEM = useSelector(state => state.allItems.allItems);
   const table = useSelector(state => state.customer.customerInfo);
-  const cartSlice = useSelector(state => state.cart.items); // Redux
+  const cartSlice = useSelector(state => state.cart.items); //! Redux
   const itemsInfo = useSelector(state => state.pcs.itemsInfo); // ! item backend ke redux
   console.log('cartSLice: ', cartSlice);
   console.log('item Info: ', itemsInfo);
+  console.log('ALLITEM: ', ALITEM)
   const [selectedItems, setSelectedItems] = useState([]); // Backend
   const [combined, setCombined] = useState([]);
   const [combine, setCombine] = useState([]);
@@ -79,7 +80,7 @@ const BottomSheet = props => {
   }, [dispatch]);
 
   function mergeCart(backEnd, redux) {
-    const transactionId = Object.keys(backEnd);
+    // const transactionId = Object.keys(backEnd) || Object.keys(redux);
     const combinedData = [
       ...(backEnd[transactionId.toString()] || []),
       ...(redux[transactionId.toString()] || []),
@@ -101,60 +102,12 @@ const BottomSheet = props => {
   }
   const hasilmerge = mergeCart(itemsInfo, cartSlice);
   console.log('hasil :', hasilmerge);
-  // console.log('HASIL MERGE: ', hasilmerge);
-
-  // useEffect(() => {
-  //   const combinedData = combineItems(selectedItems, cartSlice, menuCompany);
-  //   setCombine(combinedData);
-  // }, [cart, allItems, menuCompany]);
-
-  // function combineItems(backendData, localData, menuCompany) {
-  //   const combined = new Map();
-  //   const menuMap = new Map(menuCompany.map(item => [item.id, item.name]));
-
-  //   backendData.forEach(item => {
-  //     const key = `${item.menuid}-${item.transactionId}`;
-  //     combined.set(key, {...item, name: menuMap.get(item.menuid) || item.name});
-  //   });
-
-  //   localData.forEach(item => {
-  //     const key = `${item.menuid}-${item.transactionid}`; // Pastikan key sesuai
-  //     if (combined.has(key)) {
-  //       // Jika sudah ada, kita update dengan data dari local yang mungkin memiliki informasi tambahan
-  //       const existingItem = combined.get(key);
-  //       combined.set(key, {
-  //         ...existingItem,
-  //         ...item,
-  //         name: menuMap.get(item.menuid) || item.name,
-  //       });
-  //     } else {
-  //       // Jika tidak ada, tambahkan sebagai item baru
-  //       combined.set(key, {
-  //         ...item,
-  //         name: menuMap.get(item.menuid) || item.name,
-  //       });
-  //     }
-  //   });
-
-  //   // Ubah map kembali menjadi array
-  //   return Array.from(combined.values());
-  // }
 
   const slide = useRef(new Animated.Value(700)).current;
 
   async function handlePay(params) {
     console.log(menuCompany);
     const payloadUpdate = {};
-
-    // try {
-    //   setLoading(true);
-    //   const token = await AsyncStorage.getItem('userToken');
-    //   const res = await axios.post(`${API_URL}/${ITEM_ENDPOINT}/updateItems`);
-    // } catch (error) {}
-    // console.log('isi cartItems: ', cartItems);
-    // navigation.navigate('Pembayaran', {
-    //   data: combine,
-    // });
   }
 
   async function updateItems(selectedItems) {
@@ -221,25 +174,6 @@ const BottomSheet = props => {
     }
     const result = updateArray(items, payload);
     console.log('result: ', result);
-    // const payloadUpdateItems = params.map(item => ({
-    //   id: item.id,
-    //   count: item.count,
-    //   pricingcategory: item.pricingcategory,
-    //   price: item.price,
-    //   totalPrice: item.totalprice,
-    // }));
-    // console.log('UPDATE ITEMS ---> : ', payloadUpdateItems);
-    // try {
-    //   const action = await PostData({
-    //     operation: ITEM_ENDPOINT,
-    //     endpoint: 'updateItems',
-    //     payload: payloadUpdateItems,
-    //   });
-    //   console.log(action.message);
-    //   ToastAndroid.show(action.message, ToastAndroid.SHORT);
-    // } catch (error) {
-    //   console.log('error Update ITEMS: ', error);
-    // }
   }
 
   async function addItems(params) {
@@ -302,20 +236,23 @@ const BottomSheet = props => {
 
   async function handleSave(params) {
     console.log('==== Handle Save ====');
-    if (cartSlice[transactionId.toString()].length > 0) {
-      console.log('IF cartSLice');
-      // console.log(cartSlice[transactionId.toString()]);
-      await addItems(cartSlice[transactionId.toString()]);
-    } else if (selectedItems.length > 0) {
-      console.log('IF select');
-      await updateItems(selectedItems);
-    }
-    await updateTransaction(allTransaction);
+    console.log('Param: ', params)
+    console.log('cartSlice: ', cartSlice[transactionId.toString()])
+    console.log('itemInfo: ', itemsInfo)
+    // if (cartSlice[transactionId.toString()].length > 0) {
+    //   console.log('IF cartSLice');
+    //   // console.log(cartSlice[transactionId.toString()]);
+    //   await addItems(cartSlice[transactionId.toString()]);
+    // } else if (selectedItems.length > 0) {
+    //   console.log('IF select');
+    //   await updateItems(selectedItems);
+    // }
+    // await updateTransaction(allTransaction);
     // ! ----------------------------------------------------------
   }
 
   function calculateSubtotal(params) {
-    return params.reduce((sum, item) => sum + item.totalPrice, 0);
+    return params.reduce((sum, item) => sum + item.totalprice, 0);
   }
   function calculateDiscount(params) {
     return params.reduce((sum, item) => sum + item.disc, 0);
@@ -352,6 +289,8 @@ const BottomSheet = props => {
     });
   }, [combine]);
 
+  
+
   return (
     <Pressable onPress={closeModal} style={styles.backdrop}>
       <Pressable style={{width: '100%', height: '99.9%'}}>
@@ -363,7 +302,9 @@ const BottomSheet = props => {
               paddingHorizontal: 10,
             }}>
             <Text variant="titleMedium" style={{flex: 1, fontSize: 18}}>
-              {} produk
+              {mergeCart(itemsInfo, cartSlice)[transactionId.toString()] 
+              ? mergeCart(itemsInfo, cartSlice)[transactionId.toString()].length 
+              : 0} produk
             </Text>
             <View style={{flexDirection: 'row', columnGap: 20}}>
               <TouchableOpacity>
@@ -378,21 +319,13 @@ const BottomSheet = props => {
             </View>
           </View>
 
-          {cartSlice[transactionId.toString()].length > 0 ? (
-            <FlatList
-              //cartSLice = redux
-              // itemsInfo = backend
-              data={
-                mergeCart(itemsInfo, cartSlice).length > 0
-                  ? mergeCart(itemsInfo, cartSlice)
-                  : cartSlice[transactionId.toString()]
-              }
-              keyExtractor={item =>
-                (item.id ? item.id : item.menuid).toString()
-              }
-              renderItem={({item}) => {
-                return (
-                  <TouchableOpacity
+          <FlatList 
+          data={mergeCart(itemsInfo, cartSlice)[transactionId.toString()]}
+          keyExtractor={item => (item.id? item.id: item.menuid).toString()}
+          renderItem={({item}) => {
+            return(
+              <ScrollView>
+                <TouchableOpacity
                     onPress={() =>
                       navigation.navigate('Detail Items Cart', {item})
                     }>
@@ -422,15 +355,10 @@ const BottomSheet = props => {
                       ) : null}
                     </View>
                   </TouchableOpacity>
-                );
-              }}
-            />
-          ) : (
-            <View style={styles.noData}>
-              <NoData width={250} height={250} />
-              <Text variant="headlineSmall">No items for this order</Text>
-            </View>
-          )}
+              </ScrollView>
+            )
+          }}
+          />
           <View
             style={{
               flexDirection: 'row',
@@ -438,22 +366,16 @@ const BottomSheet = props => {
               marginVertical: 10,
             }}>
             <Text variant="titleMedium" style={{fontWeight: '700'}}>
-              Subtotal
+              {`Subtotal (${mergeCart(itemsInfo, cartSlice)[transactionId].length})`}
             </Text>
             <Text variant="titleMedium">
-              {/* {FormatRP(
-                calculateSubtotal(
-                  selectedItems > 0
-                    ? combined
-                    : cartSlice[transactionId.toString()],
-                ),
-              )} */}
+              {FormatRP( calculateSubtotal(mergeCart(itemsInfo, cartSlice)[transactionId.toString()]))}
             </Text>
           </View>
 
           <View style={{flexDirection: 'row', columnGap: 10}}>
             <TouchableOpacity
-              onPress={() => handleSave(combine)}
+              onPress={() => handleSave(mergeCart(itemsInfo, cartSlice)[transactionId.toString()])}
               style={
                 disabled.button
                   ? [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
@@ -472,14 +394,10 @@ const BottomSheet = props => {
             <View style={{flex: 1}}>
               <ConstButton
                 disabled={disabled.button}
-                // title={`Bayar ${FormatRP(
-                //   calculateSubtotal(
-                //     selectedItems.length > 0
-                //       ? combined
-                //       : cartSlice[transactionId.toString()],
-                //   ),
-                // )}`}
                 onPress={handlePay}
+                title={
+                  `Bayar = ${FormatRP( calculateSubtotal(mergeCart(itemsInfo, cartSlice)[transactionId.toString()]))}`
+                }
               />
             </View>
           </View>

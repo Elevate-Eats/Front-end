@@ -18,13 +18,12 @@ import {Colors} from '../../../utils/colors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {LoadingIndicator, SearchBox} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
-import {addItem, removeTransaction} from '../../../redux/cartSlice';
-import {deleteTransaction} from '../../../database/deleteTransaction';
 import Receipt from '../../../assets/icons/receipt.svg';
 import {selectBranch} from '../../../redux/branchSlice';
 import transactionSlice from '../../../redux/transactionSlice';
 import {get} from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import {addItemsInfo, addPcsInfo} from '../../../redux/pcsSlice';
+import { deleteTransaction } from '../../../redux/showTransaction';
 
 const PendingTransaction = ({navigation}) => {
   const dispatch = useDispatch();
@@ -39,56 +38,43 @@ const PendingTransaction = ({navigation}) => {
   const filteredTransaction = allTransaction.filter(
     item => item.branchid === branch.id,
   );
-  console.log('filtered:', filteredTransaction);
 
-  filteredTransaction.map(async item => {
-    let transactionId = item.id;
-    console.log('id: ', transactionId);
-    try {
-      const data = await getDataQuery({
-        operation: ITEM_ENDPOINT,
-        endpoint: 'showItems',
-        resultKey: 'itemData',
-        query: `transactionId=${item.id}`,
-      });
-      if (data) {
-        console.log('menuCom: ', menuCompany);
-        function getName(params) {
-          return data.map(item => {
-            const menu = menuCompany.find(menu => menu.id === item.menuid);
-            return menu
-              ? {...item, name: menu.name}
-              : {...item, name: 'Unknown'};
-          });
+
+
+  if (filteredTransaction.length > 0) {
+    console.log('filtered:', filteredTransaction);
+    filteredTransaction.map(async item => {
+      let transactionId = item.id;
+      console.log('id: ', transactionId);
+      try {
+        const data = await getDataQuery({
+          operation: ITEM_ENDPOINT,
+          endpoint: 'showItems',
+          resultKey: 'itemData',
+          query: `transactionId=${item.id}`,
+        });
+        if (data) {
+          function getName(params) {
+            return data.map(item => {
+              const menu = menuCompany.find(menu => menu.id === item.menuid);
+              return menu
+                ? {...item, name: menu.name}
+                : {...item, name: 'Unknown'};
+            });
+          }
+          const newData = getName(data);
+          console.log(`getName ID-${item.id}:`, newData);
+          dispatch(addItemsInfo(newData));
         }
-        const newData = getName(data);
-        console.log('new: ', newData);
-        dispatch(addItemsInfo(newData));
-      }
-    } catch (error) {}
-  });
-  // async function showItems(params) {
-  //   let data;
-  //   console.log('params: ', params);
-  //   try {
-  //     setLoading(true);
-  //     data = await getDataQuery({
-  //       operation: ITEM_ENDPOINT,
-  //       endpoint: 'showItems',
-  //       resultKey: 'itemData',
-  //       query: `transactionId=${params.id}`,
-  //     });
-  //   } catch (error) {
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  //   navigation.navigate('Transaksi', {
-  //     // item: data,
-  //     name: params.customername,
-  //     id: params.id,
-  //   });
-  // }
+      } catch (error) {}
+    });
+  } else {
+    console.log('Filtered none')
+  }
+
+  
   async function handleDelete(params) {
+    console.log('param: ', params)
     try {
       setLoading(true);
       const action = await PostData({
@@ -96,13 +82,14 @@ const PendingTransaction = ({navigation}) => {
         endpoint: 'deleteTransaction',
         payload: {id: params.id},
       });
-      await deleteTransaction(params.id);
+      if (action) {
+        dispatch(deleteTransaction(params.id))
+        ToastAndroid.show(`${action.message}`, ToastAndroid.SHORT);
+      }
     } catch (error) {
     } finally {
       setLoading(false);
     }
-    dispatch(removeTransaction(params.id));
-    ToastAndroid.show(`${action.message}`, ToastAndroid.SHORT);
   }
 
   if (loading) {
@@ -138,7 +125,6 @@ const PendingTransaction = ({navigation}) => {
                       <View style={{marginHorizontal: 15, flex: 1}}>
                         <TouchableOpacity
                           onLongPress={() => {
-                            console.log('long press: ', item.id);
                             Alert.alert('Actions', 'Hapus transaksi? ', [
                               {text: 'Batal'},
                               {

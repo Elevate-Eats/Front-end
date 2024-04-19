@@ -32,18 +32,20 @@ import {
 } from '../../../redux/transactionSlice';
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
-  console.log('prev: ', prevData);
+  // console.log('prev: ', prevData);
   const dispatch = useDispatch();
   const selectBranch = useSelector(s => s.branch.selectedBranch);
   const transactionId = useSelector(s => s.transaction.transactionId);
   const itemsInfo = useSelector(state => state.pcs.itemsInfo); // ! item backend
   const cartSlice = useSelector(state => state.cart.items);
-  console.log('item ifno: ', itemsInfo);
+  console.log('item backend: ', itemsInfo);
+  console.log('item redux: ', cartSlice);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(false);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [menu, setMenu] = useState({});
+  // console.log('trans ID: ', transactionId);
 
   const [customer, setCustomer] = useState({
     name: prevData ? prevData.name : '',
@@ -65,15 +67,9 @@ const MainTransaksi = ({navigation, route}) => {
               resultKey: 'menuData',
               query: `branchid=${selectBranch.id}`,
             }),
-            getDataQuery({
-              operation: ITEM_ENDPOINT,
-              endpoint: 'showItems',
-              resultKey: 'itemData',
-              query: `transactionId=${transactionId}`,
-            }),
           ];
-          const [menuBranch, items] = await Promise.all(promises);
-          if (menuBranch && items) {
+          const [menuBranch] = await Promise.all(promises);
+          if (menuBranch) {
             setMenu(menuBranch);
           }
         } catch (error) {
@@ -111,7 +107,6 @@ const MainTransaksi = ({navigation, route}) => {
       customername: customer.name,
       tableNumber: parseInt(customer.table, 10),
     };
-    console.log(payloadAdd);
     try {
       setLoading(true);
       const data = await PostData({
@@ -120,9 +115,13 @@ const MainTransaksi = ({navigation, route}) => {
         payload: payloadAdd,
       });
       if (data) {
+        console.log('payload Add: ', payloadAdd);
+        console.log('if data: ', data);
+        console.log('id: ', data.id);
+        console.log('customer: ', customer);
         dispatch(setTransactionId(parseInt(data.id, 10)));
         dispatch(setCustomerInfo(customer));
-        dispatch(setTransactionList(payloadAdd));
+        // dispatch(setTransactionList(payloadAdd));
         setPrompt(false);
       }
     } catch (error) {
@@ -234,7 +233,11 @@ const MainTransaksi = ({navigation, route}) => {
         <ConstButton
           onPress={() => setStatus(true)}
           title="Checkout"
-          // disabled={cartSlice[transactionId] ? !disabled : disabled}
+          disabled={
+            cartSlice[transactionId] || itemsInfo[transactionId]
+              ? !disabled
+              : disabled
+          }
         />
       </View>
       {status && (

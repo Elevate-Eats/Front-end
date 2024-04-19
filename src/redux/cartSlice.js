@@ -13,14 +13,13 @@ export const cartSlice = createSlice({
       const {...newItems} = action.payload;
       if (!state.items[transactionId]) {
         state.items[transactionId] = [];
-        // state.allItems[transactionId] = [];
       }
       const index = state.items[transactionId].findIndex(
-        item => item.menuId === newItems.menuId,
+        item => item.menuid === newItems.menuid,
       );
-      if (index >= 0) {
+      if (index > 0) {
         state.items[transactionId][index].count += newItems.count;
-        state.items[transactionId][index].totalPrice += newItems.totalPrice;
+        state.items[transactionId][index].totalprice += newItems.totalprice;
         if (newItems.disc !== undefined) {
           state.items[transactionId][index].disc += newItems.disc;
         }

@@ -1,5 +1,4 @@
 import {
-  Alert,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -23,11 +22,13 @@ import {useSelector} from 'react-redux';
 
 const DetailTransaksi = ({route, navigation}) => {
   const {item} = route.params;
+  // console.log('item: ', item)
   const customer = useSelector(s => s.customer.customerInfo);
   const transactionId = useSelector(s => s.transaction.transactionId);
   const dispatch = useDispatch();
   const showItems = useSelector(state => state.allItems.allItems);
-  console.log('show Items: ', showItems);
+  // console.log('show Items: ', showItems);
+  console.log('transID: ', transactionId)
 
   const [checked, setChecked] = useState({
     price: null,
@@ -40,7 +41,7 @@ const DetailTransaksi = ({route, navigation}) => {
     count: count,
     menuid: item.menuid,
     pricingcategory: '',
-    transactionId: transactionId ? transactionId : 0,
+    transactionId: transactionId,
     price: checked.price,
     totalprice: 0,
     category: item.category,
@@ -60,7 +61,7 @@ const DetailTransaksi = ({route, navigation}) => {
     console.log('====HANDLE CART====');
     console.log('PRODUK: ', product);
     if (product.count <= 0 || product.price === null) {
-      let message = product.count ? 'Pilih harga' : 'Masukkan pesanan';
+      let message = product.count ? 'Pilih harga' : 'Masukkan jumlah pesanan';
       ToastAndroid.show(message, ToastAndroid.SHORT);
     } else {
       dispatch(addItem(product));
