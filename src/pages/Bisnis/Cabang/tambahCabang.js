@@ -12,25 +12,52 @@ import {AddPhoto, ConstButton, FormInput} from '../../../components';
 import {Text} from 'react-native-paper';
 import PostData from '../../../utils/postData';
 import {BRANCH_ENDPOINT} from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useDispatch} from 'react-redux';
+import {addBranch as tambahBranch} from '../../../redux/branchSlice';
 
 const TambahCabang = ({navigation}) => {
+  const dispatch = useDispatch();
   const [branch, setBranch] = useState({
     name: '',
     address: '',
     phone: '',
   });
 
+  async function getManagerId() {
+    try {
+      const managerId = await AsyncStorage.getItem('managerId');
+      if (managerId !== null) {
+        return managerId;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Failed to fetch managerId', error);
+    }
+  }
   async function addBranch(params) {
+    const payload = {
+      ...branch,
+      managerId: parseInt(await getManagerId()),
+    };
+    console.log('payload: ', payload);
     try {
       const action = await PostData({
         operation: BRANCH_ENDPOINT,
         endpoint: 'addBranch',
         payload: branch,
       });
-      ToastAndroid.show(`${branch.name} successfully added`);
-      navigation.goBack();
+      if (action) {
+        dispatch(tambahBranch(branch));
+        ToastAndroid.show(
+          `${branch.name} successfully added`,
+          ToastAndroid.SHORT,
+        );
+        navigation.goBack();
+      }
     } catch (error) {
-      Alert.alert('Failed to Add Branch');
+      ToastAndroid.show('Failed to add branch', ToastAndroid.SHORT);
     }
   }
   return (

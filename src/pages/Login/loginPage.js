@@ -13,8 +13,10 @@ import {BtnLogReg, FormLogReg} from '../../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {API_KEY, API_URL, LOGIN_ENDPOINT} from '@env';
+import {useDispatch} from 'react-redux';
 
 const LoginPage = ({navigation, route}) => {
+  const dispatch = useDispatch();
   const [login, setLogin] = useState({
     email: '',
     password: '',
@@ -29,10 +31,10 @@ const LoginPage = ({navigation, route}) => {
           apikey: API_KEY, // Ensure header keys are correctly expected by your backend
         },
       });
-
       console.log('data: ', action.data.nickname);
       if (action.data && action.data.token) {
         await AsyncStorage.setItem('userToken', action.data.token);
+        await AsyncStorage.setItem('managerId', action.data.id.toString());
         console.log(`${action.data.id} - ${action.data.nickname}`);
         navigation.replace('Bottom Tab', {
           nickname: action.data.nickname,
@@ -46,25 +48,6 @@ const LoginPage = ({navigation, route}) => {
       Alert.alert('Login Error', 'Check your email or password!');
     }
   };
-  // try {
-  //   const action = await axios
-  //     .post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         apikey: API_KEY,
-  //       },
-  //     })
-  //     .then(async res => {
-  //       await AsyncStorage.setItem('userToken', res.data.token);
-  //       // console.log('Token: ', await AsyncStorage.getItem('userToken'));
-  //     });
-  //   console.log('isi action: ', action);
-  //   // navigation.replace('Bottom Tab');
-  // } catch (error) {
-  //   Alert.alert('Email atau Password Salah');
-  // }
-  // console.log(token);
-  // };
 
   return (
     <KeyboardAvoidingView style={styles.KeyboardAvoidingView} enabled={true}>

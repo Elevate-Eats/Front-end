@@ -11,24 +11,47 @@ import {
 } from '../../../components';
 import Empty from '../../../assets/icons/empty-menu.svg';
 import {Colors} from '../../../utils/colors';
+import {useFocusEffect} from '@react-navigation/native';
+import GetData from '../../../utils/getData';
+import {MENU_COMPANY_ENDPOINT} from '@env';
 
 const PilihMenu = ({navigation}) => {
   const dispatch = useDispatch();
-  const menuCompany = useSelector(state => state.menu.allMenu);
+  // const menuCompany = useSelector(state => state.menu.allMenu);
+  const [menuCompany, setMenuCompany] = useState([]);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        try {
+          setLoading(true);
+          const action = await GetData({
+            operation: MENU_COMPANY_ENDPOINT,
+            endpoint: 'showMenus',
+            resultKey: 'menuData',
+          });
+          setMenuCompany(action);
+        } catch (error) {
+        } finally {
+          setLoading(false);
+        }
+      }
+      fetchData();
+    }, []),
+  );
+
+  // useEffect(() => {
+  //   if (!menuCompany) {
+  //     setError('Menu not Found');
+  //   }
+  // });
+
   const menu = Object.values(menuCompany).sort((a, b) => {
     a.name.localeCompare(b.name);
   });
-
-  useEffect(() => {
-    if (!menu.length) {
-      setError('Menu not Found');
-    }
-  });
-
   if (loading) {
     return <LoadingIndicator />;
   }

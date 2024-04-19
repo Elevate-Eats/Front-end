@@ -28,10 +28,14 @@ const TambahProduk = ({navigation}) => {
   const [menu, setMenu] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // console.log('sort Menu: ', sortMenu);
+
   const listMenu = Object.values(menuCompany).map(item => ({
     value: item.id,
     label: item.name,
   }));
+  const sortMenu = listMenu.sort((a, b) => a.label.localeCompare(b.label));
+
   const kategori = [
     {key: 'foods', value: 'Makanan'},
     {key: 'drinks', value: 'Minuman'},
@@ -119,7 +123,7 @@ const TambahProduk = ({navigation}) => {
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={styles.selectedTextStyle}
                 inputSearchStyle={styles.inputSearchStyle}
-                data={listMenu}
+                data={sortMenu}
                 search
                 maxHeight={300}
                 labelField="label"

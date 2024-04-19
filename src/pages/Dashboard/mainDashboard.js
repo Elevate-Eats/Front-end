@@ -38,7 +38,6 @@ import {allTransaction} from '../../redux/showTransaction';
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
-  // console.log(selectBranch);
 
   const [modal, setModal] = useState(false);
   const [loading, setloading] = useState(false);

@@ -1,5 +1,5 @@
 import {StyleSheet, View, KeyboardAvoidingView} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {
   BtnAdd,
@@ -14,10 +14,29 @@ import {BRANCH_ENDPOINT} from '@env';
 import {useSelector} from 'react-redux';
 
 const PilihCabang = ({navigation}) => {
-  // const [branch, setBranch] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const branch = useSelector(state => state.branch.allBranch);
+  const [branch, setBranch] = useState([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        setLoading(true);
+        try {
+          const action = await GetData({
+            operation: BRANCH_ENDPOINT,
+            endpoint: 'showBranches',
+            resultKey: 'branchData',
+          });
+          setBranch(action);
+        } catch (error) {
+        } finally {
+          setLoading(false);
+        }
+      }
+      fetchData();
+    }, []),
+  );
 
   return (
     <KeyboardAvoidingView style={styles.container}>

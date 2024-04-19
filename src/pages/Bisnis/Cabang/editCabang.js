@@ -5,6 +5,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  ToastAndroid,
 } from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {Colors} from '../../../utils/colors';
@@ -21,17 +22,20 @@ import {Text} from 'react-native-paper';
 import PostData from '../../../utils/postData';
 import GetData from '../../../utils/getData';
 import {useFocusEffect} from '@react-navigation/native';
+import {useDispatch} from 'react-redux';
+import {deleteBranch as delBranch} from '../../../redux/branchSlice';
 
 import {BRANCH_ENDPOINT, EMPLOYEE_ENDPOINT} from '@env';
 
 const EditCabang = ({route, navigation}) => {
+  const dispatch = useDispatch();
   const {item} = route.params; // prev page
+  console.log('item edit cbang: ', item);
   const [branch, setBranch] = useState({}); // dari database
   const [modal, setModal] = useState(false); // open Modal content
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [employee, setEmployee] = useState({}); // dari database
-  const [selectID, setSelectID] = useState([]); // dari recive key Modal Content
   const [selectedEmp, setSelectedEmp] = useState([]);
 
   useFocusEffect(
@@ -52,9 +56,9 @@ const EditCabang = ({route, navigation}) => {
             resultKey: 'employeeData',
           });
           setEmployee(dataEmployee);
-          setSelectedEmp(
-            Object.values(dataEmployee).filter(emp => emp.branchid === item.id),
-          );
+          // setSelectedEmp(
+          //   Object.values(dataEmployee).filter(emp => emp.branchid === item.id),
+          // );
         } catch (error) {
           setError('Data Not Found !');
           console.log('Error');
@@ -107,16 +111,25 @@ const EditCabang = ({route, navigation}) => {
   async function deleteBranch() {
     async function handleDelete() {
       try {
+        setLoading(true);
         const action = await PostData({
           operation: BRANCH_ENDPOINT,
           endpoint: 'deleteBranch',
           payload: {id: item.id},
         });
-        Alert.alert(action.message, `${branch.name} successfully deleted`, [
-          {text: 'OK', onPress: () => navigation.goBack()},
-        ]);
-      } catch (error) {}
+        if (action) {
+          dispatch(delBranch(item.id));
+          ToastAndroid.show(
+            `${branch.name} successfully deleted`,
+            ToastAndroid.SHORT,
+          );
+          navigation.goBack();
+        }
+      } catch (error) {
+        ToastAndroid.show('Failed to Delete', ToastAndroid.SHORT);
+      }
     }
+    // !-------------------------
     Alert.alert(
       'Branch Deleted',
       `Delete ${branch.name} ?`,
@@ -136,6 +149,9 @@ const EditCabang = ({route, navigation}) => {
     setSelectedEmp(delEmp);
   }
 
+  if (loading) {
+    return <LoadingIndicator />;
+  }
   return (
     <KeyboardAvoidingView enabled style={styles.container}>
       <View style={styles.whiteLayer}>

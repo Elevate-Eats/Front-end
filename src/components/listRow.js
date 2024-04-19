@@ -3,6 +3,7 @@ import {Text} from 'react-native-paper';
 import React from 'react';
 
 const ListRow = props => {
+  console.log('prop listrow :', props.data);
   return (
     <View>
       <FlatList

@@ -1,5 +1,4 @@
 import {
-  Alert,
   Modal,
   SafeAreaView,
   StyleSheet,
@@ -31,7 +30,6 @@ import {
   setTransactionId,
   setTransactionList,
 } from '../../../redux/transactionSlice';
-
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
   console.log('prev: ', prevData);
@@ -86,28 +84,6 @@ const MainTransaksi = ({navigation, route}) => {
       fetchData();
     }, [dispatch]),
   );
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     async function fetchData(params) {
-  //       setLoading(true);
-  //       try {
-  //         const data = await getDataQuery({
-  //           operation: MENU_BRANCH_ENDPOINT,
-  //           endpoint: 'showMenus',
-  //           resultKey: 'menuData',
-  //           query: `branchid=${selectBranch.id}`,
-  //         });
-  //         setMenu(data);
-  //       } catch (error) {
-  //         setError('Menu Not Found !');
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     }
-  //     fetchData(transactionId);
-  //   }, []),
-  // );
 
   useEffect(() => {
     if (customer.name && customer.table) {

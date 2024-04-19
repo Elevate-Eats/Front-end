@@ -5,7 +5,6 @@ export const branchSlice = createSlice({
   initialState: {
     selectedBranch: null,
     allBranch: [],
-    manyBranch: [],
   },
 
   reducers: {
@@ -15,11 +14,17 @@ export const branchSlice = createSlice({
     allBranch: (state, action) => {
       state.allBranch = action.payload;
     },
-    manyBranch: (state, action) => {
-      state.manyBranch = action.payload;
+    addBranch: (state, action) => {
+      state.allBranch.push(action.payload);
+    },
+    deleteBranch: (state, action) => {
+      state.allBranch = state.allBranch.filter(
+        branch => branch.id !== action.payload,
+      );
     },
   },
 });
 
-export const {selectBranch, allBranch, manyBranch} = branchSlice.actions;
+export const {selectBranch, allBranch, deleteBranch, addBranch} =
+  branchSlice.actions;
 export default branchSlice.reducer;
