@@ -11,10 +11,16 @@ export const showTransactionSlice = createSlice({
       state.allTransaction = action.payload;
     },
     deleteTransaction: (state, action) => {
-      state.allTransaction = state.allTransaction.filter(trasaction => trasaction.id !== action.payload)
-    }
+      state.allTransaction = state.allTransaction.filter(
+        trasaction => trasaction.id !== action.payload,
+      );
+    },
+    addTransaction: (state, action) => {
+      state.allTransaction.push(action.payload);
+    },
   },
 });
 
-export const {allTransaction, deleteTransaction} = showTransactionSlice.actions;
+export const {allTransaction, deleteTransaction, addTransaction} =
+  showTransactionSlice.actions;
 export default showTransactionSlice.reducer;

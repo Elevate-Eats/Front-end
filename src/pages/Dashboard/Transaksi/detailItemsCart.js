@@ -17,16 +17,16 @@ import {useSelector, useDispatch} from 'react-redux';
 import FormatRP from '../../../utils/formatRP';
 import {ConstButton, LoadingIndicator} from '../../../components';
 import {addItem, updateItem} from '../../../redux/cartSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {addItems} from '../../../database/addItems';
 
 const DetailItemsCart = ({navigation, route}) => {
+  const dispatch = useDispatch();
   const {item} = route.params;
-  console.log('items: ', item);
+  console.log('data from bottom: ', item);
   const branch = useSelector(state => state.branch.selectedBranch);
   const transactionId = useSelector(state => state.transaction.transactionId);
   const [loading, setLoading] = useState(false);
   const [menu, setMenu] = useState({});
+  const a = useSelector(state => state.cart.items);
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
@@ -34,13 +34,12 @@ const DetailItemsCart = ({navigation, route}) => {
   const [count, setCount] = useState(item.count);
   const [product, setProduct] = useState({
     disc: checked.disc,
-    id: item.id,
     count: count,
     menuId: item.menuid,
     pricingCategory: item.pricingcategory,
     transactionId: transactionId,
     price: checked.price,
-    totalPrice: item.totalprice,
+    totalPrice: 0,
     category: item.category,
     name: item.name,
   });
@@ -80,12 +79,13 @@ const DetailItemsCart = ({navigation, route}) => {
   );
 
   useEffect(() => {
-    const totalPrice = product.price * product.count - product.disc;
+    const total = product.price * count;
+    // console.log('total Price use: ', total);
     setProduct(e => ({
       ...e,
-      totalPrice: totalPrice,
+      totalPrice: total,
     }));
-  }, [product.price, product.count, product.disc]);
+  }, [product.price, count]);
 
   useEffect(() => {
     setChecked({
@@ -100,35 +100,25 @@ const DetailItemsCart = ({navigation, route}) => {
   }, [menu, item]);
 
   async function handlePress(params) {
-    // console.log('Produk: ', product);
-    const dbPayload = {
-      id: null,
-      disc: product.disc,
+    console.log('cartItems: ', a);
+    // console.log('product: ', product);
+    // console.log('product: ', item);
+    const payload = {
+      ...item,
       count: product.count,
-      menuid: product.menuId,
-      pricingcategory: product.pricingCategory,
-      transactionid: product.transactionId,
       price: product.price,
-      category: product.category,
-      totalprice: product.count * product.price,
-      name: product.name,
+      pricingcategory: product.pricingCategory,
+      totalprice: product.totalPrice,
+      disc: product.disc,
     };
-    console.log('db payload: ', dbPayload);
-    addItems(dbPayload)
-      .then(() => {
-        ToastAndroid.show(
-          `${product.name} successfully updated `,
-          ToastAndroid.SHORT,
-        );
-        navigation.goBack();
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    console.log('payload: ', payload);
+    // dispatch(updateItem(payload));
+    // ToastAndroid.show(`Updated ${item.name}`, ToastAndroid.SHORT);
+    // navigation.goBack();
   }
 
   if (loading) {
-    return <LoadingIndicator />;
+    return <LoadingIndicator message="please wait ..." />;
   }
 
   return (
@@ -282,9 +272,9 @@ const DetailItemsCart = ({navigation, route}) => {
           <View style={styles.separator} />
         </ScrollView>
         <View style={{rowGap: 20}}>
-          <Text>{`${FormatRP(product.price)} X ${product.count} = ${FormatRP(
+          {/* <Text>{`${FormatRP(product.price)} X ${product.count} = ${FormatRP(
             product.totalPrice,
-          )}`}</Text>
+          )}`}</Text> */}
           <ConstButton title="Simpan" onPress={() => handlePress()} />
         </View>
       </View>

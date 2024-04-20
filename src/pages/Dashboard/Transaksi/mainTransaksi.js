@@ -30,9 +30,10 @@ import {
   setTransactionId,
   setTransactionList,
 } from '../../../redux/transactionSlice';
+import {addTransaction as addTrans} from '../../../redux/showTransaction';
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
-  // console.log('prev: ', prevData);
+  console.log('prev: ', prevData);
   const dispatch = useDispatch();
   const selectBranch = useSelector(s => s.branch.selectedBranch);
   const transactionId = useSelector(s => s.transaction.transactionId);
@@ -115,13 +116,8 @@ const MainTransaksi = ({navigation, route}) => {
         payload: payloadAdd,
       });
       if (data) {
-        console.log('payload Add: ', payloadAdd);
-        console.log('if data: ', data);
-        console.log('id: ', data.id);
-        console.log('customer: ', customer);
         dispatch(setTransactionId(parseInt(data.id, 10)));
         dispatch(setCustomerInfo(customer));
-        // dispatch(setTransactionList(payloadAdd));
         setPrompt(false);
       }
     } catch (error) {

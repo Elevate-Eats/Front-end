@@ -12,29 +12,27 @@ import {Colors} from '../../../utils/colors';
 
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {ITEM_ENDPOINT} from '@env';
+import {ITEM_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
 import {ConstButton} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
 import {useDispatch} from 'react-redux';
-import cartSlice, {addItem, saveItem} from '../../../redux/cartSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {addItem} from '../../../redux/cartSlice';
+import {addTransaction} from '../../../redux/showTransaction';
 import {useSelector} from 'react-redux';
+import {useFocusEffect} from '@react-navigation/native';
+import getDataQuery from '../../../utils/getDataQuery';
 
 const DetailTransaksi = ({route, navigation}) => {
   const {item} = route.params;
   // console.log('item: ', item)
-  const customer = useSelector(s => s.customer.customerInfo);
   const transactionId = useSelector(s => s.transaction.transactionId);
   const dispatch = useDispatch();
-  const showItems = useSelector(state => state.allItems.allItems);
-  // console.log('show Items: ', showItems);
-  console.log('transID: ', transactionId)
-
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
   });
 
+  const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(0);
   const [product, setProduct] = useState({
     // *req payload addItems
@@ -48,7 +46,6 @@ const DetailTransaksi = ({route, navigation}) => {
     name: item.name,
     disc: 0,
   });
-
   useEffect(() => {
     const totalprice = product.price * product.count - product.disc;
     setProduct(e => ({

@@ -72,7 +72,7 @@ const MainDashboard = ({navigation, route}) => {
               operation: TRANSACTION_ENDPOINT,
               endpoint: 'showTransactions',
               resultKey: 'transactionData',
-              query: `branch=${selectBranch ? selectBranch.id : 0}`,
+              query: `branch=0`,
             }),
           ];
           const [branch, menuCompany, dataEmployee, manager, transaction] =

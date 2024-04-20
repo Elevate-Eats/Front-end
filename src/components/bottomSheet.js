@@ -28,71 +28,58 @@ import {useDispatch} from 'react-redux';
 import getDataQuery from '../utils/getDataQuery';
 import {allItems as allitem} from '../redux/allItems';
 import {red} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
+import ItemDashboard from './itemDashboard';
 
 const BottomSheet = props => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const menuCompany = useSelector(s => s.menu.allMenu);
   const transactionId = useSelector(state => state.transaction.transactionId); // Directly from state
+  const selectedBranch = useSelector(state => state.branch.selectedBranch);
   const allTransaction = useSelector(
     state => state.showTransaction.allTransaction,
   );
-  const ALITEM = useSelector(state => state.allItems.allItems);
   const table = useSelector(state => state.customer.customerInfo);
   const cartSlice = useSelector(state => state.cart.items); //! Redux
   const itemsInfo = useSelector(state => state.pcs.itemsInfo); // ! item backend ke redux
-  console.log('cartSLice: ', cartSlice);
-  console.log('item Info: ', itemsInfo);
-  console.log('ALLITEM: ', ALITEM)
   const [selectedItems, setSelectedItems] = useState([]); // Backend
-  const [combined, setCombined] = useState([]);
-  const [combine, setCombine] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [disabled, setDisabled] = useState({
-    button: true,
-    disc: true,
-  });
+  const [selectedTransaction, setSelectedTransaction] = useState([]);
 
   // console.log('all Trans: ', allTransaction);
   const filtered = allTransaction.filter(item => item.id === transactionId);
+  //   function mergeCart(backend, redux){
+  //     const transactionId = 45
+  //     const combinedData = [
+  //         ...(backend[transactionId.toString()] || []),
+  //         ...(redux[transactionId.toString()] || [])]
 
-  useEffect(() => {
-    let data;
-    async function fetchData(params) {
-      if (transactionId) {
-        setLoading(true);
-        try {
-          data = await getDataQuery({
-            operation: ITEM_ENDPOINT,
-            endpoint: 'showItems',
-            resultKey: 'itemsData',
-            query: `transactionId=${transactionId}`,
-          });
-          dispatch(allitem(data.itemData));
-          setSelectedItems(data.itemData);
-        } catch (error) {
-        } finally {
-          setLoading(false);
-        }
-      }
-    }
-    fetchData();
-  }, [dispatch]);
+  //     const mergeResult = combinedData.reduce((sum, item) =>{
+  //         const existing = sum.find()
+  //     })
+  //     return mergeResult
+  // }
+  // const backend = {"45": [{"category": "Makanan", "count": 2, "id": 24, "menuid": 9, "name": "Sate Khas Tegal Polos (tanpa lemak)", "price": 70000, "pricingcategory": "base", "totalprice": 140000, "transactionId": 45}, {"category": "Makanan", "count": 3, "id": 25, "menuid": 13, "name": "Sate Klathak Polos (tanpa lemak)", "price": 70000, "pricingcategory": "base", "totalprice": 190000, "transactionId": 45}]}
+
+  // const redux = {"45": [{"category": "Minuman", "count": 3, "disc": 0, "menuid": 4, "name": "Es Teh Manis", "price": 5000, "pricingcategory": "base", "totalprice": 15000, "transactionId": 45}]}
+
+  // const hasil = mergeCart(backend, redux)
+  // console.log('hasil: ', hasil)
 
   function mergeCart(backEnd, redux) {
-    // const transactionId = Object.keys(backEnd) || Object.keys(redux);
     const combinedData = [
       ...(backEnd[transactionId.toString()] || []),
       ...(redux[transactionId.toString()] || []),
     ];
 
     const mergeResult = combinedData.reduce((sum, item) => {
-      const existingItem = sum.find(
-        i => i.menuid === item.menuid || i.menuId === item.menuId,
+      const existing = sum.find(
+        i => i.menuid === item.menuid || i.menuId === item.menuid,
       );
-      if (existingItem) {
-        existingItem.count += item.count;
-        existingItem.totalprice += item.totalprice;
+
+      if (existing) {
+        (existing.count += item.count),
+          (existing.totalprice += item.totalprice);
       } else {
         sum.push({...item});
       }
@@ -110,87 +97,55 @@ const BottomSheet = props => {
     const payloadUpdate = {};
   }
 
-  async function updateItems(selectedItems) {
-    // console.log('params: ', params);
-    const items = [
-      {
-        id: 1,
-        count: 3,
-        price: 5000,
-        totalprice: 15000,
-        menuid: 3,
-        transactionId: 4,
-        category: 'Makanan',
-        pricingcategory: 'base',
-      },
-      {
-        id: 2,
-        count: 2,
-        price: 5000,
-        totalprice: 10000,
-        menuid: 4,
-        transactionId: 4,
-        category: 'Makanan',
-        pricingcategory: 'base',
-      },
-    ];
+  async function updateItems(params) {
+    console.log('params Update: ', params);
+    const payload = params.map(
+      ({category, disc, menuid, name, transactionId, ...rest}) => rest,
+    );
+    // console.log('payload: ', payload);
 
-    const payload = [
-      {
-        id: 2,
-        count: 6,
-        price: 5000,
-        totalprice: 30000,
-        menuid: 4,
-        transactionId: 4,
-        category: 'Menu Utama',
-        pricingcategory: 'base',
-      },
-      {
-        id: 1,
-        count: 3,
-        price: 5000,
-        totalprice: 15000,
-        menuid: 3,
-        transactionId: 4,
-        category: 'Menu Utama',
-        pricingcategory: 'base',
-      },
-    ];
-    // console.log(items);
-    function updateArray(backEnd, payload) {
-      const itemMap = new Map(backEnd.map(item => [item.id, item]));
-
-      payload.forEach(update => {
-        const item = itemMap.get(update.id);
-        if (item) {
-          itemMap.set(update.id, {...item, ...update});
-        } else {
-          itemMap.set(update.id, update);
-        }
+    try {
+      setLoading(true);
+      const action = await PostData({
+        operation: ITEM_ENDPOINT,
+        endpoint: 'updateItems',
+        payload: payload,
       });
-
-      return Array.from(itemMap.values());
+      if (action) {
+        setLoading(false);
+        ToastAndroid.show(action.message, ToastAndroid.SHORT);
+      }
+    } catch (error) {
+      console.log('Error Updating Items: ', error);
+    } finally {
+      setLoading(false);
     }
-    const result = updateArray(items, payload);
-    console.log('result: ', result);
   }
 
   async function addItems(params) {
-    // console.log('ADDITEMS: --->: ', params);
-    const payloadAdd = params.map(({id, name, disc, ...rest}) => rest);
-    console.log('ADDITEMS2: -->: ', payloadAdd);
+    console.log('params Additem: --->: ', params);
+
+    const payload = params
+      .map(item => ({
+        ...item,
+        menuId: item.menuid,
+        totalPrice: item.totalprice - item.disc,
+        pricingCategory: item.pricingcategory,
+      }))
+      .map(
+        ({name, disc, menuid, totalprice, pricingcategory, ...rest}) => rest,
+      );
+    // console.log('payload: ', payload);
     try {
       setLoading(true);
       const action = await PostData({
         operation: ITEM_ENDPOINT,
         endpoint: 'addItems',
-        payload: payloadAdd,
+        payload: payload,
       });
       if (action) {
         setLoading(false);
         ToastAndroid.show(action.message, ToastAndroid.SHORT);
-        navigation.goBack();
       }
     } catch (error) {
       console.log('Error add Items" ', error);
@@ -198,34 +153,29 @@ const BottomSheet = props => {
       setLoading(false);
     }
   }
-  async function updateTransaction(transaction) {
-    const filtered = transaction.filter(item => item.id === transactionId);
-    const payloadUpdate = {
+  async function updateTransaction(params) {
+    console.log('params updateTrans:', params);
+    const filtered = selectedTransaction.filter(
+      item => item.id === transactionId,
+    );
+    // console.log('filtered: ', filtered);
+    const payload = {
       ...filtered[0],
-      discount: calculateDiscount(
-        selectedItems.length > 0
-          ? combined
-          : cartSlice[transactionId.toString()],
-      ),
-      totalprice: calculateSubtotal(
-        selectedItems.length > 0
-          ? combined
-          : cartSlice[transactionId.toString()],
-      ),
-      tableNumber: table.table,
+      tableNumber: table === undefined ? table.table : 0,
+      totalprice: calculateSubtotal(params) - calculateDiscount(params),
+      discount: calculateDiscount(params),
     };
-    console.log(payloadUpdate);
+    // console.log('payload: ', payload);
     try {
       setLoading(true);
       const action = await PostData({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'updateTransaction',
-        payload: payloadUpdate,
+        payload: payload,
       });
       if (action) {
         setLoading(false);
-        ToastAndroid.show(action.message, ToastAndroid.SHORT);
-        navigation.goBack();
+        // ToastAndroid.show(action.message, ToastAndroid.SHORT);
       }
     } catch (error) {
       console.log('Error UpdateTrans: ', error);
@@ -235,19 +185,39 @@ const BottomSheet = props => {
   }
 
   async function handleSave(params) {
-    console.log('==== Handle Save ====');
-    console.log('Param: ', params)
-    console.log('cartSlice: ', cartSlice[transactionId.toString()])
-    console.log('itemInfo: ', itemsInfo)
-    // if (cartSlice[transactionId.toString()].length > 0) {
-    //   console.log('IF cartSLice');
-    //   // console.log(cartSlice[transactionId.toString()]);
-    //   await addItems(cartSlice[transactionId.toString()]);
-    // } else if (selectedItems.length > 0) {
-    //   console.log('IF select');
-    //   await updateItems(selectedItems);
-    // }
-    // await updateTransaction(allTransaction);
+    const withId = mergeCart(itemsInfo, cartSlice)[
+      transactionId.toString()
+    ].filter(item => item.hasOwnProperty('id'));
+
+    const withoutId = mergeCart(itemsInfo, cartSlice)[
+      transactionId.toString()
+    ].filter(item => !item.hasOwnProperty('id'));
+
+    try {
+      setLoading(true);
+      if (withoutId.length > 0) {
+        console.log('==IF AddItems==');
+        await addItems(withoutId);
+      }
+
+      if (withId.length > 0) {
+        console.log('==IF UpdateItems==');
+        await updateItems(withId);
+      }
+
+      if (withId.length > 0 || withoutId.length > 0) {
+        console.log('==IF UpdateTrans==');
+        await updateTransaction(
+          mergeCart(itemsInfo, cartSlice)[transactionId.toString()],
+        );
+      }
+      ToastAndroid.show('Items saved successfully', ToastAndroid.SHORT);
+      navigation.goBack();
+    } catch (error) {
+      console.log('Error save', error);
+      ToastAndroid.show('Items failed to save', ToastAndroid.SHORT);
+    }
+
     // ! ----------------------------------------------------------
   }
 
@@ -283,13 +253,20 @@ const BottomSheet = props => {
 
   useEffect(() => {
     slideUp();
-    setDisabled({
-      ...disabled,
-      button: combine.length === undefined ? combine : null,
-    });
-  }, [combine]);
-
-  
+    async function fetchData(params) {
+      try {
+        const action = await getDataQuery({
+          operation: TRANSACTION_ENDPOINT,
+          endpoint: 'showTransactions',
+          resultKey: 'transactionData',
+          query: `branch=${selectedBranch.id}`,
+        });
+        // console.log('action: ', action);
+        setSelectedTransaction(action);
+      } catch (error) {}
+    }
+    fetchData();
+  }, []);
 
   return (
     <Pressable onPress={closeModal} style={styles.backdrop}>
@@ -302,9 +279,11 @@ const BottomSheet = props => {
               paddingHorizontal: 10,
             }}>
             <Text variant="titleMedium" style={{flex: 1, fontSize: 18}}>
-              {mergeCart(itemsInfo, cartSlice)[transactionId.toString()] 
-              ? mergeCart(itemsInfo, cartSlice)[transactionId.toString()].length 
-              : 0} produk
+              {mergeCart(itemsInfo, cartSlice)[transactionId.toString()]
+                ? mergeCart(itemsInfo, cartSlice)[transactionId.toString()]
+                    .length
+                : 0}{' '}
+              produk
             </Text>
             <View style={{flexDirection: 'row', columnGap: 20}}>
               <TouchableOpacity>
@@ -319,13 +298,13 @@ const BottomSheet = props => {
             </View>
           </View>
 
-          <FlatList 
-          data={mergeCart(itemsInfo, cartSlice)[transactionId.toString()]}
-          keyExtractor={item => (item.id? item.id: item.menuid).toString()}
-          renderItem={({item}) => {
-            return(
-              <ScrollView>
-                <TouchableOpacity
+          <FlatList
+            data={mergeCart(itemsInfo, cartSlice)[transactionId.toString()]}
+            keyExtractor={item => (item.id ? item.id : item.menuid).toString()}
+            renderItem={({item}) => {
+              return (
+                <ScrollView>
+                  <TouchableOpacity
                     onPress={() =>
                       navigation.navigate('Detail Items Cart', {item})
                     }>
@@ -342,22 +321,29 @@ const BottomSheet = props => {
                           {FormatRP(item.price)} x {item.count}
                         </Text>
                         <Text style={{fontWeight: '700', fontSize: 18}}>
-                          {FormatRP(item.totalprice || item.totalprice)}
+                          {FormatRP(item.totalprice)}
                         </Text>
                       </View>
-                      {item.disc ? (
+                      {
                         <View>
-                          <Text style={{color: 'rgba(0,0,0,0.4)'}}>
-                            Diskon (-
-                            {FormatRP(item.disc)})
-                          </Text>
+                          {item.hasOwnProperty('disc') ? (
+                            <Text>Diskon (- {FormatRP(item.disc)})</Text>
+                          ) : (
+                            <Text>
+                              Diskon(-
+                              {FormatRP(
+                                item.totalprice - item.price * item.count,
+                              )}
+                              )
+                            </Text>
+                          )}
                         </View>
-                      ) : null}
+                      }
                     </View>
                   </TouchableOpacity>
-              </ScrollView>
-            )
-          }}
+                </ScrollView>
+              );
+            }}
           />
           <View
             style={{
@@ -369,35 +355,41 @@ const BottomSheet = props => {
               {`Subtotal (${mergeCart(itemsInfo, cartSlice)[transactionId].length})`}
             </Text>
             <Text variant="titleMedium">
-              {FormatRP( calculateSubtotal(mergeCart(itemsInfo, cartSlice)[transactionId.toString()]))}
+              {FormatRP(
+                calculateSubtotal(
+                  mergeCart(itemsInfo, cartSlice)[transactionId.toString()],
+                ),
+              )}
             </Text>
           </View>
 
           <View style={{flexDirection: 'row', columnGap: 10}}>
             <TouchableOpacity
-              onPress={() => handleSave(mergeCart(itemsInfo, cartSlice)[transactionId.toString()])}
+              onPress={() => handleSave(mergeCart(itemsInfo, cartSlice))}
               style={
-                disabled.button
-                  ? [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
-                  : [styles.simpan, {borderColor: Colors.btnColor}]
+                mergeCart(itemsInfo, cartSlice)
+                  ? [styles.simpan, {borderColor: Colors.btnColor}]
+                  : [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
               }
-              disabled={disabled.button}>
+              disabled={mergeCart(itemsInfo, cartSlice) ? false : true}>
               <Text
                 style={
-                  disabled.button
-                    ? [styles.texSimpan, {color: 'rgba(0,0,0,0.4)'}]
-                    : [styles.texSimpan, {color: Colors.btnColor}]
+                  mergeCart(itemsInfo, cartSlice)
+                    ? [styles.texSimpan, {color: Colors.btnColor}]
+                    : [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
                 }>
                 Simpan
               </Text>
             </TouchableOpacity>
             <View style={{flex: 1}}>
               <ConstButton
-                disabled={disabled.button}
+                disabled={mergeCart(itemsInfo, cartSlice) ? false : true}
                 onPress={handlePay}
-                title={
-                  `Bayar = ${FormatRP( calculateSubtotal(mergeCart(itemsInfo, cartSlice)[transactionId.toString()]))}`
-                }
+                title={`Bayar = ${FormatRP(
+                  calculateSubtotal(
+                    mergeCart(itemsInfo, cartSlice)[transactionId.toString()],
+                  ),
+                )}`}
               />
             </View>
           </View>
