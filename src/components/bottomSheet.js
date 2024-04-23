@@ -29,6 +29,7 @@ import getDataQuery from '../utils/getDataQuery';
 import {allItems as allitem} from '../redux/allItems';
 import {red} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 import ItemDashboard from './itemDashboard';
+import {clearReduxItems} from '../redux/cartSlice';
 
 const BottomSheet = props => {
   const navigation = useNavigation();
@@ -40,32 +41,13 @@ const BottomSheet = props => {
     state => state.showTransaction.allTransaction,
   );
   const table = useSelector(state => state.customer.customerInfo);
-  const cartSlice = useSelector(state => state.cart.items); //! Redux
-  const itemsInfo = useSelector(state => state.pcs.itemsInfo); // ! item backend ke redux
-  const [selectedItems, setSelectedItems] = useState([]); // Backend
+  const reduxItems = useSelector(state => state.cart.reduxItems); //! Redux
+  const backendItems = useSelector(state => state.cart.backendItems); // !Backend
   const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState([]);
 
   // console.log('all Trans: ', allTransaction);
   const filtered = allTransaction.filter(item => item.id === transactionId);
-  //   function mergeCart(backend, redux){
-  //     const transactionId = 45
-  //     const combinedData = [
-  //         ...(backend[transactionId.toString()] || []),
-  //         ...(redux[transactionId.toString()] || [])]
-
-  //     const mergeResult = combinedData.reduce((sum, item) =>{
-  //         const existing = sum.find()
-  //     })
-  //     return mergeResult
-  // }
-  // const backend = {"45": [{"category": "Makanan", "count": 2, "id": 24, "menuid": 9, "name": "Sate Khas Tegal Polos (tanpa lemak)", "price": 70000, "pricingcategory": "base", "totalprice": 140000, "transactionId": 45}, {"category": "Makanan", "count": 3, "id": 25, "menuid": 13, "name": "Sate Klathak Polos (tanpa lemak)", "price": 70000, "pricingcategory": "base", "totalprice": 190000, "transactionId": 45}]}
-
-  // const redux = {"45": [{"category": "Minuman", "count": 3, "disc": 0, "menuid": 4, "name": "Es Teh Manis", "price": 5000, "pricingcategory": "base", "totalprice": 15000, "transactionId": 45}]}
-
-  // const hasil = mergeCart(backend, redux)
-  // console.log('hasil: ', hasil)
-
   function mergeCart(backEnd, redux) {
     const combinedData = [
       ...(backEnd[transactionId.toString()] || []),
@@ -87,22 +69,38 @@ const BottomSheet = props => {
     }, []);
     return {[transactionId]: mergeResult};
   }
-  const hasilmerge = mergeCart(itemsInfo, cartSlice);
+  const hasilmerge = mergeCart(backendItems, reduxItems);
   console.log('hasil :', hasilmerge);
 
   const slide = useRef(new Animated.Value(700)).current;
 
   async function handlePay(params) {
-    console.log(menuCompany);
-    const payloadUpdate = {};
+    console.log(
+      calculateSubtotal(mergeCart(backendItems, reduxItems)[transactionId]),
+    );
+    navigation.navigate('Pembayaran', {
+      data: selectedTransaction,
+      totalprice: calculateSubtotal(
+        mergeCart(backendItems, reduxItems)[transactionId],
+      ),
+    });
   }
 
   async function updateItems(params) {
     console.log('params Update: ', params);
-    const payload = params.map(
-      ({category, disc, menuid, name, transactionId, ...rest}) => rest,
-    );
-    // console.log('payload: ', payload);
+    // const payload = params.map(
+    //   ({category, disc, menuid, name, transactionId, ...rest}) => rest,
+    // );
+    const payload = params
+      .map(item => ({
+        ...item,
+        totalPrice: item.totalprice,
+      }))
+      .map(
+        ({category, disc, menuid, name, transactionId, totalprice, ...rest}) =>
+          rest,
+      );
+    console.log('payload: ', payload);
 
     try {
       setLoading(true);
@@ -135,7 +133,8 @@ const BottomSheet = props => {
       .map(
         ({name, disc, menuid, totalprice, pricingcategory, ...rest}) => rest,
       );
-    // console.log('payload: ', payload);
+
+    console.log('payload: ', payload);
     try {
       setLoading(true);
       const action = await PostData({
@@ -154,18 +153,18 @@ const BottomSheet = props => {
     }
   }
   async function updateTransaction(params) {
-    console.log('params updateTrans:', params);
+    // console.log('params updateTrans:', params);
+    // !selectedTransaction = transaksi branch tertentu
     const filtered = selectedTransaction.filter(
       item => item.id === transactionId,
     );
-    // console.log('filtered: ', filtered);
+    console.log('filtered: ', filtered);
     const payload = {
       ...filtered[0],
       tableNumber: table === undefined ? table.table : 0,
-      totalprice: calculateSubtotal(params) - calculateDiscount(params),
-      discount: calculateDiscount(params),
+      totalprice: calculateSubtotal(params),
     };
-    // console.log('payload: ', payload);
+    console.log('payload: ', payload);
     try {
       setLoading(true);
       const action = await PostData({
@@ -185,13 +184,26 @@ const BottomSheet = props => {
   }
 
   async function handleSave(params) {
-    const withId = mergeCart(itemsInfo, cartSlice)[
+    const withId = mergeCart(backendItems, reduxItems)[
       transactionId.toString()
     ].filter(item => item.hasOwnProperty('id'));
 
-    const withoutId = mergeCart(itemsInfo, cartSlice)[
+    const withoutId = mergeCart(backendItems, reduxItems)[
       transactionId.toString()
     ].filter(item => !item.hasOwnProperty('id'));
+
+    console.log('=====================================');
+    console.log('with id: ', withId);
+    console.log('without id: ', withoutId);
+    console.log('=====================================');
+
+    // await addItems(withoutId);
+    // await updateItems(withId);
+    // console.log(withId.length);
+    // console.log(withoutId.length);
+    // await updateTransaction(
+    //   mergeCart(backendItems, reduxItems)[transactionId.toString()],
+    // );
 
     try {
       setLoading(true);
@@ -208,9 +220,10 @@ const BottomSheet = props => {
       if (withId.length > 0 || withoutId.length > 0) {
         console.log('==IF UpdateTrans==');
         await updateTransaction(
-          mergeCart(itemsInfo, cartSlice)[transactionId.toString()],
+          mergeCart(backendItems, reduxItems)[transactionId.toString()],
         );
       }
+      dispatch(clearReduxItems());
       ToastAndroid.show('Items saved successfully', ToastAndroid.SHORT);
       navigation.goBack();
     } catch (error) {
@@ -279,8 +292,8 @@ const BottomSheet = props => {
               paddingHorizontal: 10,
             }}>
             <Text variant="titleMedium" style={{flex: 1, fontSize: 18}}>
-              {mergeCart(itemsInfo, cartSlice)[transactionId.toString()]
-                ? mergeCart(itemsInfo, cartSlice)[transactionId.toString()]
+              {mergeCart(backendItems, reduxItems)[transactionId.toString()]
+                ? mergeCart(backendItems, reduxItems)[transactionId.toString()]
                     .length
                 : 0}{' '}
               produk
@@ -299,7 +312,7 @@ const BottomSheet = props => {
           </View>
 
           <FlatList
-            data={mergeCart(itemsInfo, cartSlice)[transactionId.toString()]}
+            data={mergeCart(backendItems, reduxItems)[transactionId.toString()]}
             keyExtractor={item => (item.id ? item.id : item.menuid).toString()}
             renderItem={({item}) => {
               return (
@@ -352,12 +365,12 @@ const BottomSheet = props => {
               marginVertical: 10,
             }}>
             <Text variant="titleMedium" style={{fontWeight: '700'}}>
-              {`Subtotal (${mergeCart(itemsInfo, cartSlice)[transactionId].length})`}
+              {`Subtotal (${mergeCart(backendItems, reduxItems)[transactionId].length})`}
             </Text>
             <Text variant="titleMedium">
               {FormatRP(
                 calculateSubtotal(
-                  mergeCart(itemsInfo, cartSlice)[transactionId.toString()],
+                  mergeCart(backendItems, reduxItems)[transactionId.toString()],
                 ),
               )}
             </Text>
@@ -365,16 +378,16 @@ const BottomSheet = props => {
 
           <View style={{flexDirection: 'row', columnGap: 10}}>
             <TouchableOpacity
-              onPress={() => handleSave(mergeCart(itemsInfo, cartSlice))}
+              onPress={() => handleSave(mergeCart(backendItems, reduxItems))}
               style={
-                mergeCart(itemsInfo, cartSlice)
+                mergeCart(backendItems, reduxItems)
                   ? [styles.simpan, {borderColor: Colors.btnColor}]
                   : [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
               }
-              disabled={mergeCart(itemsInfo, cartSlice) ? false : true}>
+              disabled={mergeCart(backendItems, reduxItems) ? false : true}>
               <Text
                 style={
-                  mergeCart(itemsInfo, cartSlice)
+                  mergeCart(backendItems, reduxItems)
                     ? [styles.texSimpan, {color: Colors.btnColor}]
                     : [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
                 }>
@@ -383,11 +396,13 @@ const BottomSheet = props => {
             </TouchableOpacity>
             <View style={{flex: 1}}>
               <ConstButton
-                disabled={mergeCart(itemsInfo, cartSlice) ? false : true}
+                disabled={mergeCart(backendItems, reduxItems) ? false : true}
                 onPress={handlePay}
                 title={`Bayar = ${FormatRP(
                   calculateSubtotal(
-                    mergeCart(itemsInfo, cartSlice)[transactionId.toString()],
+                    mergeCart(backendItems, reduxItems)[
+                      transactionId.toString()
+                    ],
                   ),
                 )}`}
               />

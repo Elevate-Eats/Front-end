@@ -37,10 +37,10 @@ const MainTransaksi = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(s => s.branch.selectedBranch);
   const transactionId = useSelector(s => s.transaction.transactionId);
-  const itemsInfo = useSelector(state => state.pcs.itemsInfo); // ! item backend
-  const cartSlice = useSelector(state => state.cart.items);
-  console.log('item backend: ', itemsInfo);
-  console.log('item redux: ', cartSlice);
+  const reduxItems = useSelector(state => state.cart.reduxItems); // !redux
+  const backendItems = useSelector(state => state.cart.backendItems); // !backend
+  console.log('item backend: ', backendItems);
+  console.log('item redux: ', reduxItems);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(false);
   const [query, setQuery] = useState('');
@@ -230,7 +230,7 @@ const MainTransaksi = ({navigation, route}) => {
           onPress={() => setStatus(true)}
           title="Checkout"
           disabled={
-            cartSlice[transactionId] || itemsInfo[transactionId]
+            reduxItems[transactionId] || backendItems[transactionId]
               ? !disabled
               : disabled
           }

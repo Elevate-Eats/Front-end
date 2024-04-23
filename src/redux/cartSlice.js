@@ -3,35 +3,36 @@ import {createSlice} from '@reduxjs/toolkit';
 export const cartSlice = createSlice({
   name: 'cart',
   initialState: {
-    items: {},
-    newItems: [],
+    reduxItems: {},
+    backendItems: {},
   },
 
   reducers: {
+    // !For cart items in bottomSheet to redux
     addItem: (state, action) => {
       const transactionId = parseInt(action.payload.transactionId, 10);
       const newItems = action.payload;
-      // state.items[transactionId] = action.payload
-      if (!state.items[transactionId]) {
-        state.items[transactionId ? transactionId : 0] = [];
+      if (!state.reduxItems[transactionId]) {
+        state.reduxItems[transactionId ? transactionId : 0] = [];
       }
-      const index = state.items[transactionId].findIndex(
+      const index = state.reduxItems[transactionId].findIndex(
         item => item.menuid === newItems.menuid,
       );
 
       if (index >= 0) {
-        state.items[transactionId].map(item => {
+        state.reduxItems[transactionId].map(item => {
           if (newItems.menuid === item.menuid) {
-            state.items[transactionId][index].count += newItems.count;
-            state.items[transactionId][index].totalprice += newItems.totalprice;
+            state.reduxItems[transactionId][index].count += newItems.count;
+            state.reduxItems[transactionId][index].totalprice +=
+              newItems.totalprice;
             if (newItems.disc !== undefined) {
-              state.items[transactionId][index].disc += newItems.disc;
+              state.reduxItems[transactionId][index].disc += newItems.disc;
             }
           }
         });
       } else {
-        // state.items[transactionId].push(newItems);
-        state.items[transactionId].push({
+        // state.reduxItems[transactionId].push(newItems);
+        state.reduxItems[transactionId].push({
           ...newItems,
           totalprice: newItems.totalprice,
         });
@@ -39,42 +40,72 @@ export const cartSlice = createSlice({
     },
     removeItem: (state, action) => {
       const {transactionId, menuId} = action.payload;
-      if (state.items[transactionId]) {
-        state.items[transactionId] = state.items[transactionId].filter(
-          item => item.menuId !== menuId,
-        );
+      if (state.reduxItems[transactionId]) {
+        state.reduxItems[transactionId] = state.reduxItems[
+          transactionId
+        ].filter(item => item.menuId !== menuId);
       }
     },
     removeTransaction: (state, action) => {
       const {transactionId} = action.payload;
-      delete state.items[transactionId.toString()];
+      delete state.reduxItems[transactionId.toString()];
       // delete state.allItems[transactionId.toString()];
     },
 
+    // !get Item from backend
     saveItem: (state, action) => {
-      state.newItems = action.payload;
+      const transactionId = parseInt(action.payload[0].transactionId);
+      if (!state.backendItems[transactionId]) {
+        state.backendItems[transactionId] = [];
+      }
+      state.backendItems[transactionId] = action.payload;
     },
+
     updateItem: (state, action) => {
       const transactionId = parseInt(action.payload.transactionId, 10);
-      if (!state.items[transactionId]) {
-        state.items[transactionId] = [];
-      }
-      const index = state.items[transactionId].findIndex(
-        item => item.menuid === action.payload.menuid,
-      );
-      if (index === -1) {
-        state.items[transactionId].push({...action.payload});
+      const newItems = action.payload;
+      if (newItems.hasOwnProperty('id')) {
+        const index = state.backendItems[transactionId].findIndex(
+          item => item.id === newItems.id,
+        );
+
+        if (index !== -1) {
+          state.backendItems[transactionId][index] = {
+            ...state.backendItems[transactionId][index],
+            ...newItems,
+          };
+        } else {
+          state.backendItems[transactionId].push({...newItems});
+        }
       } else {
-        state.items[transactionId][index] = {
-          ...action.payload,
-          totalprice:
-            action.payload.count * action.payload.price - action.payload.disc,
-        };
+        const index = state.reduxItems[transactionId]?.findIndex(
+          item => item.menuid === newItems.menuid,
+        );
+        if (index !== -1) {
+          state.reduxItems[transactionId][index] = {
+            ...state.reduxItems[transactionId][index],
+            ...newItems,
+          };
+        } else {
+          if (!state.reduxItems[transactionId]) {
+            state.reduxItems[transactionId] = [];
+          }
+          state.reduxItems[transactionId].push({...newItems});
+        }
       }
+    },
+    clearReduxItems: state => {
+      state.reduxItems = {};
     },
   },
 });
 
-export const {addItem, removeItem, saveItem, removeTransaction, updateItem} =
-  cartSlice.actions;
+export const {
+  addItem,
+  removeItem,
+  saveItem,
+  removeTransaction,
+  updateItem,
+  clearReduxItems,
+} = cartSlice.actions;
 export default cartSlice.reducer;

@@ -22,92 +22,72 @@ import axios from 'axios';
 
 const Pembayaran = ({route}) => {
   const navigation = useNavigation();
-  const {data} = route.params;
+  const data = route.params;
   const {transactionId} = useSelector(state => state.transaction);
-  const [singleTrans, setSingleTrans] = useState({});
-  const [total, setTotal] = useState(0);
+  const customer = useSelector(state => state.customer.customerInfo);
+  console.log('ID: ', transactionId);
+  console.log('customer: ', customer);
   const [checked, setChecked] = useState(null);
   const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    const total = data.reduce((acc, item) => acc + item.totalprice, 0);
-    setTotal(total);
-  }, [data]);
-
-  useFocusEffect(
-    useCallback(() => {
-      async function fetchData(params) {
-        try {
-          const data = await PostData({
-            operation: TRANSACTION_ENDPOINT,
-            endpoint: 'showSingleTransaction',
-            payload: {id: transactionId},
-          });
-          // console.log('data: ', data.transactionData);
-          setSingleTrans(data.transactionData);
-        } catch (error) {}
-      }
-      fetchData();
-    }, []),
-  );
-  console.log('single Trans: ', singleTrans);
 
   async function handleConfirm(params) {
     if (checked === null || checked === undefined) {
       ToastAndroid.show('Pilih Metode Pembayaran !!', ToastAndroid.SHORT);
-      ToastAndroid.showWithGravity(
-        'Pilih Metode Pembayaran',
-        ToastAndroid.SHORT,
-        ToastAndroid.CENTER,
-      );
     } else {
-      const initial = {
-        ...singleTrans,
-        id: transactionId,
+      // console.log('data: ', data.data[0]);
+      const payload = {
+        ...data.data[0],
+        totalprice: data.totalprice,
         paymentmethod: checked,
+        tableNumber: customer === undefined ? customer.table : 0,
         status: 0,
-        tableNumber: singleTrans.tablenumber,
       };
-      // console.log('Init: ', initial);
-      const {tablenumber, ...payloadUpdateTransaction} = initial;
+      console.log('payload: ', payload);
+      try {
+        setLoading(true);
+        const action = await PostData({
+          operation: TRANSACTION_ENDPOINT,
+          endpoint: 'updateTransaction',
+          payload: payload,
+        });
+        if (action) {
+          setLoading(false);
+          ToastAndroid.show('Transaksi berhasil', ToastAndroid.SHORT);
+          navigation.navigate('Dashboard');
+        }
+      } catch (error) {
+        ToastAndroid.show('Transaksi gagal !!!');
+      }
+
+      // !-----------------------------------------
+      // const {tablenumber, ...payloadUpdateTransaction} = initial;
       // console.log('Init: ', payloadUpdateTransaction);
 
       // ToastAndroid.show('Pembayaran Berhasil !!', ToastAndroid.SHORT);
-      try {
-        setLoading(true);
-        const token = await AsyncStorage.getItem('userToken');
-        const res = await axios.post(
-          `${API_URL}/${TRANSACTION_ENDPOINT}/updateTransaction`,
-          payloadUpdateTransaction,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        );
-        console.log('res :', res);
-        if (res.status !== 200) {
-          ToastAndroid.show('Pembayaran Berhasil', ToastAndroid.SHORT);
-        } else {
-          ToastAndroid.show('Pembayaran Gagal', ToastAndroid.SHORT);
-        }
-        // setLoading(true);
-        // const data = await PostData({
-        //   operation: TRANSACTION_ENDPOINT,
-        //   endpoint: 'updateTransaction',
-        //   payload: payloadUpdateTransaction,
-        // });
-        // console.log(data);
-        // if (data.status === 200) {
-        //   setLoading(false);
-        //   ToastAndroid.show('Pembayaran Berhasil !!', ToastAndroid.SHORT);
-        //   // navigation.navigate('Dashboard');
-        // }
-      } catch (error) {
-        ToastAndroid.show('Pembayaran Gagal', ToastAndroid.SHORT);
-      } finally {
-        setLoading(false);
-      }
+      // try {
+      //   setLoading(true);
+      //   const token = await AsyncStorage.getItem('userToken');
+      //   const res = await axios.post(
+      //     `${API_URL}/${TRANSACTION_ENDPOINT}/updateTransaction`,
+      //     payloadUpdateTransaction,
+      //     {
+      //       headers: {
+      //         Authorization: `Bearer ${token}`,
+      //         'Content-Type': 'application/json',
+      //       },
+      //     },
+      //   );
+      //   console.log('res :', res);
+      //   if (res.status !== 200) {
+      //     ToastAndroid.show('Pembayaran Berhasil', ToastAndroid.SHORT);
+      //   } else {
+      //     ToastAndroid.show('Pembayaran Gagal', ToastAndroid.SHORT);
+      //   }
+      // } catch (error) {
+      //   ToastAndroid.show('Pembayaran Gagal', ToastAndroid.SHORT);
+      // } finally {
+      //   setLoading(false);
+      // }
     }
   }
   if (loading) {
@@ -128,7 +108,7 @@ const Pembayaran = ({route}) => {
             fontWeight: '700',
             // backgroundColor: 'red',
           }}>
-          {FormatRP(total)}
+          {FormatRP(data.totalprice)}
         </Text>
       </View>
       <View style={styles.whiteLayer}>

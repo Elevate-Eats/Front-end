@@ -21,12 +21,11 @@ import {addItem, updateItem} from '../../../redux/cartSlice';
 const DetailItemsCart = ({navigation, route}) => {
   const dispatch = useDispatch();
   const {item} = route.params;
-  console.log('data from bottom: ', item);
+  // console.log('data from bottom: ', item);
   const branch = useSelector(state => state.branch.selectedBranch);
   const transactionId = useSelector(state => state.transaction.transactionId);
   const [loading, setLoading] = useState(false);
   const [menu, setMenu] = useState({});
-  const a = useSelector(state => state.cart.items);
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
@@ -100,7 +99,6 @@ const DetailItemsCart = ({navigation, route}) => {
   }, [menu, item]);
 
   async function handlePress(params) {
-    console.log('cartItems: ', a);
     // console.log('product: ', product);
     // console.log('product: ', item);
     const payload = {
@@ -112,9 +110,9 @@ const DetailItemsCart = ({navigation, route}) => {
       disc: product.disc,
     };
     console.log('payload: ', payload);
-    // dispatch(updateItem(payload));
-    // ToastAndroid.show(`Updated ${item.name}`, ToastAndroid.SHORT);
-    // navigation.goBack();
+    dispatch(updateItem(payload));
+    ToastAndroid.show(`Updated ${item.name}`, ToastAndroid.SHORT);
+    navigation.goBack();
   }
 
   if (loading) {

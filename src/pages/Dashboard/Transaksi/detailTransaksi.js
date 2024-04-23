@@ -19,8 +19,6 @@ import {useDispatch} from 'react-redux';
 import {addItem} from '../../../redux/cartSlice';
 import {addTransaction} from '../../../redux/showTransaction';
 import {useSelector} from 'react-redux';
-import {useFocusEffect} from '@react-navigation/native';
-import getDataQuery from '../../../utils/getDataQuery';
 
 const DetailTransaksi = ({route, navigation}) => {
   const {item} = route.params;

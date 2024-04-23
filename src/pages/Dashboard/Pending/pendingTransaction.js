@@ -21,9 +21,9 @@ import FormatRP from '../../../utils/formatRP';
 import Receipt from '../../../assets/icons/receipt.svg';
 import {selectBranch} from '../../../redux/branchSlice';
 import transactionSlice from '../../../redux/transactionSlice';
-import {get} from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import {addItemsInfo, addPcsInfo} from '../../../redux/pcsSlice';
-import { deleteTransaction } from '../../../redux/showTransaction';
+import {deleteTransaction} from '../../../redux/showTransaction';
+import {addItem, saveItem} from '../../../redux/cartSlice';
 
 const PendingTransaction = ({navigation}) => {
   const dispatch = useDispatch();
@@ -38,8 +38,6 @@ const PendingTransaction = ({navigation}) => {
   const filteredTransaction = allTransaction.filter(
     item => item.branchid === branch.id,
   );
-
-
 
   if (filteredTransaction.length > 0) {
     console.log('filtered:', filteredTransaction);
@@ -63,18 +61,16 @@ const PendingTransaction = ({navigation}) => {
             });
           }
           const newData = getName(data);
-          console.log(`getName ID-${item.id}:`, newData);
-          dispatch(addItemsInfo(newData));
+          dispatch(saveItem(newData));
         }
       } catch (error) {}
     });
   } else {
-    console.log('Filtered none')
+    console.log('Filtered none');
   }
 
-  
   async function handleDelete(params) {
-    console.log('param: ', params)
+    console.log('param: ', params);
     try {
       setLoading(true);
       const action = await PostData({
@@ -83,7 +79,7 @@ const PendingTransaction = ({navigation}) => {
         payload: {id: params.id},
       });
       if (action) {
-        dispatch(deleteTransaction(params.id))
+        dispatch(deleteTransaction(params.id));
         ToastAndroid.show(`${action.message}`, ToastAndroid.SHORT);
       }
     } catch (error) {
@@ -98,6 +94,7 @@ const PendingTransaction = ({navigation}) => {
   const pendingMenu = Object.values(filteredTransaction).filter(
     item => item.status === 1,
   );
+  console.log('pendingMenu: ', pendingMenu);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -216,14 +213,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.75,
     borderBottomColor: 'rgba(0,0,0,0.2)',
     marginBottom: 10,
-  },
-  icon: {
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    width: 65,
-    height: 65,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 5,
   },
   wrapSearch: {
     flexDirection: 'row',
