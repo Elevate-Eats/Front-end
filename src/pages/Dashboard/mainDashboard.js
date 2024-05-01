@@ -6,7 +6,7 @@ import {
   Alert,
   ToastAndroid,
 } from 'react-native';
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -16,7 +16,6 @@ import {
   MENU_COMPANY_ENDPOINT,
   EMPLOYEE_ENDPOINT,
   TRANSACTION_ENDPOINT,
-  MENU_BRANCH_ENDPOINT,
 } from '@env';
 import {
   ItemDashboard,
@@ -30,70 +29,117 @@ import {useFocusEffect} from '@react-navigation/native';
 import {useSelector, useDispatch} from 'react-redux';
 import GetData from '../../utils/getData';
 import {allBranch} from '../../redux/branchSlice';
-import {allMenu, allMenuBranch} from '../../redux/menuSlice';
+import {allMenu} from '../../redux/menuSlice';
 import {allEmployee} from '../../redux/employee';
 import getDataQuery from '../../utils/getDataQuery';
 import {allTransaction} from '../../redux/showTransaction';
+import {allManager} from '../../redux/manager';
 
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
-
   const [modal, setModal] = useState(false);
-  const [loading, setloading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      const fetchData = async () => {
-        setloading(true);
+      async function fetchData(params) {
+        setLoading(true);
         try {
-          const promises = [
-            GetData({
-              operation: BRANCH_ENDPOINT,
-              endpoint: 'showBranches',
-              resultKey: 'branchData',
-            }),
-            GetData({
-              operation: MENU_COMPANY_ENDPOINT,
-              endpoint: 'showMenus',
-              resultKey: 'menuData',
-            }),
-            GetData({
-              operation: EMPLOYEE_ENDPOINT,
-              endpoint: 'showEmployees',
-              resultKey: 'employeeData',
-            }),
-            GetData({
-              operation: MANAGER_ENDPOINT,
-              endpoint: 'showManagers',
-              resultKey: 'managerData',
-            }),
-            getDataQuery({
-              operation: TRANSACTION_ENDPOINT,
-              endpoint: 'showTransactions',
-              resultKey: 'transactionData',
-              query: `branch=0`,
-            }),
-          ];
-          const [branch, menuCompany, dataEmployee, manager, transaction] =
-            await Promise.all(promises);
-
-          if (branch && menuCompany && dataEmployee && manager && transaction) {
-            dispatch(allBranch(branch)); // save branch to redux
-            dispatch(allMenu(menuCompany)); // save menu company to redux
-            dispatch(allEmployee(dataEmployee)); // save employee to redux
-            dispatch(allTransaction(transaction)); // save transaction to redux
+          const branch = await GetData({
+            operation: BRANCH_ENDPOINT,
+            endpoint: 'showBranches',
+            resultKey: 'branchData',
+          });
+          const menuCompany = await GetData({
+            operation: MENU_COMPANY_ENDPOINT,
+            endpoint: 'showMenus',
+            resultKey: 'menuData',
+          });
+          const employee = await GetData({
+            operation: EMPLOYEE_ENDPOINT,
+            endpoint: 'showEmployees',
+            resultKey: 'employeeData',
+          });
+          const manager = await GetData({
+            operation: MANAGER_ENDPOINT,
+            endpoint: 'showManagers',
+            resultKey: 'managerData',
+          });
+          const transaction = await getDataQuery({
+            operation: TRANSACTION_ENDPOINT,
+            endpoint: 'showTransactions',
+            resultKey: 'transactionData',
+            query: `branch=0`,
+          });
+          if (branch || menuCompany || employee || manager || transaction) {
+            dispatch(allBranch(branch));
+            dispatch(allMenu(menuCompany));
+            dispatch(allEmployee(employee));
+            dispatch(allManager(manager));
+            dispatch(allTransaction(transaction));
           }
         } catch (error) {
-          console.log('Error fetching data:', error);
+          console.log('Eror fetching data: ', error);
         } finally {
-          setloading(false);
+          setLoading(false);
         }
-      };
-
+      }
       fetchData();
     }, [dispatch]),
   );
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchData = async () => {
+  //       setloading(true);
+  //       try {
+  //         const promises = [
+  //           GetData({
+  //             operation: BRANCH_ENDPOINT,
+  //             endpoint: 'showBranches',
+  //             resultKey: 'branchData',
+  //           }),
+  //           GetData({
+  //             operation: MENU_COMPANY_ENDPOINT,
+  //             endpoint: 'showMenus',
+  //             resultKey: 'menuData',
+  //           }),
+  //           GetData({
+  //             operation: EMPLOYEE_ENDPOINT,
+  //             endpoint: 'showEmployees',
+  //             resultKey: 'employeeData',
+  //           }),
+  //           GetData({
+  //             operation: MANAGER_ENDPOINT,
+  //             endpoint: 'showManagers',
+  //             resultKey: 'managerData',
+  //           }),
+  //           getDataQuery({
+  //             operation: TRANSACTION_ENDPOINT,
+  //             endpoint: 'showTransactions',
+  //             resultKey: 'transactionData',
+  //             query: `branch=0`,
+  //           }),
+  //         ];
+  //         const [branch, menuCompany, dataEmployee, manager, transaction] =
+  //           await Promise.all(promises);
+
+  //         if (branch && menuCompany && dataEmployee && manager && transaction) {
+  //           dispatch(allBranch(branch)); // save branch to redux
+  //           dispatch(allMenu(menuCompany)); // save menu company to redux
+  //           dispatch(allEmployee(dataEmployee)); // save employee to redux
+  //           dispatch(allTransaction(transaction)); // save transaction to redux
+  //         }
+  //       } catch (error) {
+  //         console.log('Error fetching data:', error);
+  //       } finally {
+  //         setloading(false);
+  //       }
+  //     };
+  //     fetchData();
+  //   }, [dispatch]),
+  // );
   if (loading) {
     return <LoadingIndicator message="Please Wait ..." />;
   }
@@ -111,19 +157,14 @@ const MainDashboard = ({navigation, route}) => {
   return (
     <View style={styles.container}>
       <TopBar navigation={navigation} title={'Dashboard'} />
-
       <View style={styles.blueLayer}>
         <View style={styles.account}>
           <Ionicons name="person-circle-outline" size={80} color={'white'} />
           <View style={{justifyContent: 'center', rowGap: 5}}>
             <Text variant="titleMedium" style={{fontSize: 18}}>
-              {/* {manager.name ? manager.name : 'Name'} */}
               name
             </Text>
-            <Text variant="titleMedium">
-              {/* {manager.role ? manager.role : 'role'} */}
-              role
-            </Text>
+            <Text variant="titleMedium">role</Text>
           </View>
         </View>
         <View style={styles.employee}>
@@ -146,7 +187,6 @@ const MainDashboard = ({navigation, route}) => {
       <View style={styles.whiteLayer}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={{flexDirection: 'row', marginBottom: 10}}>
-            {/* <ScrollView horizontal showsHorizontalScrollIndicator={false}>? */}
             <ItemDashboard
               iconName="fast-food"
               name="Menu"
@@ -162,7 +202,6 @@ const MainDashboard = ({navigation, route}) => {
               name="On Going"
               onPress={() => handlePress('Pending')}
             />
-            {/* </ScrollView> */}
           </View>
           <View style={{rowGap: 10}}>
             <View>

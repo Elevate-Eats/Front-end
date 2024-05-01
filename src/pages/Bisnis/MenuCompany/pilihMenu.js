@@ -9,7 +9,7 @@ import {
   LoadingIndicator,
   SearchBox,
 } from '../../../components';
-import Empty from '../../../assets/icons/empty-menu.svg';
+import MenuCompany from '../../../assets/icons/menuCompany.svg';
 import {Colors} from '../../../utils/colors';
 import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
@@ -20,7 +20,7 @@ const PilihMenu = ({navigation}) => {
   // const menuCompany = useSelector(state => state.menu.allMenu);
   const [menuCompany, setMenuCompany] = useState([]);
   const [query, setQuery] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useFocusEffect(
@@ -35,6 +35,7 @@ const PilihMenu = ({navigation}) => {
           });
           setMenuCompany(action);
         } catch (error) {
+          setError('Menu not found !!!');
         } finally {
           setLoading(false);
         }
@@ -71,7 +72,7 @@ const PilihMenu = ({navigation}) => {
         <View style={{flex: 1, marginVertical: 10}}>
           {error ? (
             <View style={styles.dataError}>
-              <Empty width={200} height={200} />
+              <MenuCompany width={200} height={200} />
               <DataError data={error} />
             </View>
           ) : (

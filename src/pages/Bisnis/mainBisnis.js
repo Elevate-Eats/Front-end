@@ -1,10 +1,7 @@
-import {StyleSheet, View, TouchableOpacity} from 'react-native';
-import {Text} from 'react-native-paper';
+import {StyleSheet, View} from 'react-native';
 import React from 'react';
 import {Colors} from '../../utils/colors';
 import {ItemBisnis, TopBar} from '../../components';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useSelector} from 'react-redux';
 
 const MainBisnis = ({navigation}) => {
   return (

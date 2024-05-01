@@ -5,15 +5,18 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  ToastAndroid,
 } from 'react-native';
 import React, {useState} from 'react';
-
 import {Text} from 'react-native-paper';
-
 import {BtnLogReg, FormLogReg} from '../../components';
 import {Colors} from '../../utils/colors';
+import {REGISTER_ENDPOINT, API_KEY, API_URL} from '@env';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RegisterPage = ({navigation}) => {
+  const [loading, setLoading] = useState(false);
   const [regist, setRegist] = useState({
     name: '',
     nickname: '',
@@ -24,10 +27,36 @@ const RegisterPage = ({navigation}) => {
     passwordConfirm: '',
     phone: '',
   });
+
+  async function PostRegist(params) {
+    try {
+      setLoading(true);
+      const action = await axios.post(
+        `${API_URL}/${REGISTER_ENDPOINT}`,
+        regist,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: API_KEY,
+          },
+        },
+      );
+      if (action.data) {
+        console.log('action.data: ', action.data);
+        await AsyncStorage.setItem('userToken', action.data.token);
+        ToastAndroid.show(action.data.message, ToastAndroid.SHORT);
+        navigation.replace('Bottom Tab');
+      }
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <KeyboardAvoidingView style={styles.KeyboardAvoidingView} enabled={true}>
+    <KeyboardAvoidingView style={styles.KeyboardAvoidingView}>
       <ScrollView>
-        <View style={{}}>
+        <View>
           <Image
             source={require('../../assets/images/elevate.png')}
             style={styles.img}
@@ -108,7 +137,7 @@ const RegisterPage = ({navigation}) => {
               }
             />
 
-            <BtnLogReg name="Sign Up" />
+            <BtnLogReg name="Sign Up" onPress={() => PostRegist()} />
             <View style={styles.have_account}>
               <Text variant="titleSmall" style={{fontSize: 18}}>
                 Don't have an account?

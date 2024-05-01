@@ -12,18 +12,43 @@ import {
   ListRow,
   SearchBox,
 } from '../../../components';
+import Employee from '../../../assets/icons/employee.svg';
 const PilihPegawai = ({navigation}) => {
-  // const [employee, setEmployee] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const employee = useSelector(state => state.employee.allEmployee);
+  const [employee, setEmployee] = useState({});
+  // const employee = useSelector(state => state.employee.allEmployee);
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        try {
+          const action = await GetData({
+            operation: EMPLOYEE_ENDPOINT,
+            endpoint: 'showEmployees',
+            resultKey: 'employeeData',
+          });
+          if (action) {
+            setEmployee(action);
+          }
+        } catch (error) {
+          setError('Employee not found');
+        }
+      }
+      fetchData();
+    }, []),
+  );
+  // const [employee, setEmployee] = useState({});
+
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>
         <SearchBox search="Cari pegawai ..." />
         <View style={{flex: 1, marginVertical: 10}}>
           {error ? (
-            <DataError data={error} />
+            <View style={styles.dataError}>
+              <Employee width={200} height={200} />
+              <DataError data={error} />
+            </View>
           ) : (
             <ListColumn
               data={employee}
@@ -51,5 +76,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     elevation: 1,
     padding: 10,
+  },
+  dataError: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    rowGap: 20,
   },
 });

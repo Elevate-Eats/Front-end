@@ -1,22 +1,22 @@
 import {StyleSheet, View, KeyboardAvoidingView} from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {
   BtnAdd,
   SearchBox,
-  LoadingIndicator,
   ListRow,
   DataError,
+  LoadingIndicator,
 } from '../../../components';
 import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
 import {BRANCH_ENDPOINT} from '@env';
-import {useSelector} from 'react-redux';
+import Store from '../../../assets/icons/store.svg';
 
 const PilihCabang = ({navigation}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [branch, setBranch] = useState([]);
+  const [branch, setBranch] = useState({});
 
   useFocusEffect(
     useCallback(() => {
@@ -30,6 +30,7 @@ const PilihCabang = ({navigation}) => {
           });
           setBranch(action);
         } catch (error) {
+          setError('Branch not found');
         } finally {
           setLoading(false);
         }
@@ -38,13 +39,23 @@ const PilihCabang = ({navigation}) => {
     }, []),
   );
 
+  if (loading) {
+    return <LoadingIndicator />;
+  }
+
+  console.log('branch: ', branch);
+  console.table(branch);
+
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>
         <SearchBox search="Cari cabang ..." />
         <View style={{flex: 1, marginVertical: 10}}>
           {error ? (
-            <DataError data={error} />
+            <View style={styles.dataError}>
+              <Store width={200} height={200} />
+              <DataError data={error} />
+            </View>
           ) : (
             <ListRow
               data={branch}
@@ -89,5 +100,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 5,
+  },
+  dataError: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    rowGap: 20,
   },
 });

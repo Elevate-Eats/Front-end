@@ -122,7 +122,7 @@ const PendingTransaction = ({navigation}) => {
                       <View style={{marginHorizontal: 15, flex: 1}}>
                         <TouchableOpacity
                           onLongPress={() => {
-                            Alert.alert('Actions', 'Hapus transaksi? ', [
+                            Alert.alert('Actions', 'Hapus transaksi ? ', [
                               {text: 'Batal'},
                               {
                                 text: 'OK',
@@ -182,7 +182,9 @@ const PendingTransaction = ({navigation}) => {
           <View
             style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
             <Receipt width={200} height={200} />
-            <Text variant="titleMedium">Tidak Ada Transaksi</Text>
+            <Text variant="headlineMedium" style={{fontWeight: '700'}}>
+              Transaction not found
+            </Text>
           </View>
         )}
       </View>

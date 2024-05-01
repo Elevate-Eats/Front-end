@@ -5,7 +5,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ListColumn = props => {
   return (
-    <View style={{alignItems: 'center'}}>
+    <View style={{}}>
       <FlatList
         data={props.data}
         keyExtractor={item => item.id.toString()}
@@ -14,7 +14,6 @@ const ListColumn = props => {
           const handlePress = () => {
             props.onPress(item);
           };
-
           const sliceName = (str, num) => {
             if (str.length <= num) {
               return str;

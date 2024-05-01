@@ -5,8 +5,8 @@ export const menuSlice = createSlice({
   name: 'menu',
   initialState: {
     selectedMenu: null,
-    allMenu: [],
-    allMenuBranch: [],
+    allMenu: [], // !menu Company
+    allMenuBranch: [], // !Menu Branch
   },
 
   reducers: {

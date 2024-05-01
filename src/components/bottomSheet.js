@@ -75,9 +75,7 @@ const BottomSheet = props => {
   const slide = useRef(new Animated.Value(700)).current;
 
   async function handlePay(params) {
-    console.log(
-      calculateSubtotal(mergeCart(backendItems, reduxItems)[transactionId]),
-    );
+    await handleSave();
     navigation.navigate('Pembayaran', {
       data: selectedTransaction,
       totalprice: calculateSubtotal(
@@ -111,7 +109,7 @@ const BottomSheet = props => {
       });
       if (action) {
         setLoading(false);
-        ToastAndroid.show(action.message, ToastAndroid.SHORT);
+        // ToastAndroid.show(action.message, ToastAndroid.SHORT);
       }
     } catch (error) {
       console.log('Error Updating Items: ', error);
@@ -144,7 +142,7 @@ const BottomSheet = props => {
       });
       if (action) {
         setLoading(false);
-        ToastAndroid.show(action.message, ToastAndroid.SHORT);
+        // ToastAndroid.show(action.message, ToastAndroid.SHORT);
       }
     } catch (error) {
       console.log('Error add Items" ', error);

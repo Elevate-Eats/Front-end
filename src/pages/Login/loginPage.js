@@ -13,16 +13,12 @@ import {BtnLogReg, FormLogReg} from '../../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {API_KEY, API_URL, LOGIN_ENDPOINT} from '@env';
-import {useDispatch} from 'react-redux';
 
 const LoginPage = ({navigation, route}) => {
-  const dispatch = useDispatch();
   const [login, setLogin] = useState({
     email: '',
     password: '',
   });
-  console.log(login);
-  const [id, setID] = useState('');
   const PostLogin = async () => {
     try {
       const action = await axios.post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
@@ -33,15 +29,13 @@ const LoginPage = ({navigation, route}) => {
       });
       console.log('data: ', action.data.nickname);
       if (action.data && action.data.token) {
+        console.log('token: ', action.data.token);
         await AsyncStorage.setItem('userToken', action.data.token);
-        await AsyncStorage.setItem('managerId', action.data.id.toString());
         console.log(`${action.data.id} - ${action.data.nickname}`);
         navigation.replace('Bottom Tab', {
           nickname: action.data.nickname,
           id: action.data.id,
         });
-        // setNickname(action.data.nickname);
-        // setID(action.data.id);
       }
     } catch (error) {
       console.log(error);
@@ -85,7 +79,7 @@ const LoginPage = ({navigation, route}) => {
 
           <BtnLogReg
             // onPress={PostLogin}
-            onPress={() => navigation.replace('Bottom Tab', {id: id})}
+            onPress={() => navigation.replace('Bottom Tab')}
             disabled={false}
             name="Log In"
           />

@@ -30,7 +30,6 @@ import {BRANCH_ENDPOINT, EMPLOYEE_ENDPOINT} from '@env';
 const EditCabang = ({route, navigation}) => {
   const dispatch = useDispatch();
   const {item} = route.params; // prev page
-  console.log('item edit cbang: ', item);
   const [branch, setBranch] = useState({}); // dari database
   const [modal, setModal] = useState(false); // open Modal content
   const [loading, setLoading] = useState(false);
@@ -56,9 +55,6 @@ const EditCabang = ({route, navigation}) => {
             resultKey: 'employeeData',
           });
           setEmployee(dataEmployee);
-          // setSelectedEmp(
-          //   Object.values(dataEmployee).filter(emp => emp.branchid === item.id),
-          // );
         } catch (error) {
           setError('Data Not Found !');
           console.log('Error');
@@ -69,21 +65,12 @@ const EditCabang = ({route, navigation}) => {
       fetchData();
     }, []),
   );
-
-  // console.log('isi selected Emp: ', selectedEmp);
   async function reciveID(key) {
-    // console.log(branch.id);
-    // console.log('key:', key);
     const newEmp = key.map(k => {
-      // console.log({...k, branchid: branch.id});
       return {...k, branchid: branch.id};
     });
-    // console.log(selectedEmp.concat(newEmp));
-    // console.log('new EMp:', newEmp);
     setSelectedEmp(selectedEmp.concat(newEmp));
   }
-
-  // console.log('isi selected emp: ', selectedEmp);
 
   // FINAL UPDATE
   const updateBranch = async () => {
@@ -145,7 +132,6 @@ const EditCabang = ({route, navigation}) => {
       }
       return k;
     });
-    // console.log(delEmp);
     setSelectedEmp(delEmp);
   }
 
@@ -212,12 +198,6 @@ const EditCabang = ({route, navigation}) => {
           {selectedEmp
             .filter(emp => emp.branchid === branch.id)
             .map(emp => {
-              // console.log(
-              //   'UI: ',
-              //   selectedEmp
-              //     .filter(emp => emp.branchid === branch.id)
-              //     .map(emp => emp),
-              // );
               return (
                 <View key={emp.id} style={styles.itemEmp}>
                   <Text variant="titleMedium" style={{flex: 1}}>

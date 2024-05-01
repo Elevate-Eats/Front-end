@@ -54,7 +54,7 @@ const ModalBranch = props => {
           <View style={{marginVertical: 30}}>
             <FlatList
               data={branch}
-              keyExtractor={item => item.id.toString()}
+              keyExtractor={item => (item.id || item.menuid).toString()}
               renderItem={({item}) => {
                 return (
                   <View style={styles.wrapList}>
