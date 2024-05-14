@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   TouchableOpacity,
   Alert,
+  ToastAndroid,
 } from 'react-native';
 import React, {useState} from 'react';
 import {Colors} from '../../utils/colors';
@@ -14,32 +15,44 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {API_KEY, API_URL, LOGIN_ENDPOINT} from '@env';
 
-const LoginPage = ({navigation, route}) => {
+const LoginPage = ({navigation}) => {
+  const [loading, setLoading] = useState(false);
   const [login, setLogin] = useState({
     email: '',
     password: '',
   });
   const PostLogin = async () => {
     try {
+      setLoading(true);
       const action = await axios.post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
         headers: {
           'Content-Type': 'application/json',
           apikey: API_KEY, // Ensure header keys are correctly expected by your backend
         },
       });
-      console.log('data: ', action.data.nickname);
-      if (action.data && action.data.token) {
-        console.log('token: ', action.data.token);
+      console.log('data: ', action.data);
+      // console.log('login: ', login);vv
+
+      if (action.data) {
+        // console.log('token: ', action.data.token);
         await AsyncStorage.setItem('userToken', action.data.token);
-        console.log(`${action.data.id} - ${action.data.nickname}`);
-        navigation.replace('Bottom Tab', {
-          nickname: action.data.nickname,
-          id: action.data.id,
-        });
+        await AsyncStorage.setItem(
+          'companyId',
+          action.data.credentials.companyid.toString(),
+        );
+        // navigation.replace('Bottom Tab', {
+        //   nickname: action.data.nickname,
+        //   id: action.data.id,
+        // });
+        navigation.replace('Bottom Tab');
+        ToastAndroid.show(action.data.message, ToastAndroid.SHORT);
       }
     } catch (error) {
-      console.log(error);
+      // console.log('login: ', login);
+      console.log('err: ', error);
       Alert.alert('Login Error', 'Check your email or password!');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,6 +95,7 @@ const LoginPage = ({navigation, route}) => {
             onPress={() => navigation.replace('Bottom Tab')}
             disabled={false}
             name="Log In"
+            loading={loading}
           />
           <View style={styles.have_account}>
             <Text variant="titleSmall" style={{fontSize: 18}}>

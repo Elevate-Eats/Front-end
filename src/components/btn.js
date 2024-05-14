@@ -12,6 +12,7 @@ USE:
 const ConstButton = props => {
   return (
     <Button
+      loading={props.loading}
       disabled={props.disabled}
       onPress={props.onPress}
       mode="elevated"

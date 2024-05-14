@@ -144,7 +144,7 @@ const RegisterPage = ({navigation}) => {
               </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text variant="titleSmall" style={styles.signup}>
-                  Sign Up
+                  Sign In
                 </Text>
               </TouchableOpacity>
             </View>

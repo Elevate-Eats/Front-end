@@ -59,8 +59,8 @@ const BottomBar = ({route}) => {
               options.tabBarLabel !== undefined
                 ? options.tabBarLabel
                 : options.title !== undefined
-                ? options.title
-                : route.title;
+                  ? options.title
+                  : route.title;
             return label;
           }}
         />

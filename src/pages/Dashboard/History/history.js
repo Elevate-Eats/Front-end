@@ -25,9 +25,10 @@ import FormatDateTime from '../../../utils/formatDateTime';
 
 const History = () => {
   const navigation = useNavigation();
+  const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [isFocus, setIsFocus] = useState(false);
-  const [value, setValue] = useState(null);
+  const [value, setValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [transaction, setTransaction] = useState({});
 
@@ -44,17 +45,20 @@ const History = () => {
   useEffect(() => {
     async function fetchData(params) {
       setLoading(true);
+      console.log('value: ', value);
       try {
         const data = await getDataQuery({
           operation: TRANSACTION_ENDPOINT,
           endpoint: 'showTransactions',
-          resultKey: 'transactionData',
+          resultKey: 'transactions',
           query: `branch=${value}`,
         });
         if (data) {
           setTransaction(data);
         }
       } catch (error) {
+        setTransaction([]);
+        console.log('error: ', error);
       } finally {
         setLoading(false);
       }
@@ -152,19 +156,13 @@ const History = () => {
         </View>
       </View>
       <View style={{backgroundColor: 'rgba(0,0,0,0.0001)', flex: 1}}>
-        {value !== null && transaction.length > 0 ? (
+        {transaction.length > 0 ? (
           <FlatList
             data={sortTransaction(
-              transaction.filter(item => item.status === 0),
+              Object.values(transaction).filter(item => item.status === 0),
             )}
             keyExtractor={item => item.id.toString()}
             renderItem={({item}) => {
-              function getTime(transactionDate) {
-                const splitDateTime = transactionDate.split('T');
-                const date = splitDateTime[0];
-                const time = splitDateTime[1].split('.')[0];
-                return time;
-              }
               return (
                 <View>
                   <View style={[styles.icon, {flexDirection: 'row'}]}>
@@ -229,6 +227,7 @@ const History = () => {
             </Text>
           </View>
         )}
+        {/* {console.log('transaction: ', transaction)} */}
       </View>
     </SafeAreaView>
   );

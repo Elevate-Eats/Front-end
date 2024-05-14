@@ -35,7 +35,7 @@ const PendingTransaction = ({navigation}) => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const filteredTransaction = allTransaction.filter(
+  const filteredTransaction = Object.values(allTransaction).filter(
     item => item.branchid === branch.id,
   );
 

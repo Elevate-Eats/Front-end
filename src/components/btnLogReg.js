@@ -7,6 +7,7 @@ import {Colors} from '../utils/colors';
 const BtnLogReg = props => {
   return (
     <Button
+      loading={props.loading}
       disabled={props.disabled}
       onPress={props.onPress}
       mode="elevated"

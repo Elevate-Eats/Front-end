@@ -15,7 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import PostData from '../../../utils/postData';
-import {TRANSACTION_ENDPOINT, API_URL} from '@env';
+import {TRANSACTION_ENDPOINT, API_URL, ANALYTICS_ENDPOINT} from '@env';
 
 const Pembayaran = ({route}) => {
   const navigation = useNavigation();
@@ -36,14 +36,16 @@ const Pembayaran = ({route}) => {
       ToastAndroid.show('Pilih Metode Pembayaran !!', ToastAndroid.SHORT);
     } else {
       const prevData = data.data.filter(item => item.id === transactionId);
-      const payload = {
+      const payloadUpdate = {
         ...prevData[0],
         paymentmethod: checked,
         status: 0,
-        tableNumber: customer ? customer.table : 0,
+        tableNumber: prevData[0].tablenumber,
         totalprice: data.totalprice,
       };
-      console.log(payload);
+      const {companyid, tablenumber, ...payload} = payloadUpdate;
+      console.log('payload: ', payload);
+      // console.log('transactionid: ', transactionId);
       try {
         setLoading(true);
         const action = await PostData({
@@ -51,20 +53,27 @@ const Pembayaran = ({route}) => {
           endpoint: 'updateTransaction',
           payload: payload,
         });
-        if (action) {
+        const record = await PostData({
+          operation: ANALYTICS_ENDPOINT,
+          endpoint: 'recordTransaction',
+          payload: {transactionId: transactionId},
+        });
+        if (action && record) {
           setLoading(false);
           // ToastAndroid.show('Transaksi berhasil', ToastAndroid.SHORT);
           navigation.navigate('Detail Pembayaran', {data: payload});
         }
       } catch (error) {
         ToastAndroid.show('Transaksi gagal !!!');
+      } finally {
+        setLoading(false);
       }
       // !-----------------------------------------
     }
   }
-  if (loading) {
-    return <LoadingIndicator />;
-  }
+  // if (loading) {
+  //   return <LoadingIndicator />;
+  // }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -131,7 +140,11 @@ const Pembayaran = ({route}) => {
           </View>
         </ScrollView>
         <View>
-          <ConstButton title="Konfirmasi" onPress={() => handleConfirm()} />
+          <ConstButton
+            title="Konfirmasi"
+            onPress={() => handleConfirm()}
+            loading={loading}
+          />
         </View>
       </View>
     </SafeAreaView>

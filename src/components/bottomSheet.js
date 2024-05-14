@@ -47,7 +47,9 @@ const BottomSheet = props => {
   const [selectedTransaction, setSelectedTransaction] = useState([]);
 
   // console.log('all Trans: ', allTransaction);
-  const filtered = allTransaction.filter(item => item.id === transactionId);
+  const filtered = Object.values(allTransaction).filter(
+    item => item.id === transactionId,
+  );
   function mergeCart(backEnd, redux) {
     const combinedData = [
       ...(backEnd[transactionId.toString()] || []),
@@ -75,9 +77,10 @@ const BottomSheet = props => {
   const slide = useRef(new Animated.Value(700)).current;
 
   async function handlePay(params) {
+    console.log('selected Trans: ', selectedTransaction.transactions);
     await handleSave();
     navigation.navigate('Pembayaran', {
-      data: selectedTransaction,
+      data: selectedTransaction.transactions,
       totalprice: calculateSubtotal(
         mergeCart(backendItems, reduxItems)[transactionId],
       ),
@@ -153,15 +156,17 @@ const BottomSheet = props => {
   async function updateTransaction(params) {
     // console.log('params updateTrans:', params);
     // !selectedTransaction = transaksi branch tertentu
-    const filtered = selectedTransaction.filter(
+    // console.log('seelcted: ', selectedTransaction);
+    const filtered = selectedTransaction.transactions.filter(
       item => item.id === transactionId,
     );
-    console.log('filtered: ', filtered);
-    const payload = {
+    // console.log('filtered: ', filtered);
+    const payloadUpdate = {
       ...filtered[0],
-      tableNumber: table === undefined ? table.table : 0,
+      tableNumber: filtered[0].tablenumber,
       totalprice: calculateSubtotal(params),
     };
+    const {tablenumber, companyid, ...payload} = payloadUpdate;
     console.log('payload: ', payload);
     try {
       setLoading(true);
@@ -222,7 +227,7 @@ const BottomSheet = props => {
         );
       }
       dispatch(clearReduxItems());
-      ToastAndroid.show('Items saved successfully', ToastAndroid.SHORT);
+      // ToastAndroid.show('Items saved successfully', ToastAndroid.SHORT);
       navigation.goBack();
     } catch (error) {
       console.log('Error save', error);
@@ -394,6 +399,7 @@ const BottomSheet = props => {
             </TouchableOpacity>
             <View style={{flex: 1}}>
               <ConstButton
+                loading={loading}
                 disabled={mergeCart(backendItems, reduxItems) ? false : true}
                 onPress={handlePay}
                 title={`Bayar = ${FormatRP(

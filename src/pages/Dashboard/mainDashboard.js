@@ -69,7 +69,7 @@ const MainDashboard = ({navigation, route}) => {
           const transaction = await getDataQuery({
             operation: TRANSACTION_ENDPOINT,
             endpoint: 'showTransactions',
-            resultKey: 'transactionData',
+            resultKey: 'transactions',
             query: `branch=0`,
           });
           if (branch || menuCompany || employee || manager || transaction) {
@@ -89,57 +89,6 @@ const MainDashboard = ({navigation, route}) => {
     }, [dispatch]),
   );
 
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchData = async () => {
-  //       setloading(true);
-  //       try {
-  //         const promises = [
-  //           GetData({
-  //             operation: BRANCH_ENDPOINT,
-  //             endpoint: 'showBranches',
-  //             resultKey: 'branchData',
-  //           }),
-  //           GetData({
-  //             operation: MENU_COMPANY_ENDPOINT,
-  //             endpoint: 'showMenus',
-  //             resultKey: 'menuData',
-  //           }),
-  //           GetData({
-  //             operation: EMPLOYEE_ENDPOINT,
-  //             endpoint: 'showEmployees',
-  //             resultKey: 'employeeData',
-  //           }),
-  //           GetData({
-  //             operation: MANAGER_ENDPOINT,
-  //             endpoint: 'showManagers',
-  //             resultKey: 'managerData',
-  //           }),
-  //           getDataQuery({
-  //             operation: TRANSACTION_ENDPOINT,
-  //             endpoint: 'showTransactions',
-  //             resultKey: 'transactionData',
-  //             query: `branch=0`,
-  //           }),
-  //         ];
-  //         const [branch, menuCompany, dataEmployee, manager, transaction] =
-  //           await Promise.all(promises);
-
-  //         if (branch && menuCompany && dataEmployee && manager && transaction) {
-  //           dispatch(allBranch(branch)); // save branch to redux
-  //           dispatch(allMenu(menuCompany)); // save menu company to redux
-  //           dispatch(allEmployee(dataEmployee)); // save employee to redux
-  //           dispatch(allTransaction(transaction)); // save transaction to redux
-  //         }
-  //       } catch (error) {
-  //         console.log('Error fetching data:', error);
-  //       } finally {
-  //         setloading(false);
-  //       }
-  //     };
-  //     fetchData();
-  //   }, [dispatch]),
-  // );
   if (loading) {
     return <LoadingIndicator message="Please Wait ..." />;
   }

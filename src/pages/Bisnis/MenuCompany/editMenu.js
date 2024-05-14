@@ -49,11 +49,13 @@ const EditMenu = ({navigation, route}) => {
         endpoint: 'updateMenu',
         payload: payload,
       });
-      ToastAndroid.show(
-        `${menu.name} has been successfully updated`,
-        ToastAndroid.SHORT,
-      );
-      navigation.goBack();
+      if (action) {
+        ToastAndroid.show(
+          `${menu.name} has been successfully updated`,
+          ToastAndroid.SHORT,
+        );
+        navigation.goBack();
+      }
     } catch (error) {
       ToastAndroid.show(`Failed to delete ${menu.name}`);
       console.log(error);
