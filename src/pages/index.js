@@ -42,6 +42,9 @@ import DetailItemsCart from './Dashboard/Transaksi/detailItemsCart';
 
 // +++++ LAPORAN +++++
 import MainLaporan from './Laporan/mainLaporan';
+import MainExpense from './Laporan/Pengeluaran/mainExpense';
+import AddExpense from './Laporan/Pengeluaran/addExpense';
+import EditExpense from './Laporan/Pengeluaran/editExpense';
 // +++++ STATISTIK +++++
 import MainStatistik from './Statistik/mainStastistik';
 // +++++ LOGIN & REGIST +++++
@@ -52,6 +55,9 @@ import RegisterPage from './Register/registerPage';
 import CompanyAccount from './Account/companyAccount';
 
 export {
+  EditExpense,
+  AddExpense,
+  MainExpense,
   DetailPembayaran,
   DetailHistory,
   History,

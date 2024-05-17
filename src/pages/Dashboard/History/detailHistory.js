@@ -21,6 +21,7 @@ import {Colors} from '../../../utils/colors';
 const DetailHistory = ({route}) => {
   const navigation = useNavigation();
   const {data} = route.params;
+  console.log('date: ', FormatDateTime(data.transactiondate).realDate);
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -60,9 +61,9 @@ const DetailHistory = ({route}) => {
     return params.reduce((sum, item) => sum + item.totalprice, 0);
   }
 
-  // if (loading) {
-  //   return <LoadingIndicator />;
-  // }
+  if (loading) {
+    return <LoadingIndicator />;
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>

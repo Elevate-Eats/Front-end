@@ -23,4 +23,7 @@ export const store = configureStore({
     allItems: allItemsReducer,
     pcs: pcsReducer,
   },
+  middleware: getDefaultMiddleware => {
+    return getDefaultMiddleware({serializableCheck: false});
+  },
 });

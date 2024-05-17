@@ -33,6 +33,9 @@ import {
   DetailItemsCart,
   DetailHistory,
   DetailPembayaran,
+  MainExpense,
+  AddExpense,
+  EditExpense,
 } from '../pages';
 import {BottomBar} from '.';
 import Route from '../routes/route';
@@ -206,6 +209,20 @@ function HomeStackNavigator(params) {
           component={DetailHistory}
           options={{headerShown: false}}
         />
+      </Stack.Group>
+
+      {/*LAPORAN */}
+      <Stack.Group
+        screenOptions={{
+          animation: 'slide_from_bottom',
+        }}>
+        <Stack.Screen
+          name="Pengeluaran"
+          component={MainExpense}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen name="Tambah Pengeluaran" component={AddExpense} />
+        <Stack.Screen name="Edit Pengeluaran" component={EditExpense} />
       </Stack.Group>
     </Stack.Navigator>
   );

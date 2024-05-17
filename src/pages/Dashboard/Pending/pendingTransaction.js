@@ -34,16 +34,35 @@ const PendingTransaction = ({navigation}) => {
   const menuCompany = useSelector(state => state.menu.allMenu);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [transaction, setTransaction] = useState({});
 
   const filteredTransaction = Object.values(allTransaction).filter(
     item => item.branchid === branch.id,
   );
 
+  useEffect(() => {
+    async function fetchData(params) {
+      setLoading(true);
+      try {
+        const data = await getDataQuery({
+          operation: TRANSACTION_ENDPOINT,
+          endpoint: 'showTransactions',
+          resultKey: 'transactions',
+          query: `branch=${branch.id}`,
+        });
+        console.log('data: ', data);
+      } catch (error) {
+        console.log('error: ', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
   if (filteredTransaction.length > 0) {
-    console.log('filtered:', filteredTransaction);
     filteredTransaction.map(async item => {
       let transactionId = item.id;
-      console.log('id: ', transactionId);
       try {
         const data = await getDataQuery({
           operation: ITEM_ENDPOINT,
@@ -65,12 +84,9 @@ const PendingTransaction = ({navigation}) => {
         }
       } catch (error) {}
     });
-  } else {
-    console.log('Filtered none');
   }
 
   async function handleDelete(params) {
-    console.log('param: ', params);
     try {
       setLoading(true);
       const action = await PostData({
@@ -94,7 +110,6 @@ const PendingTransaction = ({navigation}) => {
   const pendingMenu = Object.values(filteredTransaction).filter(
     item => item.status === 1,
   );
-  console.log('pendingMenu: ', pendingMenu);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>

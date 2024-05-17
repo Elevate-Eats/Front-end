@@ -13,7 +13,8 @@ import {Text} from 'react-native-paper';
 import {BtnLogReg, FormLogReg} from '../../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {API_KEY, API_URL, LOGIN_ENDPOINT} from '@env';
+import {API_KEY, API_URL, LOGIN_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
+import getDataQuery from '../../utils/getDataQuery';
 
 const LoginPage = ({navigation}) => {
   const [loading, setLoading] = useState(false);
@@ -40,17 +41,17 @@ const LoginPage = ({navigation}) => {
           'companyId',
           action.data.credentials.companyid.toString(),
         );
-        // navigation.replace('Bottom Tab', {
-        //   nickname: action.data.nickname,
-        //   id: action.data.id,
-        // });
         navigation.replace('Bottom Tab');
         ToastAndroid.show(action.data.message, ToastAndroid.SHORT);
       }
     } catch (error) {
       // console.log('login: ', login);
       console.log('err: ', error);
-      Alert.alert('Login Error', 'Check your email or password!');
+      // Alert.alert('Login Error', 'Check your email or password!');
+      ToastAndroid.show(
+        'Login Error, Check your email or password!',
+        ToastAndroid.SHORT,
+      );
     } finally {
       setLoading(false);
     }

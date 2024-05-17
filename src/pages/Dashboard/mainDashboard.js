@@ -40,7 +40,6 @@ const MainDashboard = ({navigation, route}) => {
   const selectBranch = useSelector(state => state.branch.selectedBranch);
   const [modal, setModal] = useState(false);
   const [loading, setLoading] = useState(false);
-
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
@@ -66,18 +65,11 @@ const MainDashboard = ({navigation, route}) => {
             endpoint: 'showManagers',
             resultKey: 'managerData',
           });
-          const transaction = await getDataQuery({
-            operation: TRANSACTION_ENDPOINT,
-            endpoint: 'showTransactions',
-            resultKey: 'transactions',
-            query: `branch=0`,
-          });
-          if (branch || menuCompany || employee || manager || transaction) {
+          if (branch || menuCompany || employee || manager) {
             dispatch(allBranch(branch));
             dispatch(allMenu(menuCompany));
             dispatch(allEmployee(employee));
             dispatch(allManager(manager));
-            dispatch(allTransaction(transaction));
           }
         } catch (error) {
           console.log('Eror fetching data: ', error);

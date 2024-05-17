@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Button, Text} from 'react-native-paper';
+import {Button, Text, TextInput} from 'react-native-paper';
 import React, {useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Expanse from '../../assets/icons/cash-out.svg';
-import Print from '../../assets/icons/printers.svg';
+import Print from '../../assets/icons/download_file.svg';
 import Right from '../../assets/icons/arrow-right.svg';
 import {useNavigation} from '@react-navigation/native';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -26,14 +26,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFetchBlob from 'rn-fetch-blob';
 import Pdf from 'react-native-pdf';
 import {Buffer} from 'buffer';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import FormatDateTime from '../../utils/formatDateTime';
 global.Buffer = Buffer;
 
 const MainLaporan = () => {
   const navigation = useNavigation();
   const [filePath, setFilePath] = useState('');
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
   const [transaction, setTransaction] = useState({});
   const [loading, setLoading] = useState(false);
@@ -42,33 +41,6 @@ const MainLaporan = () => {
     value: item.id,
     label: item.name,
   }));
-  listBranch.push({
-    value: 0,
-    label: 'Semua Cabang',
-  });
-
-  useEffect(() => {
-    async function fetchData(params) {
-      try {
-        // setLoading(true);
-        const data = await getDataQuery({
-          operation: TRANSACTION_ENDPOINT,
-          endpoint: 'showTransactions',
-          resultKey: 'transactions',
-          query: `branch=${value}`,
-        });
-        if (data) {
-          setTransaction(data);
-        }
-      } catch (error) {
-        setTransaction([]);
-      } finally {
-        // setLoading(false);
-      }
-    }
-    fetchData();
-  }, [value]);
-  // console.log('transaction: ', transaction);
 
   const [date, setDate] = useState(new Date());
   const [showDate, setShowDate] = useState(false);
@@ -77,90 +49,43 @@ const MainLaporan = () => {
     setDate(value);
     setShowDate(false);
   }
-
-  async function handlePress(params) {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('userToken');
-      const pdfData = await axios.get(
-        `${API_URL}/${REPORT_ENDPOINT}/showDailyReport?branchId=6&date=2024-05-13`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          responseType: 'arraybuffer',
-        },
-      );
-
-      const base64 = Buffer.from(pdfData.data, 'binary').toString('base64');
-      const dirs = RNFetchBlob.fs.dirs;
-      const path = `${dirs.DownloadDir}/Elevate/report_4.pdf`;
-      console.log('dirs: ', dirs);
-      console.log('path: ', path);
-
-      await RNFetchBlob.fs.writeFile(path, base64, 'base64');
-      setFilePath(path);
-    } catch (error) {
-      console.log('error: ', error);
-    } finally {
-      setLoading(false);
-      ToastAndroid.show('Success', ToastAndroid.BOTTOM);
-    }
+  function handlePress(params) {
+    navigation.navigate(params);
   }
-  // console.log(`transaction branchId-${value}: `, transaction);
-  // const dateOnly = date.toISOString().split('T')[0];
-  // console.log('dateOnly: ', dateOnly);
+
+  // async function handlePress(params) {
+  //   try {
+  //     setLoading(true);
+  //     const token = await AsyncStorage.getItem('userToken');
+  //     const pdfData = await axios.get(
+  //       `${API_URL}/${REPORT_ENDPOINT}/showDailyReport?branchId=6&date=2024-05-13`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         responseType: 'arraybuffer',
+  //       },
+  //     );
+
+  //     const base64 = Buffer.from(pdfData.data, 'binary').toString('base64');
+  //     const dirs = RNFetchBlob.fs.dirs;
+  //     const path = `${dirs.DownloadDir}/Elevate/report_4.pdf`;
+  //     console.log('dirs: ', dirs);
+  //     console.log('path: ', path);
+
+  //     await RNFetchBlob.fs.writeFile(path, base64, 'base64');
+  //     setFilePath(path);
+  //   } catch (error) {
+  //     console.log('error: ', error);
+  //   } finally {
+  //     setLoading(false);
+  //     ToastAndroid.show('Success', ToastAndroid.BOTTOM);
+  //   }
+  // }
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: Colors.backgroundColor}}>
       <TopBar title="Laporan Pengeluaran" navigation={navigation} />
-      {/* <View style={styles.header}>
-        <View
-          style={{flexDirection: 'row', alignItems: 'center', columnGap: 16}}>
-          <TouchableOpacity onPress={() => navigation.openDrawer()}>
-            <Icon name="menu" size={25} color="black" />
-          </TouchableOpacity>
-          <Text variant="titleMedium" style={{fontSize: 20}}>
-            Laporan Pengeluaran
-          </Text>
-        </View>
-        <View style={{marginTop: 10}}>
-          <Dropdown
-            data={Object.values(listBranch).sort((a, b) =>
-              a.label.localeCompare(b.label),
-            )}
-            mode="modal"
-            style={[styles.dropdown, isFocus && {borderColor: Colors.btnColor}]}
-            placeholderStyle={{fontSize: 16}}
-            selectedTextStyle={{
-              fontSize: 18,
-              fontWeight: '600',
-              color: 'grey',
-            }}
-            inputSearchStyle={{height: 40, fontSize: 16}}
-            itemTextStyle={{fontWeight: '700'}}
-            search
-            maxHeight={300}
-            labelField={'label'}
-            valueField={'value'}
-            placeholder="Pilih Cabang ..."
-            searchPlaceholder="Search ..."
-            value={value}
-            onFocus={() => setIsFocus(true)}
-            onBlur={() => setIsFocus(false)}
-            onChange={item => {
-              setValue(item.value);
-              setIsFocus(false);
-            }}
-            renderLeftIcon={() => {
-              return (
-                <View style={{marginRight: 20}}>
-                  <Icon name="storefront" size={30} color={Colors.btnColor} />
-                </View>
-              );
-            }}
-          />
-        </View>
-      </View> */}
       {/*
         {
           // filePath ? (
@@ -174,71 +99,40 @@ const MainLaporan = () => {
           // ) : null
         }
       </View>*/}
-      {/* {
-        <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.001)'}}>
-          <ScrollView style={{flex: 1, padding: 16}}>
-            <Text variant="headlineMedium" style={{fontWeight: '700'}}>
-              Beranda
-            </Text>
-            <Pressable
-              style={styles.calendar}
-              onPress={() => setShowDate(true)}>
-              <Icon name="calendar-month" size={30} color={Colors.btnColor} />
-              <Text
-                style={{
-                  marginHorizontal: 10,
-                  fontSize: 18,
-                  flex: 1,
-                }}
-                variant="titleMedium">
-                {FormatDateTime(date.toISOString()).realDate}
-              </Text>
-              <Edit width={25} height={25} fill="grey" />
-            </Pressable>
-            {showDate && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                onChange={handleDate}
-                maximumDate={new Date()}
-                negativeButton={{label: 'Batal', textColor: Colors.deleteColor}}
-              />
-            )}
-          </ScrollView>
-        </View>
-      } */}
       <View style={styles.whiteLayer}>
-        <Text
-          style={{
-            fontSize: 20,
-            fontWeight: '700',
-            padding: 10,
-          }}>
-          Pilih Opsi
-        </Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginHorizontal: 10,
-            padding: 15,
-            backgroundColor: 'rgba(0,0,0,0.07)',
-            borderRadius: 5,
-            shadowColor: 'black',
-            shadowOffset: {
-              width: 0,
-              height: 6,
-            },
-            shadowOpacity: 10,
-            shadowRadius: 10,
-          }}>
-          <Expanse width={40} height={40} />
+        <View>
           <Text
-            variant="titleMedium"
-            style={{fontWeight: '700', marginHorizontal: 15}}>
-            Catatan Pengeluaran
+            style={{
+              fontSize: 20,
+              fontWeight: '700',
+              padding: 10,
+            }}>
+            Pilih Opsi
           </Text>
-          <Right width={25} height={25} />
+          <Pressable
+            onPress={() => handlePress('Pengeluaran')}
+            style={styles.box}>
+            <Expanse width={40} height={40} />
+            <Text
+              variant="titleMedium"
+              style={{fontWeight: '700', marginHorizontal: 15, flex: 1}}>
+              Catatan Pengeluaran
+            </Text>
+            <TouchableOpacity onPress={() => handlePress('Pengeluaran')}>
+              <Right width={30} height={30} />
+            </TouchableOpacity>
+          </Pressable>
+          <Pressable onPress={() => console.log('Press')} style={styles.box}>
+            <Print width={40} height={40} />
+            <Text
+              variant="titleMedium"
+              style={{fontWeight: '700', marginHorizontal: 15, flex: 1}}>
+              Unduh Laporan
+            </Text>
+            <TouchableOpacity onPress={() => console.log('Press')}>
+              <Right width={30} height={30} />
+            </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -277,12 +171,12 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   box: {
-    height: '35%',
-    width: '45%',
-    backgroundColor: 'rgba(0,0,0,0.07)',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    rowGap: 20,
-    borderRadius: 10,
+    marginHorizontal: 10,
+    padding: 15,
+    backgroundColor: 'rgba(0,0,0,0.07)',
+    borderRadius: 8,
+    marginVertical: 10,
   },
 });

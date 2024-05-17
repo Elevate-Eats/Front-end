@@ -22,9 +22,11 @@ import getDataQuery from '../../../utils/getDataQuery';
 import {TRANSACTION_ENDPOINT} from '@env';
 import PostData from '../../../utils/postData';
 import FormatDateTime from '../../../utils/formatDateTime';
+import {allTransaction} from '../../../redux/showTransaction';
 
 const History = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [isFocus, setIsFocus] = useState(false);
@@ -45,8 +47,8 @@ const History = () => {
   useEffect(() => {
     async function fetchData(params) {
       setLoading(true);
-      console.log('value: ', value);
       try {
+        console.log('value: ', value);
         const data = await getDataQuery({
           operation: TRANSACTION_ENDPOINT,
           endpoint: 'showTransactions',
@@ -54,6 +56,7 @@ const History = () => {
           query: `branch=${value}`,
         });
         if (data) {
+          console.log('data ===> : ', data);
           setTransaction(data);
         }
       } catch (error) {
@@ -65,8 +68,6 @@ const History = () => {
     }
     fetchData();
   }, [value]);
-
-  console.log('transaction backend: ', transaction);
 
   function sortTransaction(data) {
     const sortedData = data.sort((a, b) => {
@@ -101,9 +102,9 @@ const History = () => {
       setLoading(false);
     }
   }
-  if (loading) {
-    return <LoadingIndicator />;
-  }
+  // if (loading) {
+  //   return <LoadingIndicator />;
+  // }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -148,7 +149,7 @@ const History = () => {
             renderLeftIcon={() => {
               return (
                 <View style={{marginRight: 20}}>
-                  <Icon name="storefront" size={30} color={Colors.btnColor} />
+                  <Icon name="storefront" size={25} color={Colors.btnColor} />
                 </View>
               );
             }}
@@ -171,8 +172,9 @@ const History = () => {
                       onPress={() =>
                         navigation.navigate('Detail History', {data: item})
                       }
-                      onLongPress={() =>
-                        Alert.alert('Actions', 'Hapus transaksi ?', [
+                      onLongPress={
+                        // () => console.log('id: ', item.id)
+                        Alert.alert('Actions', `Hapus transaksi ?`, [
                           {text: 'Batal'},
                           {text: 'OK', onPress: () => handleDelete(item.id)},
                         ])
