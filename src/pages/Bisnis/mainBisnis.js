@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
   whiteLayer: {
     flex: 1,
     backgroundColor: 'white',
-    margin: 10,
+    margin: 5,
     borderRadius: 5,
     elevation: 1,
     padding: 10,

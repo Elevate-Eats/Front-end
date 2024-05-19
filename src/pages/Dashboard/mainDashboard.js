@@ -38,6 +38,7 @@ import {allManager} from '../../redux/manager';
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
+  console.log('select branch: ', selectBranch);
   const [modal, setModal] = useState(false);
   const [loading, setLoading] = useState(false);
   useFocusEffect(
@@ -91,7 +92,7 @@ const MainDashboard = ({navigation, route}) => {
         ToastAndroid.SHORT,
       );
     } else {
-      navigation.navigate(params);
+      navigation.navigate(params, {data: selectBranch.id});
     }
   }
 
@@ -182,8 +183,8 @@ const styles = StyleSheet.create({
   blueLayer: {
     backgroundColor: Colors.secondaryColor,
     flex: 1 / 5,
-    marginHorizontal: 10,
-    marginTop: 10,
+    marginHorizontal: 5,
+    marginTop: 5,
     marginBottom: 5,
     borderRadius: 5,
     elevation: 3,
@@ -194,9 +195,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     flex: 4 / 5,
     borderRadius: 5,
-    marginHorizontal: 10,
-    marginTop: 5,
-    marginBottom: 10,
+    marginHorizontal: 5,
+    marginBottom: 5,
     elevation: 1,
     padding: 10,
   },

@@ -7,15 +7,20 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Text} from 'react-native-paper';
-import React, {useCallback, useEffect, useState} from 'react';
+import {ActivityIndicator, Text} from 'react-native-paper';
+import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
-import {LoadingIndicator, SearchBox, TopBar} from '../../../components';
+import {
+  ConstButton,
+  LoadingIndicator,
+  SearchBox,
+  TopBar,
+} from '../../../components';
 import {Colors} from '../../../utils/colors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FormatRP from '../../../utils/formatRP';
-import Receipt from '../../../assets/icons/receipt.svg';
+import Receipt from '../../../assets/icons/receipt-bulk.svg';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {Dropdown} from 'react-native-element-dropdown';
 import getDataQuery from '../../../utils/getDataQuery';
@@ -23,237 +28,221 @@ import {TRANSACTION_ENDPOINT} from '@env';
 import PostData from '../../../utils/postData';
 import FormatDateTime from '../../../utils/formatDateTime';
 import {allTransaction} from '../../../redux/showTransaction';
+import FormatDateToISO from '../../../utils/formatDateToIso';
 
-const History = () => {
+const History = ({route}) => {
+  const {data} = route.params;
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [error, setError] = useState('');
-  const [query, setQuery] = useState('');
   const [isFocus, setIsFocus] = useState(false);
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(data);
   const [loading, setLoading] = useState(false);
-  const [transaction, setTransaction] = useState({});
+  const [transaction, setTransaction] = useState([]);
+  const [page, setPage] = useState(1);
+  const [fetchingMore, setFetchingMore] = useState(false);
 
   const allBranch = useSelector(state => state.branch.allBranch);
-  const listBranch = allBranch.map(item => ({
-    value: item.id,
-    label: item.name.toUpperCase(),
-  }));
-  listBranch.push({
-    value: 0,
-    label: 'Semua Cabang',
-  });
+  const listBranch = useMemo(() => {
+    const branches = allBranch.map(item => ({
+      value: item.id,
+      label: item.name.toUpperCase(),
+    }));
+    branches.push({
+      value: 0,
+      label: 'Semua Cabang',
+    });
+    return branches;
+  }, [allBranch]);
+
+  const fetchData = useCallback(async () => {
+    try {
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setFetchingMore(true);
+      }
+      const response = await getDataQuery({
+        operation: TRANSACTION_ENDPOINT,
+        endpoint: 'showTransactions',
+        resultKey: 'transactions',
+        query: `branch=${value}&page=${page}&limit=15`,
+      });
+      if (response) {
+        setTransaction(prev =>
+          page === 1 ? response : [...prev, ...response],
+        );
+      } else if (page === 1) {
+        setTransaction([]);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+      setFetchingMore(false);
+    }
+  }, [page, value]);
 
   useEffect(() => {
-    async function fetchData(params) {
-      setLoading(true);
+    fetchData();
+  }, [fetchData]);
+
+  const handleDelete = useCallback(
+    async id => {
       try {
-        console.log('value: ', value);
-        const data = await getDataQuery({
+        setLoading(true);
+        const action = await PostData({
           operation: TRANSACTION_ENDPOINT,
-          endpoint: 'showTransactions',
-          resultKey: 'transactions',
-          query: `branch=${value}`,
+          endpoint: 'deleteTransaction',
+          payload: {id},
         });
-        if (data) {
-          console.log('data ===> : ', data);
-          setTransaction(data);
+        if (action) {
+          ToastAndroid.show(
+            'Delete Transaction Successfully!',
+            ToastAndroid.SHORT,
+          );
+          setPage(1); // Reset page to 1 to refresh the list after deletion
+          fetchData();
         }
       } catch (error) {
-        setTransaction([]);
-        console.log('error: ', error);
+        ToastAndroid.show('Error deleting transaction', ToastAndroid.SHORT);
       } finally {
         setLoading(false);
       }
-    }
-    fetchData();
-  }, [value]);
+    },
+    [fetchData],
+  );
 
-  function sortTransaction(data) {
-    const sortedData = data.sort((a, b) => {
-      if (a.status === b.status) {
-        return 0;
-      } else if (a.status > b.status) {
-        return -1;
-      } else {
-        return 1;
-      }
-    });
-    return sortedData;
-  }
+  const renderItem = useCallback(
+    ({item}) => (
+      <View>
+        <View style={[styles.icon, {flexDirection: 'row'}]}>
+          <Receipt width={35} height={35} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Detail History', {data: item})}
+            style={styles.itemContainer}>
+            <View style={styles.itemRow}>
+              <Text variant="titleMedium" style={styles.paymentMethod}>
+                {item.paymentmethod === '0' ? 'Cash' : 'Transfer'}
+              </Text>
+              <Text variant="titleMedium" style={styles.totalPrice}>
+                {FormatRP(item.totalprice)}
+              </Text>
+            </View>
+            <View style={styles.itemRow}>
+              <Text variant="titleMedium" style={styles.itemDate}>
+                {FormatDateTime(item.transactiondate).realDate}
+              </Text>
+              <Text variant="titleMedium" style={styles.itemTime}>
+                {FormatDateTime(item.transactiondate).realTime}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ),
+    [navigation],
+  );
 
-  async function handleDelete(id) {
-    try {
-      setLoading(true);
-      const action = await PostData({
-        operation: TRANSACTION_ENDPOINT,
-        endpoint: 'deleteTransaction',
-        payload: {id: id},
-      });
-      if (action) {
-        ToastAndroid.show(
-          'Delete Transaction Successfully!',
-          ToastAndroid.SHORT,
-        );
-      }
-    } catch (error) {
-      ToastAndroid.show('Error deleting transaction', ToastAndroid.SHORT);
-    } finally {
-      setLoading(false);
-    }
-  }
-  // if (loading) {
-  //   return <LoadingIndicator />;
-  // }
+  const renderLoader = () => (
+    <View style={styles.loaderContainer}>
+      <ActivityIndicator size="small" style={styles.loader} />
+      <Text>Please Wait ...</Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View
-          style={{flexDirection: 'row', alignItems: 'center', columnGap: 16}}>
+        <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={25} color="black" />
           </TouchableOpacity>
-          <Text variant="titleMedium" style={{fontSize: 20}}>
+          <Text variant="titleMedium" style={styles.headerTitle}>
             Riwayat Transaksi
           </Text>
         </View>
-        <View style={{marginTop: 10}}>
+        <View style={styles.dropdownContainer}>
           <Dropdown
             mode="modal"
             style={[styles.dropdown, isFocus && {borderColor: Colors.btnColor}]}
-            placeholderStyle={{fontSize: 16}}
-            selectedTextStyle={{
-              fontSize: 18,
-              fontWeight: '600',
-              color: Colors.btnColor,
-            }}
-            inputSearchStyle={{height: 40, fontSize: 16}}
-            data={Object.values(listBranch).sort((a, b) =>
-              a.label.localeCompare(b.label),
-            )}
-            itemTextStyle={{fontWeight: '700'}}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            inputSearchStyle={styles.inputSearchStyle}
+            data={listBranch.sort((a, b) => a.label.localeCompare(b.label))}
+            itemTextStyle={styles.itemTextStyle}
             search
             maxHeight={300}
             labelField="label"
             valueField="value"
-            placeholder={'Pilih Cabang'}
+            placeholder="Pilih Cabang"
             searchPlaceholder="Search ..."
             value={value}
             onFocus={() => setIsFocus(true)}
             onBlur={() => setIsFocus(false)}
             onChange={item => {
               setValue(item.value);
+              setPage(1); // Reset page to 1 when branch changes
               setIsFocus(false);
             }}
-            renderLeftIcon={() => {
-              return (
-                <View style={{marginRight: 20}}>
-                  <Icon name="storefront" size={25} color={Colors.btnColor} />
-                </View>
-              );
-            }}
+            renderLeftIcon={() => (
+              <View style={styles.iconContainer}>
+                <Icon name="storefront" size={25} color={Colors.btnColor} />
+              </View>
+            )}
           />
         </View>
       </View>
-      <View style={{backgroundColor: 'rgba(0,0,0,0.0001)', flex: 1}}>
+      <View style={styles.listContainer}>
         {transaction.length > 0 ? (
           <FlatList
-            data={sortTransaction(
-              Object.values(transaction).filter(item => item.status === 0),
-            )}
+            data={transaction}
             keyExtractor={item => item.id.toString()}
-            renderItem={({item}) => {
-              return (
-                <View>
-                  <View style={[styles.icon, {flexDirection: 'row'}]}>
-                    <Ionicons name="receipt-outline" size={40} />
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate('Detail History', {data: item})
-                      }
-                      onLongPress={
-                        // () => console.log('id: ', item.id)
-                        Alert.alert('Actions', `Hapus transaksi ?`, [
-                          {text: 'Batal'},
-                          {text: 'OK', onPress: () => handleDelete(item.id)},
-                        ])
-                      }
-                      style={{
-                        paddingLeft: 15,
-                        flex: 1,
-                        justifyContent: 'center',
-                        rowGap: 5,
-                      }}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                        }}>
-                        <Text
-                          variant="titleMedium"
-                          style={{fontWeight: '600', color: 'grey'}}>
-                          {item.paymentmethod === '0' ? 'Cash' : 'Transfer'}
-                        </Text>
-                        <Text
-                          variant="titleMedium"
-                          style={{color: 'green', fontWeight: '700'}}>
-                          {FormatRP(item.totalprice)}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                        }}>
-                        <Text variant="titleMedium" style={{fontWeight: '700'}}>
-                          {item.transactiondate}
-                        </Text>
-                        <Text variant="titleMedium" style={{color: 'grey'}}>
-                          {FormatDateTime(item.transactiondate).realTime}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
+            renderItem={renderItem}
+            ListFooterComponent={fetchingMore ? renderLoader : null}
+            onEndReached={() => {
+              if (!fetchingMore) setPage(prev => prev + 1);
             }}
+            onEndReachedThreshold={0.5}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            removeClippedSubviews
           />
         ) : (
-          <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <View style={styles.emptyContainer}>
             <Receipt width={200} height={200} />
-            <Text variant="headlineMedium" style={{fontWeight: '700'}}>
+            <Text variant="headlineMedium" style={styles.emptyText}>
               Transaction not found
             </Text>
           </View>
         )}
-        {/* {console.log('transaction: ', transaction)} */}
       </View>
     </SafeAreaView>
   );
 };
 
-export default History;
+export default React.memo(History);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: Colors.backgroundColor,
+    backgroundColor: '#fff',
   },
-  whiteLayer: {
-    flex: 1,
-    backgroundColor: 'white',
-    margin: 10,
-    borderRadius: 5,
-    elevation: 1,
-    padding: 10,
+  header: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
-  wrapSearch: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    columnGap: 10,
+    columnGap: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+  },
+  dropdownContainer: {
+    marginTop: 10,
   },
   dropdown: {
     height: 50,
@@ -261,23 +250,75 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.06)',
     borderRadius: 8,
   },
+  placeholderStyle: {
+    fontSize: 16,
+  },
+  selectedTextStyle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.btnColor,
+  },
+  inputSearchStyle: {
+    height: 40,
+    fontSize: 16,
+  },
+  itemTextStyle: {
+    fontWeight: '700',
+  },
+  iconContainer: {
+    marginRight: 20,
+  },
+  listContainer: {
+    backgroundColor: 'rgba(0,0,0,0.0001)',
+    flex: 1,
+  },
   icon: {
     marginVertical: 5,
     borderBottomColor: 'grey',
     borderBottomWidth: 0.3,
     marginHorizontal: 15,
-    // backgroundColor: 'red',
     paddingVertical: 15,
+    alignItems: 'center',
   },
-  status: {
+  itemContainer: {
+    paddingLeft: 15,
+    flex: 1,
+    justifyContent: 'center',
+    rowGap: 5,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  paymentMethod: {
+    fontWeight: '600',
+    color: 'grey',
+  },
+  totalPrice: {
+    color: 'green',
     fontWeight: '700',
-    fontSize: 16,
   },
-  header: {
-    backgroundColor: 'white',
-    padding: 16,
-    paddingVertical: 20,
-    elevation: 5,
-    zIndex: 888,
+  itemDate: {
+    fontWeight: '700',
+  },
+  itemTime: {
+    color: 'grey',
+  },
+  loaderContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    columnGap: 10,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontWeight: '700',
   },
 });

@@ -1,32 +1,22 @@
 import {
   Pressable,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
-  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Button, Text, TextInput} from 'react-native-paper';
-import React, {useEffect, useState} from 'react';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {Text} from 'react-native-paper';
+import React, {useState} from 'react';
 import Expanse from '../../assets/icons/cash-out.svg';
 import Print from '../../assets/icons/download_file.svg';
 import Right from '../../assets/icons/arrow-right.svg';
 import {useNavigation} from '@react-navigation/native';
-import {Dropdown} from 'react-native-element-dropdown';
 import {useSelector} from 'react-redux';
-import getDataQuery from '../../utils/getDataQuery';
 import {Colors} from '../../utils/colors';
-import {TRANSACTION_ENDPOINT} from '@env';
-import {ConstButton, TopBar} from '../../components';
-import {REPORT_ENDPOINT, API_URL, API_KEY} from '@env';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {TopBar} from '../../components';
 import RNFetchBlob from 'rn-fetch-blob';
 import Pdf from 'react-native-pdf';
 import {Buffer} from 'buffer';
-import FormatDateTime from '../../utils/formatDateTime';
 global.Buffer = Buffer;
 
 const MainLaporan = () => {
@@ -35,20 +25,6 @@ const MainLaporan = () => {
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
   const [transaction, setTransaction] = useState({});
-  const [loading, setLoading] = useState(false);
-  const allBranch = useSelector(state => state.branch.allBranch);
-  const listBranch = allBranch.map(item => ({
-    value: item.id,
-    label: item.name,
-  }));
-
-  const [date, setDate] = useState(new Date());
-  const [showDate, setShowDate] = useState(false);
-
-  function handleDate(event, value) {
-    setDate(value);
-    setShowDate(false);
-  }
   function handlePress(params) {
     navigation.navigate(params);
   }
@@ -165,7 +141,7 @@ const styles = StyleSheet.create({
   whiteLayer: {
     flex: 1,
     backgroundColor: 'white',
-    margin: 10,
+    margin: 5,
     borderRadius: 5,
     elevation: 1,
     padding: 10,
