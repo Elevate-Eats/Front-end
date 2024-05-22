@@ -1,6 +1,7 @@
 import {
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -11,12 +12,12 @@ import Expanse from '../../assets/icons/cash-out.svg';
 import Print from '../../assets/icons/download_file.svg';
 import Right from '../../assets/icons/arrow-right.svg';
 import {useNavigation} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
 import {Colors} from '../../utils/colors';
 import {TopBar} from '../../components';
 import RNFetchBlob from 'rn-fetch-blob';
 import Pdf from 'react-native-pdf';
 import {Buffer} from 'buffer';
+import ContentPage from '../../components/contentPage';
 global.Buffer = Buffer;
 
 const MainLaporan = () => {
@@ -75,42 +76,21 @@ const MainLaporan = () => {
           // ) : null
         }
       </View>*/}
-      <View style={styles.whiteLayer}>
-        <View>
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: '700',
-              padding: 10,
-            }}>
-            Pilih Opsi
-          </Text>
-          <Pressable
+      <ScrollView style={[styles.whiteLayer, {flexGrow: 1}]}>
+        <View style={{marginVertical: 15}}>
+          <Text style={styles.textOpsi}>Pilih Opsi</Text>
+          <ContentPage
+            Icon={Expanse}
+            title="Catatan Pengeluaran"
             onPress={() => handlePress('Pengeluaran')}
-            style={styles.box}>
-            <Expanse width={40} height={40} />
-            <Text
-              variant="titleMedium"
-              style={{fontWeight: '700', marginHorizontal: 15, flex: 1}}>
-              Catatan Pengeluaran
-            </Text>
-            <TouchableOpacity onPress={() => handlePress('Pengeluaran')}>
-              <Right width={30} height={30} />
-            </TouchableOpacity>
-          </Pressable>
-          <Pressable onPress={() => console.log('Press')} style={styles.box}>
-            <Print width={40} height={40} />
-            <Text
-              variant="titleMedium"
-              style={{fontWeight: '700', marginHorizontal: 15, flex: 1}}>
-              Unduh Laporan
-            </Text>
-            <TouchableOpacity onPress={() => console.log('Press')}>
-              <Right width={30} height={30} />
-            </TouchableOpacity>
-          </Pressable>
+          />
+          <ContentPage
+            Icon={Print}
+            title="Unduh Laporan"
+            onPress={() => console.log('PRess')}
+          />
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -118,25 +98,10 @@ const MainLaporan = () => {
 export default MainLaporan;
 
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: 'white',
-    padding: 16,
-    paddingVertical: 20,
-    elevation: 5,
-    zIndex: 888,
-  },
-  dropdown: {
-    height: 50,
-    paddingHorizontal: 15,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    borderRadius: 8,
-  },
-  calendar: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderRadius: 5,
+  textOpsi: {
+    fontSize: 20,
+    fontWeight: '700',
     padding: 10,
-    alignItems: 'center',
   },
   whiteLayer: {
     flex: 1,
@@ -144,15 +109,6 @@ const styles = StyleSheet.create({
     margin: 5,
     borderRadius: 5,
     elevation: 1,
-    padding: 10,
-  },
-  box: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 10,
-    padding: 15,
-    backgroundColor: 'rgba(0,0,0,0.07)',
-    borderRadius: 8,
-    marginVertical: 10,
+    paddingHorizontal: 10,
   },
 });

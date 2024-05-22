@@ -47,6 +47,8 @@ import AddExpense from './Laporan/Pengeluaran/addExpense';
 import EditExpense from './Laporan/Pengeluaran/editExpense';
 // +++++ STATISTIK +++++
 import MainStatistik from './Statistik/mainStastistik';
+import DataAnalisis from './Statistik/dataAnalisis';
+import DataPrediksi from './Statistik/dataPrediksi';
 // +++++ LOGIN & REGIST +++++
 import LoginPage from './Login/loginPage';
 import RegisterPage from './Register/registerPage';
@@ -55,6 +57,8 @@ import RegisterPage from './Register/registerPage';
 import CompanyAccount from './Account/companyAccount';
 
 export {
+  DataPrediksi,
+  DataAnalisis,
   EditExpense,
   AddExpense,
   MainExpense,

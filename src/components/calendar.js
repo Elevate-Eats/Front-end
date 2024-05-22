@@ -5,7 +5,7 @@ import Calendar from '../assets/icons/calendar-bulk.svg';
 const CalendarPicker = props => {
   return (
     <View style={{flex: 1, rowGap: 5}}>
-      <Text variant="titleMedium">{props.title}</Text>
+      <Text style={{marginLeft: 5, fontWeight: '800'}}>{props.title}</Text>
       <Pressable
         disabled={props.disabled}
         onPress={props.onPress}

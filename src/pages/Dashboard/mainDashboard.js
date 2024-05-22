@@ -16,6 +16,8 @@ import {
   MENU_COMPANY_ENDPOINT,
   EMPLOYEE_ENDPOINT,
   TRANSACTION_ENDPOINT,
+  ANALYTICS_ENDPOINT,
+  REPORT_ENDPOINT,
 } from '@env';
 import {
   ItemDashboard,
@@ -32,15 +34,24 @@ import {allBranch} from '../../redux/branchSlice';
 import {allMenu} from '../../redux/menuSlice';
 import {allEmployee} from '../../redux/employee';
 import getDataQuery from '../../utils/getDataQuery';
-import {allTransaction} from '../../redux/showTransaction';
 import {allManager} from '../../redux/manager';
+import SalesToday from '../../components/salesToday';
+import FormatRP from '../../utils/formatRP';
 
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
-  console.log('select branch: ', selectBranch);
+  // console.log('select branch: ', selectBranch.id);
   const [modal, setModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [todayData, setTodayData] = useState({
+    dailySummary: [],
+    predict: [],
+    weekly: [],
+    shiftData: [],
+  });
+
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
@@ -66,6 +77,106 @@ const MainDashboard = ({navigation, route}) => {
             endpoint: 'showManagers',
             resultKey: 'managerData',
           });
+          const dataDailySummary = await getDataQuery({
+            operation: ANALYTICS_ENDPOINT,
+            endpoint: 'showDailySummary',
+            resultKey: 'data',
+            query: `companyId=1&branchId=12&startDate=2024-05-08&endDate=2024-05-08`,
+          });
+          const dataPredict = await getDataQuery({
+            operation: REPORT_ENDPOINT,
+            endpoint: 'predictTransaction',
+            resultKey: 'data',
+            query: `branchId=12&startDate=2024-05-08&endDate=2024-05-08`,
+          });
+          const dataWeekly = await getDataQuery({
+            operation: REPORT_ENDPOINT,
+            endpoint: 'predictTransaction',
+            resultKey: 'data',
+            query: `branchId=12&startDate=2024-05-13&endDate=2024-05-19`,
+          });
+          if (dataDailySummary && dataPredict && dataWeekly) {
+            const {totalsales, numberoftransactions} = dataDailySummary[0];
+            let revenueShift1 = 0;
+            let revenueShift2 = 0;
+            let transactionShift1 = 0;
+            let transactionShift2 = 0;
+
+            dataPredict.forEach(item => {
+              if (item['Shift'] === 1) {
+                transactionShift1 += item['Jumlah Transaksi'];
+                revenueShift1 += item['Total'];
+              } else if (item['Shift'] === 2) {
+                transactionShift2 += item['Jumlah Transaksi'];
+                revenueShift2 += item['Total'];
+              }
+            });
+
+            const totalPredictedSales = revenueShift1 + revenueShift2;
+            const totalPredictedTransactions =
+              transactionShift1 + transactionShift2;
+            const salesChange =
+              ((totalsales - totalPredictedSales) / totalPredictedSales) * 100;
+            const transactionChange =
+              ((numberoftransactions - totalPredictedTransactions) /
+                totalPredictedTransactions) *
+              100;
+
+            const dataDaily = {
+              transactions: numberoftransactions,
+              sales: totalsales,
+              transactionChange: transactionChange.toFixed(2),
+              salesChange: salesChange.toFixed(2),
+            };
+
+            const dataPrediction = {
+              transactions: totalPredictedTransactions,
+              sales: totalPredictedSales,
+            };
+
+            const shiftData = [
+              {shift: 1, transactions: transactionShift1, sales: revenueShift1},
+              {shift: 2, transactions: transactionShift2, sales: revenueShift2},
+            ];
+
+            const filteredData = dataWeekly
+              .map(item => ({
+                Tanggal: item.Tanggal,
+                Shift: item.Shift,
+                Days: item.Days,
+                JumlahTransaksi: item['Jumlah Transaksi'],
+                Total: item.Total / 1000000,
+              }))
+              .sort((a, b) => a.Days - b.Days);
+
+            const aggregatedData = filteredData.reduce((acc, cur) => {
+              const existing = acc.find(item => item.Tanggal === cur.Tanggal);
+              if (existing) {
+                existing.JumlahTransaksi += cur.JumlahTransaksi;
+                existing.Total += cur.Total;
+              } else {
+                acc.push({...cur});
+              }
+              return acc;
+            }, []);
+            const weeklyTransactions = aggregatedData.map(
+              day => day.JumlahTransaksi,
+            );
+            const weeklySales = aggregatedData.map(day => day.Total);
+
+            const weeklyData = {
+              transactions: weeklyTransactions,
+              sales: weeklySales,
+            };
+
+            setTodayData(prev => ({
+              ...prev,
+              dailySummary: [dataDaily],
+              predict: [dataPrediction],
+              shiftData: shiftData,
+              weekly: [weeklyData],
+            }));
+          }
           if (branch || menuCompany || employee || manager) {
             dispatch(allBranch(branch));
             dispatch(allMenu(menuCompany));
@@ -82,9 +193,10 @@ const MainDashboard = ({navigation, route}) => {
     }, [dispatch]),
   );
 
-  if (loading) {
-    return <LoadingIndicator message="Please Wait ..." />;
-  }
+  // if (loading) {
+  //   return <LoadingIndicator message="Please Wait ..." />;
+  // }
+
   function handlePress(params) {
     if (!selectBranch) {
       ToastAndroid.show(
@@ -128,8 +240,8 @@ const MainDashboard = ({navigation, route}) => {
 
       <View style={styles.whiteLayer}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={{flexDirection: 'row', marginBottom: 10}}>
-            <ItemDashboard
+          {/* <View style={{flexDirection: 'row', marginBottom: 100}}> */}
+          {/* <ItemDashboard
               iconName="fast-food"
               name="Menu"
               onPress={() => handlePress('Pilih Produk')}
@@ -143,20 +255,70 @@ const MainDashboard = ({navigation, route}) => {
               iconName="hourglass-outline"
               name="On Going"
               onPress={() => handlePress('Pending')}
-            />
-          </View>
+            /> */}
+          {/* </View> */}
           <View style={{rowGap: 10}}>
             <View>
-              <TitleDashboard title="Bisnis hari ini" />
-              <View style={styles.box}></View>
+              <TitleDashboard title="Bisnis Hari Ini" />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <SalesToday
+                  loading={loading}
+                  label={'Jumlah Transaksi'}
+                  value={
+                    todayData.dailySummary[0]
+                      ? todayData.dailySummary[0].transactions
+                      : 0
+                  }
+                  percentage={
+                    todayData.dailySummary[0]
+                      ? todayData.dailySummary[0].transactionChange
+                      : 0
+                  }
+                />
+                <SalesToday
+                  loading={loading}
+                  label={'Penjualan'}
+                  value={
+                    todayData.dailySummary[0]
+                      ? FormatRP(todayData.dailySummary[0].sales)
+                      : 0
+                  }
+                  percentage={
+                    todayData.dailySummary[0]
+                      ? todayData.dailySummary[0].salesChange
+                      : 0
+                  }
+                />
+              </View>
             </View>
             <View>
-              <TitleDashboard title="Penjualan" />
-              <View style={styles.box}></View>
-            </View>
-            <View>
-              <TitleDashboard title="Statistik" />
-              <View style={styles.box}></View>
+              <TitleDashboard title="Prediksi Hari Ini" />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <SalesToday
+                  loading={loading}
+                  label={'Jumlah Transaksi'}
+                  value={
+                    todayData.predict[0] ? todayData.predict[0].transactions : 0
+                  }
+                />
+                <SalesToday
+                  loading={loading}
+                  label={'Prediksi Penjualan'}
+                  value={
+                    todayData.predict[0]
+                      ? FormatRP(todayData.predict[0].sales)
+                      : 0
+                  }
+                />
+              </View>
             </View>
           </View>
         </ScrollView>

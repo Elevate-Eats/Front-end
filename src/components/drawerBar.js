@@ -36,8 +36,10 @@ import {
   MainExpense,
   AddExpense,
   EditExpense,
+  DataAnalisis,
+  DataPrediksi,
 } from '../pages';
-import {BottomBar} from '.';
+import {BottomBar, ItemDashboard} from '.';
 import Route from '../routes/route';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {Colors} from '../utils/colors';
@@ -79,7 +81,7 @@ const DrawerBar = ({route}) => {
       }}>
       <Drawer.Group>
         <Drawer.Screen
-          name="Home"
+          name="Dashboard"
           component={HomeStackNavigator}
           options={{
             headerShown: false,
@@ -99,6 +101,45 @@ const DrawerBar = ({route}) => {
             headerShown: true,
             drawerIcon: ({focused}) => {
               const iconName = focused ? 'person-circle' : 'person-circle';
+              const color = focused ? 'white' : 'gray';
+              return <Icon name={iconName} size={25} color={color} />;
+            },
+          }}
+        />
+        <Drawer.Screen
+          name="Menu Branch"
+          component={PilihProduk}
+          options={{
+            drawerLabel: 'Menu Branch',
+            title: 'Menu Branch',
+            drawerIcon: ({focused}) => {
+              const iconName = focused ? 'fast-food' : 'fast-food-outline';
+              const color = focused ? 'white' : 'gray';
+              return <Icon name={iconName} size={25} color={color} />;
+            },
+          }}
+        />
+        {/* <Drawer.Screen
+          name="Riwayat Transaksi"
+          component={History}
+          options={{
+            drawerLabel: 'Riwayat Transaksi',
+            title: 'Riwayat Transaksi',
+            drawerIcon: ({focused}) => {
+              const iconName = focused ? 'clipboard' : 'clipboard-outline';
+              const color = focused ? 'white' : 'gray';
+              return <Icon name={iconName} size={25} color={color} />;
+            },
+          }}
+        /> */}
+        <Drawer.Screen
+          name="On Going"
+          component={PendingTransaction}
+          options={{
+            drawerLabel: 'On Going',
+            title: 'On Going',
+            drawerIcon: ({focused}) => {
+              const iconName = focused ? 'hourglass' : 'hourglass-outline';
               const color = focused ? 'white' : 'gray';
               return <Icon name={iconName} size={25} color={color} />;
             },
@@ -212,10 +253,7 @@ function HomeStackNavigator(params) {
       </Stack.Group>
 
       {/*LAPORAN */}
-      <Stack.Group
-        screenOptions={{
-          animation: 'slide_from_bottom',
-        }}>
+      <Stack.Group screenOptions={{animation: 'slide_from_bottom'}}>
         <Stack.Screen
           name="Pengeluaran"
           component={MainExpense}
@@ -223,6 +261,12 @@ function HomeStackNavigator(params) {
         />
         <Stack.Screen name="Tambah Pengeluaran" component={AddExpense} />
         <Stack.Screen name="Edit Pengeluaran" component={EditExpense} />
+      </Stack.Group>
+
+      <Stack.Group
+        screenOptions={{animation: 'slide_from_bottom', headerShown: false}}>
+        <Stack.Screen name="Data Analisis" component={DataAnalisis} />
+        <Stack.Screen name="Data Prediksi" component={DataPrediksi} />
       </Stack.Group>
     </Stack.Navigator>
   );

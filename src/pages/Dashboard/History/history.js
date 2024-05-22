@@ -149,6 +149,9 @@ const History = ({route}) => {
       <Text>Please Wait ...</Text>
     </View>
   );
+  if (loading) {
+    return <LoadingIndicator />;
+  }
 
   return (
     <SafeAreaView style={styles.container}>

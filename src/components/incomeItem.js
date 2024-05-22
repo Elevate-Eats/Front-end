@@ -4,7 +4,17 @@ import React from 'react';
 import {Colors} from '../utils/colors';
 import FormatRP from '../utils/formatRP';
 
-const IncomeItem = ({title, loading, profit, income, expense}) => {
+const IncomeItem = ({
+  type,
+  title,
+  loading,
+  center,
+  left,
+  right,
+  centerName,
+  leftName,
+  rightName,
+}) => {
   const renderValue = (value, color) =>
     loading ? (
       <ActivityIndicator
@@ -29,12 +39,23 @@ const IncomeItem = ({title, loading, profit, income, expense}) => {
         {title}
       </Text>
       <View style={styles.divider} />
-      {renderValue(FormatRP(profit), profit > 0 ? 'green' : Colors.deleteColor)}
-      <Text style={styles.section}>Profit</Text>
+      {renderValue(
+        type === 'money' ? FormatRP(center) : center,
+        center > 0 ? 'green' : Colors.deleteColor,
+      )}
+      <Text style={styles.section}>{centerName}</Text>
       <View style={styles.divider} />
       <View style={styles.row}>
-        {renderSection('Income', FormatRP(income), 'green')}
-        {renderSection('Expense', FormatRP(expense), Colors.deleteColor)}
+        {renderSection(
+          leftName,
+          type === 'money' ? FormatRP(left) : left,
+          'green',
+        )}
+        {renderSection(
+          rightName,
+          type === 'money' ? FormatRP(right) : right,
+          Colors.deleteColor,
+        )}
       </View>
     </View>
   );
@@ -53,7 +74,7 @@ const styles = StyleSheet.create({
   titleText: {
     alignSelf: 'center',
     color: 'grey',
-    fontSize: 24,
+    fontSize: 18,
   },
   divider: {
     backgroundColor: 'grey',
@@ -73,6 +94,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     color: 'grey',
+    marginTop: 10,
   },
   row: {
     flexDirection: 'row',

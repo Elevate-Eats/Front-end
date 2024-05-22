@@ -6,7 +6,7 @@ import {Colors} from '../utils/colors';
 const SalesItem = props => {
   return (
     <View style={[styles.container]}>
-      <Text variant="titleMedium" style={{fontSize: 24, color: 'grey'}}>
+      <Text variant="titleMedium" style={{fontSize: 20, color: 'grey'}}>
         {props.title}
       </Text>
       {props.loading ? (
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     elevation: 2,
-    gap: 5,
+    gap: 10,
     alignItems: 'center',
   },
 });
