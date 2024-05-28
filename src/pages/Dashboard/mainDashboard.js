@@ -92,19 +92,19 @@ const MainDashboard = ({navigation, route}) => {
             endpoint: 'showDailySummary',
             resultKey: 'data',
             // query: `companyId=1&branchId=12&startDate=2024-05-01&endDate=2024-05-01`,
-            query: `companyId=1&branchId=12&startDate=${dateNow}&endDate=${dateNow}`,
+            query: `companyId=1&branchId=2&startDate=2024-05-29&endDate=2024-05-29`,
           });
           const dataPredict = await getDataQuery({
             operation: REPORT_ENDPOINT,
             endpoint: 'predictTransaction',
             resultKey: 'data',
-            query: `branchId=12&startDate=${dateNow}&endDate=${dateNow}`,
+            query: `branchId=2&startDate=2024-05-29&endDate=2024-05-29`,
           });
           const dataWeekly = await getDataQuery({
             operation: REPORT_ENDPOINT,
             endpoint: 'predictTransaction',
             resultKey: 'data',
-            query: `branchId=12&startDate=2024-05-29&endDate=2024-06-05`,
+            query: `branchId=2&startDate=2024-05-29&endDate=2024-06-05`,
           });
           let revenueShift1 = 0;
           let revenueShift2 = 0;

@@ -26,9 +26,6 @@ import PostData from '../utils/postData';
 import {ITEM_ENDPOINT, API_URL, TRANSACTION_ENDPOINT} from '@env';
 import {useDispatch} from 'react-redux';
 import getDataQuery from '../utils/getDataQuery';
-import {allItems as allitem} from '../redux/allItems';
-import {red} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
-import ItemDashboard from './itemDashboard';
 import {clearReduxItems} from '../redux/cartSlice';
 
 const BottomSheet = props => {
@@ -37,19 +34,13 @@ const BottomSheet = props => {
   const menuCompany = useSelector(s => s.menu.allMenu);
   const transactionId = useSelector(state => state.transaction.transactionId); // Directly from state
   const selectedBranch = useSelector(state => state.branch.selectedBranch);
-  const allTransaction = useSelector(
-    state => state.showTransaction.allTransaction,
-  );
-  const table = useSelector(state => state.customer.customerInfo);
+  const customer = useSelector(state => state.customer.customerInfo);
   const reduxItems = useSelector(state => state.cart.reduxItems); //! Redux
   const backendItems = useSelector(state => state.cart.backendItems); // !Backend
   const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState([]);
 
   // console.log('all Trans: ', allTransaction);
-  const filtered = Object.values(allTransaction).filter(
-    item => item.id === transactionId,
-  );
   function mergeCart(backEnd, redux) {
     const combinedData = [
       ...(backEnd[transactionId.toString()] || []),
@@ -73,6 +64,7 @@ const BottomSheet = props => {
   }
   const hasilmerge = mergeCart(backendItems, reduxItems);
   console.log('hasil :', hasilmerge);
+  console.log('CUSTOMER: ', customer);
 
   const slide = useRef(new Animated.Value(700)).current;
 
@@ -80,7 +72,7 @@ const BottomSheet = props => {
     // console.log('selected: ', selectedTransaction.transactions);
     await handleSave();
     navigation.navigate('Pembayaran', {
-      data: selectedTransaction.transactions,
+      data: selectedTransaction,
       totalprice: calculateSubtotal(
         mergeCart(backendItems, reduxItems)[transactionId],
       ),
@@ -89,9 +81,6 @@ const BottomSheet = props => {
 
   async function updateItems(params) {
     console.log('params Update: ', params);
-    // const payload = params.map(
-    //   ({category, disc, menuid, name, transactionId, ...rest}) => rest,
-    // );
     const payload = params
       .map(item => ({
         ...item,
@@ -122,7 +111,7 @@ const BottomSheet = props => {
   }
 
   async function addItems(params) {
-    console.log('params Additem: --->: ', params);
+    // console.log('params Additem: --->: ', params);
 
     const payload = params
       .map(item => ({
@@ -153,18 +142,19 @@ const BottomSheet = props => {
       setLoading(false);
     }
   }
+
   async function updateTransaction(params) {
-    const filtered = selectedTransaction.transactions.filter(
+    const filtered = selectedTransaction.filter(
       item => item.id === transactionId,
     );
-    // console.log('filtered: ', filtered);
+    // console.log('filtered: ', selectedTransaction);
     const payloadUpdate = {
       ...filtered[0],
       tableNumber: filtered[0].tablenumber,
       totalprice: calculateSubtotal(params),
     };
     const {tablenumber, companyid, ...payload} = payloadUpdate;
-    console.log('payload: ', payload);
+    // console.log('payload: ', payload);
     try {
       setLoading(true);
       const action = await PostData({
@@ -174,7 +164,7 @@ const BottomSheet = props => {
       });
       if (action) {
         setLoading(false);
-        // ToastAndroid.show(action.message, ToastAndroid.SHORT);
+        ToastAndroid.show(action.message, ToastAndroid.SHORT);
       }
     } catch (error) {
       console.log('Error UpdateTrans: ', error);
@@ -192,10 +182,10 @@ const BottomSheet = props => {
       transactionId.toString()
     ].filter(item => !item.hasOwnProperty('id'));
 
-    console.log('=====================================');
-    console.log('with id: ', withId);
-    console.log('without id: ', withoutId);
-    console.log('=====================================');
+    // console.log('================================');
+    // console.log('with id: ', withId);
+    // console.log('without id: ', withoutId);
+    // console.log('================================');
 
     // await addItems(withoutId);
     // await updateItems(withId);
@@ -224,7 +214,7 @@ const BottomSheet = props => {
         );
       }
       dispatch(clearReduxItems());
-      // ToastAndroid.show('Items saved successfully', ToastAndroid.SHORT);
+      ToastAndroid.show('Items saved successfully', ToastAndroid.SHORT);
       navigation.goBack();
     } catch (error) {
       console.log('Error save', error);
@@ -271,10 +261,9 @@ const BottomSheet = props => {
         const action = await getDataQuery({
           operation: TRANSACTION_ENDPOINT,
           endpoint: 'showTransactions',
-          resultKey: 'transactionData',
-          query: `branch=${selectedBranch.id}`,
+          resultKey: 'transactions',
+          query: `branch=${selectedBranch.id}&search=${customer.name}`,
         });
-        // console.log('action: ', action);
         setSelectedTransaction(action);
       } catch (error) {}
     }
@@ -283,7 +272,7 @@ const BottomSheet = props => {
 
   return (
     <Pressable onPress={closeModal} style={styles.backdrop}>
-      <Pressable style={{width: '100%', height: '99.9%'}}>
+      <Pressable style={{width: '100%', height: '99%'}}>
         <Animated.View
           style={[styles.bottomSheet, {transform: [{translateY: slide}]}]}>
           <View
@@ -316,45 +305,47 @@ const BottomSheet = props => {
             keyExtractor={item => (item.id ? item.id : item.menuid).toString()}
             renderItem={({item}) => {
               return (
-                <ScrollView>
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate('Detail Items Cart', {item})
-                    }>
-                    <View style={styles.cartItem}>
-                      <Text variant="titleMedium" style={{fontWeight: '700'}}>
-                        {item.name}
+                // <ScrollView>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('Detail Items Cart', {item})
+                  }>
+                  <View style={styles.cartItem}>
+                    <Text variant="titleMedium" style={{fontWeight: '700'}}>
+                      {item.name}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                      }}>
+                      <Text>
+                        {FormatRP(item.price)} x {item.count}
                       </Text>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                        }}>
-                        <Text>
-                          {FormatRP(item.price)} x {item.count}
-                        </Text>
-                        <Text style={{fontWeight: '700', fontSize: 18}}>
-                          {FormatRP(item.totalprice)}
-                        </Text>
-                      </View>
-                      {
-                        <View>
-                          {item.hasOwnProperty('disc') ? (
-                            <Text>Diskon (- {FormatRP(item.disc)})</Text>
-                          ) : (
-                            <Text>
-                              Diskon(-
-                              {FormatRP(
-                                item.totalprice - item.price * item.count,
-                              )}
-                              )
-                            </Text>
-                          )}
-                        </View>
-                      }
+                      <Text style={{fontWeight: '700', fontSize: 18}}>
+                        {item.disc
+                          ? FormatRP(item.totalprice - item.disc)
+                          : FormatRP(item.totalprice)}
+                      </Text>
                     </View>
-                  </TouchableOpacity>
-                </ScrollView>
+                    {
+                      <View>
+                        {item.hasOwnProperty('disc') ? (
+                          <Text>Diskon (- {FormatRP(item.disc)})</Text>
+                        ) : (
+                          <Text>
+                            Diskon(-
+                            {FormatRP(
+                              item.totalprice - item.price * item.count,
+                            )}
+                            )
+                          </Text>
+                        )}
+                      </View>
+                    }
+                  </View>
+                </TouchableOpacity>
+                // </ScrollView>
               );
             }}
           />
@@ -367,7 +358,7 @@ const BottomSheet = props => {
             <Text variant="titleMedium" style={{fontWeight: '700'}}>
               {`Subtotal (${mergeCart(backendItems, reduxItems)[transactionId].length})`}
             </Text>
-            <Text variant="titleMedium">
+            <Text variant="titleMedium" style={{fontWeight: '700'}}>
               {FormatRP(
                 calculateSubtotal(
                   mergeCart(backendItems, reduxItems)[transactionId.toString()],

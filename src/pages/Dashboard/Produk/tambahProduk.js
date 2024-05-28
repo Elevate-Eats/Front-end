@@ -81,7 +81,7 @@ const TambahProduk = ({navigation}) => {
         `${menu.name} was successfully added`,
         ToastAndroid.SHORT,
       );
-      navigation.goBack();
+      navigation.navigate('Tambah Produk');
     } catch (error) {
       Alert.alert('Failed to Add Menu', error);
     }

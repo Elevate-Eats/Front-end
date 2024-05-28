@@ -30,60 +30,48 @@ const PendingTransaction = ({navigation}) => {
   const branch = useSelector(state => state.branch.selectedBranch);
   const menuCompany = useSelector(state => state.menu.allMenu);
   const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [transaction, setTransaction] = useState([]);
-  const [error, setError] = useState(null);
 
-  // useEffect(() => {
-  //   async function fetchData(params) {
-  //     setLoading(true);
-  //     try {
-  //       const data = await getDataQuery({
-  //         operation: TRANSACTION_ENDPOINT,
-  //         endpoint: 'showTransactions',
-  //         resultKey: 'transactions',
-  //         query: `branch=${branch.id}&status=1`,
-  //       });
-  //       console.log('data useEffect: ', data);
-  //       if (data) {
-  //         setTransaction(data);
-  //       }
-  //     } catch (error) {
-  //       console.log('error: ', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-  //   fetchData();
-  // }, []);
+  const [data, setData] = useState({
+    transaction: [],
+    loading: false,
+    query: '',
+    error: null,
+  });
+
+  async function fetchData(params) {
+    setData(prev => ({...prev, loading: true}));
+    try {
+      const response = await getDataQuery({
+        operation: TRANSACTION_ENDPOINT,
+        endpoint: 'showTransactions',
+        resultKey: 'transactions',
+        query: `branch=${branch.id}&limit=100`,
+      });
+      if (response) {
+        setData(prev => ({...prev, transaction: response}));
+      }
+    } catch (error) {
+      setData(prev => ({
+        ...prev,
+        transaction: [],
+        error: 'Transaction not found',
+      }));
+    } finally {
+      setData(prev => ({...prev, loading: false}));
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, [branch?.id]);
 
   useFocusEffect(
     useCallback(() => {
-      async function fetchData(params) {
-        setLoading(true);
-        try {
-          const data = await getDataQuery({
-            operation: TRANSACTION_ENDPOINT,
-            endpoint: 'showTransactions',
-            resultKey: 'transactions',
-            query: `branch=${branch.id}`,
-          });
-          if (data) {
-            setTransaction(data);
-          }
-        } catch (error) {
-          setError('Transaction not found');
-          setTransaction([]);
-          console.log('error: ', error);
-        } finally {
-          setLoading(false);
-        }
-      }
       fetchData();
-    }, [branch?.id]),
+    }, [branch.id]),
   );
 
-  const pendingMenu = Object.values(transaction).filter(
+  const pendingMenu = Object.values(data.transaction).filter(
     item => item.status === 1,
   );
   if (pendingMenu.length > 0) {
@@ -113,7 +101,7 @@ const PendingTransaction = ({navigation}) => {
 
   async function handleDelete(params) {
     try {
-      setLoading(true);
+      setData(prev => ({...prev, loading: true}));
       const action = await PostData({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'deleteTransaction',
@@ -125,11 +113,11 @@ const PendingTransaction = ({navigation}) => {
       }
     } catch (error) {
     } finally {
-      setLoading(false);
+      setData(prev => ({...prev, loading: false}));
     }
   }
 
-  if (loading) {
+  if (data.loading) {
     return <LoadingIndicator />;
   }
 
@@ -174,8 +162,11 @@ const PendingTransaction = ({navigation}) => {
                             navigation.navigate('Transaksi', {
                               name: item.customername,
                               id: item.id,
+                              table: item.tablenumber,
                             });
-                          }}>
+                          }}
+                          // onPress={() => console.log('item: ', item)}
+                        >
                           <Text variant="titleMedium" style={{fontSize: 18}}>
                             {`${item.customername}`}
                           </Text>

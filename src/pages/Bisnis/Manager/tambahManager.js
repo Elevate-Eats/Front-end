@@ -67,7 +67,6 @@ const TambahManager = () => {
     } finally {
       setData(prev => ({...prev, loading: false}));
     }
-    // console.log('payload: ', payload);
   }
 
   return (

@@ -30,105 +30,104 @@ import {
   setTransactionId,
   setTransactionList,
 } from '../../../redux/transactionSlice';
-import {addTransaction as addTrans} from '../../../redux/showTransaction';
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
+  console.log('prevData: ', prevData);
   const dispatch = useDispatch();
   const selectBranch = useSelector(s => s.branch.selectedBranch);
   const transactionId = useSelector(s => s.transaction.transactionId);
   const reduxItems = useSelector(state => state.cart.reduxItems); // !redux
   const backendItems = useSelector(state => state.cart.backendItems); // !backend
-  const [loading, setLoading] = useState(false);
+
+  const [data, setData] = useState({
+    loading: false,
+    query: '',
+    error: null,
+    menu: [],
+    visible: true,
+  });
   const [status, setStatus] = useState(false);
-  const [query, setQuery] = useState('');
-  const [error, setError] = useState('');
-  const [menu, setMenu] = useState({});
-  // console.log('trans ID: ', transactionId);
 
   const [customer, setCustomer] = useState({
     name: prevData ? prevData.name : '',
-    table: prevData ? '0' : '',
+    table: prevData ? prevData.table : '',
   });
-
-  const [disabled, setDisabled] = useState(true);
-
-  const [prompt, setPrompt] = useState(false);
-  useFocusEffect(
-    useCallback(() => {
-      const fetchData = async () => {
-        setLoading(true);
-        try {
-          const promises = [
-            getDataQuery({
-              operation: MENU_BRANCH_ENDPOINT,
-              endpoint: 'showMenus',
-              resultKey: 'menuData',
-              query: `branchid=${selectBranch.id}`,
-            }),
-          ];
-          const [menuBranch] = await Promise.all(promises);
-          if (menuBranch) {
-            setMenu(menuBranch);
-          }
-        } catch (error) {
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchData();
-    }, [dispatch]),
-  );
 
   useEffect(() => {
     if (customer.name && customer.table) {
       dispatch(setTransactionId(prevData ? prevData.id : null));
-      setPrompt(false); //default true
+      setData(prev => ({...prev, visible: false}));
     } else {
-      setPrompt(true);
+      setData(prev => ({...prev, visible: true}));
     }
   }, []);
 
-  function transactionDate(params) {
-    const now = new Date();
-    const transactionId = now.toISOString();
-    return transactionId;
-  }
+  useEffect(() => {
+    async function fetchData(params) {
+      setData(prev => ({...prev, loading: true}));
+      try {
+        const response = await getDataQuery({
+          operation: MENU_BRANCH_ENDPOINT,
+          endpoint: 'showMenus',
+          resultKey: 'menuData',
+          query: `branchid=${selectBranch.id}`,
+        });
+        if (response) {
+          setData(prev => ({...prev, menu: response}));
+        }
+      } catch (error) {
+        setData(prev => ({...prev, menu: [], error: 'Menu not found'}));
+      } finally {
+        setData(prev => ({...prev, loading: false}));
+      }
+    }
+    fetchData();
+  }, [selectBranch?.id]);
 
-  async function addTransaction(params) {
-    const payloadAdd = {
-      transactiondate: transactionDate(),
+  async function addTransaction() {
+    const now = new Date();
+    const payload = {
+      transactiondate: now.toISOString(),
+      branchid: selectBranch.id,
       discount: 0,
       status: 1,
-      paymentmethod: null,
+      paymentmethod: 0,
       totalprice: 0,
       branchid: selectBranch.id,
       customername: customer.name,
-      tableNumber: parseInt(customer.table, 10),
+      tableNumber: customer.table,
     };
-    console.log('payload ADd Trnasac: ', payloadAdd);
-    try {
-      setLoading(true);
-      const data = await PostData({
-        operation: TRANSACTION_ENDPOINT,
-        endpoint: 'addTransaction',
-        payload: payloadAdd,
-      });
-      if (data) {
-        ToastAndroid.show('Add Transaction', ToastAndroid.BOTTOM);
-        dispatch(setTransactionId(parseInt(data.id, 10)));
-        dispatch(setCustomerInfo(customer));
-        setPrompt(false);
+    if (customer.name === null && customer.table === null) {
+      ToastAndroid.show('isi nama customer dan nomor meja', ToastAndroid.SHORT);
+    } else {
+      try {
+        setData(prev => ({...prev, loading: true}));
+        const response = await PostData({
+          operation: TRANSACTION_ENDPOINT,
+          endpoint: 'addTransaction',
+          payload: payload,
+        });
+        if (response) {
+          console.log('response Add Transaction: ', response);
+          ToastAndroid.show(response.message, ToastAndroid.SHORT);
+          dispatch(setTransactionId(parseInt(response.id, 10)));
+          console.log('customer: ', customer);
+          dispatch(setCustomerInfo(customer));
+          setData(prev => ({...prev, visible: false}));
+        }
+      } catch (error) {
+        ToastAndroid.show('Error to add transactions', ToastAndroid.SHORT);
+      } finally {
+        setData(prev => ({...prev, loading: true}));
       }
-    } catch (error) {
-      console.log('Error during transaction addition:', error);
-    } finally {
-      setLoading(false);
+
+      console.log('payload: ', payload);
     }
   }
 
-  if (loading) {
-    return <LoadingIndicator />;
-  }
+  // if (loading) {
+  //   return <LoadingIndicator />;
+  // }
 
   function openPrompt(params) {
     return (
@@ -136,7 +135,7 @@ const MainTransaksi = ({navigation, route}) => {
         <Modal
           animationType="slide"
           transparent={false}
-          visible={prompt}
+          visible={data.visible}
           onRequestClose={() => navigation.goBack()}>
           <SafeAreaView style={styles.centeredView}>
             <View style={styles.modalView}>
@@ -165,23 +164,9 @@ const MainTransaksi = ({navigation, route}) => {
               />
               <View style={{marginTop: 25}}>
                 <ConstButton
-                  loading={loading}
+                  loading={data.loading}
                   title="Submit"
-                  onPress={async () => {
-                    if (!customer.name || !customer.table) {
-                      //edit
-                      let errorMessage = customer.name
-                        ? 'Masukkan Nomor Meja'
-                        : 'Masukkan Nama Customer';
-                      ToastAndroid.showWithGravity(
-                        errorMessage,
-                        ToastAndroid.LONG,
-                        ToastAndroid.BOTTOM,
-                      );
-                    } else {
-                      await addTransaction();
-                    }
-                  }}
+                  onPress={() => addTransaction()}
                 />
               </View>
             </View>
@@ -194,45 +179,46 @@ const MainTransaksi = ({navigation, route}) => {
   return (
     <View style={styles.container}>
       <View style={styles.whiteLayer}>
-        {openPrompt(prompt)}
-        {/* ////////////////// */}
-        {customer.name && customer.table ? ( // edit
-          <View style={{flex: 1}}>
-            <View style={styles.wrapSearch}>
-              <View style={{flex: 1}}>
-                <SearchBox
-                  search="Cari produk ..."
-                  value={query}
-                  onChangeText={text => setQuery(text)}
-                />
-              </View>
-              <TouchableOpacity style={styles.receipt}>
-                <Ionicons name="options" size={28} />
-              </TouchableOpacity>
+        {openPrompt()}
+        <View style={{flex: 1}}>
+          <View style={styles.wrapSearch}>
+            <View style={{flex: 1}}>
+              <SearchBox
+                search="Cari produk ..."
+                value={data.query}
+                onChangeText={text => setQuery(text)}
+              />
             </View>
-            <View style={{flex: 1, marginVertical: 10}}>
-              {!menu ? (
-                <View style={styles.dataError}>
-                  <DataError data={error} />
-                </View>
-              ) : (
-                <ListTransaction
-                  data={menu}
-                  onPress={item => {
-                    navigation.navigate('Detail Transaksi', {item});
-                  }}
-                />
-              )}
-            </View>
+            <TouchableOpacity style={styles.receipt}>
+              <Ionicons name="options" size={28} />
+            </TouchableOpacity>
           </View>
-        ) : null}
+          <View style={{flex: 1, marginVertical: 10}}>
+            {!data.menu ? (
+              <View style={styles.dataError}>
+                <DataError data={data.error} />
+              </View>
+            ) : (
+              <ListTransaction
+                data={data.menu}
+                onPress={item => {
+                  navigation.navigate('Detail Transaksi', {item});
+                }}
+              />
+            )}
+          </View>
+        </View>
+
         <ConstButton
-          onPress={() => setStatus(true)}
+          onPress={() => {
+            setStatus(true);
+            dispatch(setCustomerInfo(prevData.name ? prevData : customer));
+          }}
           title="Checkout"
           disabled={
             reduxItems[transactionId] || backendItems[transactionId]
-              ? !disabled
-              : disabled
+              ? false
+              : true
           }
         />
       </View>

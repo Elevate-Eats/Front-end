@@ -22,8 +22,9 @@ import {useSelector} from 'react-redux';
 
 const DetailTransaksi = ({route, navigation}) => {
   const {item} = route.params;
-  // console.log('item: ', item)
+  // console.log('item: ', item);
   const transactionId = useSelector(s => s.transaction.transactionId);
+  // console.log('id: ', transactionId);
   const dispatch = useDispatch();
   const [checked, setChecked] = useState({
     price: null,

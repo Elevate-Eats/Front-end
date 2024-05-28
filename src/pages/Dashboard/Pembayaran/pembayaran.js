@@ -39,11 +39,11 @@ const Pembayaran = ({route}) => {
         ...prevData[0],
         paymentmethod: checked,
         status: 0,
-        tableNumber: customer ? customer.table : 0,
+        tableNumber: prevData[0].tablenumber || customer ? customer.table : 0,
         totalprice: totalprice,
       };
       const {companyid, tablenumber, ...payload} = payloadUpdate;
-      // console.log('payload: ', payload);
+      console.log('payload: ', payloadUpdate);
       try {
         setLoading(true);
         const action = await PostData({
@@ -62,7 +62,7 @@ const Pembayaran = ({route}) => {
           navigation.navigate('Detail Pembayaran', {data: payload});
         }
       } catch (error) {
-        ToastAndroid.show('Transaksi gagal !!!');
+        ToastAndroid.show('Transaksi gagal !!!', ToastAndroid.SHORT);
       } finally {
         setLoading(false);
       }
