@@ -43,9 +43,6 @@ const PilihCabang = ({navigation}) => {
     return <LoadingIndicator />;
   }
 
-  console.log('branch: ', branch);
-  console.table(branch);
-
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>

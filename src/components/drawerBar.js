@@ -39,6 +39,9 @@ import {
   DataAnalisis,
   DataPrediksi,
   SplashScreen,
+  PilihManager,
+  EditManager,
+  TambahManager,
 } from '../pages';
 import {BottomBar, ItemDashboard} from '.';
 import Route from '../routes/route';
@@ -220,7 +223,7 @@ function HomeStackNavigator(params) {
       {/* BISNIS */}
       <Stack.Group
         screenOptions={{
-          animation: 'slide_from_bottom',
+          animation: 'simple_push',
           animationTypeForReplace: 'push',
           statusBarStyle: 'inverted',
           statusBarColor: Colors.btnColor,
@@ -231,7 +234,18 @@ function HomeStackNavigator(params) {
       </Stack.Group>
       <Stack.Group
         screenOptions={{
-          animation: 'slide_from_bottom',
+          animation: 'simple_push',
+          animationTypeForReplace: 'push',
+          statusBarStyle: 'inverted',
+          statusBarColor: Colors.btnColor,
+        }}>
+        <Stack.Screen name="Pilih Manager" component={PilihManager} />
+        <Stack.Screen name="Edit Manager" component={EditManager} />
+        <Stack.Screen name="Tambah Manager" component={TambahManager} />
+      </Stack.Group>
+      <Stack.Group
+        screenOptions={{
+          animation: 'simple_push',
           animationTypeForReplace: 'push',
           statusBarStyle: 'inverted',
           statusBarColor: Colors.btnColor,
@@ -244,7 +258,7 @@ function HomeStackNavigator(params) {
       {/* DASHBOARD*/}
       <Stack.Group
         screenOptions={{
-          animation: 'slide_from_bottom',
+          animation: 'simple_push',
           animationTypeForReplace: 'push',
           statusBarStyle: 'inverted',
           statusBarColor: Colors.btnColor,
@@ -253,7 +267,12 @@ function HomeStackNavigator(params) {
         <Stack.Screen name="Edit Produk" component={EditProduk} />
         <Stack.Screen name="Tambah Produk" component={TambahProduk} />
       </Stack.Group>
-      <Stack.Group>
+      <Stack.Group
+        screenOptions={{
+          animation: 'simple_push',
+          statusBarStyle: 'inverted',
+          statusBarColor: Colors.btnColor,
+        }}>
         <Stack.Screen name="Pilih Menu" component={PilihMenu} />
         <Stack.Screen name="Edit Menu" component={EditMenu} />
         <Stack.Screen name="Tambah Menu" component={TambahMenu} />
@@ -297,7 +316,7 @@ function HomeStackNavigator(params) {
       </Stack.Group>
 
       {/*LAPORAN */}
-      <Stack.Group screenOptions={{animation: 'slide_from_bottom'}}>
+      <Stack.Group screenOptions={{animation: 'simple_push'}}>
         <Stack.Screen
           name="Pengeluaran"
           component={MainExpense}
@@ -308,7 +327,7 @@ function HomeStackNavigator(params) {
       </Stack.Group>
 
       <Stack.Group
-        screenOptions={{animation: 'slide_from_bottom', headerShown: false}}>
+        screenOptions={{animation: 'simple_push', headerShown: false}}>
         <Stack.Screen name="Data Analisis" component={DataAnalisis} />
         <Stack.Screen name="Data Prediksi" component={DataPrediksi} />
       </Stack.Group>

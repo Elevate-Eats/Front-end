@@ -13,10 +13,11 @@ const ListRow = props => {
           const initials = item.name
             .split(' ')
             .map(word => word[0])
-            .join('');
+            .join('')
+            .slice(0, 2);
           return (
             <View style={{marginVertical: 10}}>
-              <View style={styles.item}>
+              <View style={[styles.item]}>
                 <View style={styles.icon}>
                   <Text variant="titleLarge" style={{fontWeight: '700'}}>
                     {initials}
@@ -28,7 +29,7 @@ const ListRow = props => {
                     <Text
                       variant="labelLarge"
                       style={{color: 'rgba(0,0,0,0.4)'}}>
-                      {item.address}
+                      {item.address || item.role}
                     </Text>
                   </View>
                 </TouchableOpacity>
