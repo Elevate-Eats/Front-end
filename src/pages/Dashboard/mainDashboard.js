@@ -5,6 +5,9 @@ import {
   ScrollView,
   Alert,
   ToastAndroid,
+  Image,
+  SafeAreaView,
+  Modal,
 } from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {Colors} from '../../utils/colors';
@@ -37,12 +40,18 @@ import getDataQuery from '../../utils/getDataQuery';
 import {allManager} from '../../redux/manager';
 import SalesToday from '../../components/salesToday';
 import FormatRP from '../../utils/formatRP';
+import BarChartComponent from '../../components/barChart';
+import User from '../../assets/images/user-profile.jpg';
+import Close from '../../assets/icons/close-bold.svg';
 
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
   // console.log('select branch: ', selectBranch.id);
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState({
+    chart: false,
+    branch: false,
+  });
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState(new Date());
   const [todayData, setTodayData] = useState({
@@ -56,6 +65,7 @@ const MainDashboard = ({navigation, route}) => {
     useCallback(() => {
       async function fetchData(params) {
         setLoading(true);
+        const dateNow = date.toISOString().split('T')[0];
         try {
           const branch = await GetData({
             operation: BRANCH_ENDPOINT,
@@ -81,27 +91,27 @@ const MainDashboard = ({navigation, route}) => {
             operation: ANALYTICS_ENDPOINT,
             endpoint: 'showDailySummary',
             resultKey: 'data',
-            query: `companyId=1&branchId=12&startDate=2024-05-08&endDate=2024-05-08`,
+            // query: `companyId=1&branchId=12&startDate=2024-05-01&endDate=2024-05-01`,
+            query: `companyId=1&branchId=12&startDate=${dateNow}&endDate=${dateNow}`,
           });
           const dataPredict = await getDataQuery({
             operation: REPORT_ENDPOINT,
             endpoint: 'predictTransaction',
             resultKey: 'data',
-            query: `branchId=12&startDate=2024-05-08&endDate=2024-05-08`,
+            query: `branchId=12&startDate=${dateNow}&endDate=${dateNow}`,
           });
           const dataWeekly = await getDataQuery({
             operation: REPORT_ENDPOINT,
             endpoint: 'predictTransaction',
             resultKey: 'data',
-            query: `branchId=12&startDate=2024-05-13&endDate=2024-05-19`,
+            query: `branchId=12&startDate=2024-05-29&endDate=2024-06-05`,
           });
-          if (dataDailySummary && dataPredict && dataWeekly) {
+          let revenueShift1 = 0;
+          let revenueShift2 = 0;
+          let transactionShift1 = 0;
+          let transactionShift2 = 0;
+          if (dataDailySummary.length > 0) {
             const {totalsales, numberoftransactions} = dataDailySummary[0];
-            let revenueShift1 = 0;
-            let revenueShift2 = 0;
-            let transactionShift1 = 0;
-            let transactionShift2 = 0;
-
             dataPredict.forEach(item => {
               if (item['Shift'] === 1) {
                 transactionShift1 += item['Jumlah Transaksi'];
@@ -111,7 +121,6 @@ const MainDashboard = ({navigation, route}) => {
                 revenueShift2 += item['Total'];
               }
             });
-
             const totalPredictedSales = revenueShift1 + revenueShift2;
             const totalPredictedTransactions =
               transactionShift1 + transactionShift2;
@@ -122,11 +131,39 @@ const MainDashboard = ({navigation, route}) => {
                 totalPredictedTransactions) *
               100;
 
+            const filteredData = dataWeekly
+              .map(item => ({
+                Tanggal: item['Tanggal'],
+                Shift: item['Shift'],
+                Days: item['Days'],
+                JumlahTransaksi: item['Jumlah Transaksi'],
+                Total: item['Total'] / 1000000,
+              }))
+              .sort((a, b) => a['Days'] - b['Days']);
+
+            const aggregatedData = filteredData.reduce((acc, cur) => {
+              const existing = acc.find(
+                item => item['Tanggal'] === cur['Tanggal'],
+              );
+              if (existing) {
+                existing['JumlahTransaksi'] += cur['JumlahTransaksi'];
+                existing['Total'] += cur['Total'];
+              } else {
+                acc.push({...cur});
+              }
+              return acc;
+            }, []);
+            const weeklyTransactions = aggregatedData.map(
+              day => day['JumlahTransaksi'],
+            );
+            const weeklySales = aggregatedData.map(day => day['Total']);
+            // ! ==========================================================================
+
             const dataDaily = {
               transactions: numberoftransactions,
               sales: totalsales,
-              transactionChange: transactionChange.toFixed(2),
               salesChange: salesChange.toFixed(2),
+              transactionChange: transactionChange.toFixed(2),
             };
 
             const dataPrediction = {
@@ -139,36 +176,85 @@ const MainDashboard = ({navigation, route}) => {
               {shift: 2, transactions: transactionShift2, sales: revenueShift2},
             ];
 
+            const weeklyData = {
+              transactions: weeklyTransactions,
+              sales: weeklySales,
+            };
+            setTodayData(prev => ({
+              ...prev,
+              dailySummary: [dataDaily],
+              predict: [dataPrediction],
+              shift: shiftData,
+              weekly: [weeklyData],
+            }));
+          } else {
+            dataPredict.forEach(item => {
+              if (item['Shift'] === 1) {
+                transactionShift1 += item['Jumlah Transaksi'];
+                revenueShift1 += item['Total'];
+              } else if (item['Shift'] === 2) {
+                transactionShift2 += item['Jumlah Transaksi'];
+                revenueShift2 += item['Total'];
+              }
+            });
+            const totalPredictedSales = revenueShift1 + revenueShift2;
+            const totalPredictedTransactions =
+              transactionShift1 + transactionShift2;
+            const salesChange =
+              ((0 - totalPredictedSales) / totalPredictedSales) * 100;
+            const transactionChange =
+              ((0 - totalPredictedTransactions) / totalPredictedTransactions) *
+              100;
+
             const filteredData = dataWeekly
               .map(item => ({
-                Tanggal: item.Tanggal,
-                Shift: item.Shift,
-                Days: item.Days,
+                Tanggal: item['Tanggal'],
+                Shift: item['Shift'],
+                Days: item['Days'],
                 JumlahTransaksi: item['Jumlah Transaksi'],
-                Total: item.Total / 1000000,
+                Total: item['Total'] / 1000000,
               }))
-              .sort((a, b) => a.Days - b.Days);
+              .sort((a, b) => a['Days'] - b['Days']);
 
             const aggregatedData = filteredData.reduce((acc, cur) => {
-              const existing = acc.find(item => item.Tanggal === cur.Tanggal);
+              const existing = acc.find(
+                item => item['Tanggal'] === cur['Tanggal'],
+              );
               if (existing) {
-                existing.JumlahTransaksi += cur.JumlahTransaksi;
-                existing.Total += cur.Total;
+                existing['JumlahTransaksi'] += cur['JumlahTransaksi'];
+                existing['Total'] += cur['Total'];
               } else {
                 acc.push({...cur});
               }
               return acc;
             }, []);
             const weeklyTransactions = aggregatedData.map(
-              day => day.JumlahTransaksi,
+              day => day['JumlahTransaksi'],
             );
-            const weeklySales = aggregatedData.map(day => day.Total);
+            const weeklySales = aggregatedData.map(day => day['Total']);
+
+            // !============================================================================
+            const dataDaily = {
+              transactions: 0,
+              sales: 0,
+              salesChange: salesChange.toFixed(2),
+              transactionChange: transactionChange.toFixed(2),
+            };
+
+            const dataPrediction = {
+              transactions: totalPredictedTransactions,
+              sales: totalPredictedSales,
+            };
+
+            const shiftData = [
+              {shift: 1, transactions: transactionShift1, sales: revenueShift1},
+              {shift: 2, transactions: transactionShift2, sales: revenueShift2},
+            ];
 
             const weeklyData = {
               transactions: weeklyTransactions,
               sales: weeklySales,
             };
-
             setTodayData(prev => ({
               ...prev,
               dailySummary: [dataDaily],
@@ -197,6 +283,117 @@ const MainDashboard = ({navigation, route}) => {
   //   return <LoadingIndicator message="Please Wait ..." />;
   // }
 
+  const chartConfig = {
+    backgroundGradientFrom: '#ffffff',
+    backgroundGradientTo: '#ffffff',
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    strokeWidth: 2,
+    barPercentage: 0.5,
+    decimalPlaces: 0,
+  };
+
+  const nullData = [0, 0, 0, 0, 0, 0, 0];
+  const transactionData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [
+      {
+        data: todayData.weekly[0] ? todayData.weekly[0].transactions : nullData,
+        color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`,
+        strokeWidth: 2,
+      },
+    ],
+  };
+
+  const salesData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [
+      {
+        data: todayData.weekly[0] ? todayData.weekly[0].sales : nullData,
+        color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
+        strokeWidth: 2,
+      },
+    ],
+  };
+
+  function modalChart(params) {
+    return (
+      <SafeAreaView>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modal.chart}
+          onRequestClose={() => setModal(prev => ({...prev, chart: false}))}>
+          <SafeAreaView style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <View>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <Text style={[styles.textHeader, {flex: 1}]}>
+                    Detail Transaksi Hari Ini
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setModal(prev => ({...prev, chart: false}))}>
+                    <Close width={35} height={35} />
+                  </TouchableOpacity>
+                </View>
+                <View style={{rowGap: 5, marginVertical: 10}}>
+                  <Text style={{fontWeight: '900', fontSize: 18}}>Shift 1</Text>
+                  <View style={styles.statRow}>
+                    <View style={[styles.statItem, {rowGap: 5}]}>
+                      <Text style={{fontSize: 16, color: 'grey'}}>
+                        Transactions
+                      </Text>
+                      <Text style={styles.textValue}>
+                        {todayData.shiftData[0]
+                          ? todayData.shiftData[0].transactions
+                          : 0}
+                      </Text>
+                    </View>
+                    <View style={[styles.statItem, {rowGap: 5}]}>
+                      <Text style={{fontSize: 16, color: 'grey'}}>Sales</Text>
+                      <Text style={styles.textValue}>
+                        {todayData.shiftData[0]
+                          ? FormatRP(todayData.shiftData[0].sales)
+                          : 0}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={{rowGap: 5}}>
+                  <Text style={{fontWeight: '900', fontSize: 18}}>Shift 2</Text>
+                  <View style={styles.statRow}>
+                    <View style={[styles.statItem, {rowGap: 5}]}>
+                      <Text style={{fontSize: 16, color: 'grey'}}>
+                        Transactions
+                      </Text>
+                      <Text style={styles.textValue}>
+                        {todayData.shiftData[1]
+                          ? todayData.shiftData[1].transactions
+                          : 0}
+                      </Text>
+                    </View>
+                    <View style={[styles.statItem, {rowGap: 5}]}>
+                      <Text style={{fontSize: 16, color: 'grey'}}>Sales</Text>
+                      <Text style={styles.textValue}>
+                        {todayData.shiftData[1]
+                          ? FormatRP(todayData.shiftData[1].sales)
+                          : 0}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={{marginHorizontal: 70, marginTop: 15}}>
+                  <ConstButton
+                    title="Close"
+                    onPress={() => setModal(prev => ({...prev, chart: false}))}
+                  />
+                </View>
+              </View>
+            </View>
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    );
+  }
   function handlePress(params) {
     if (!selectBranch) {
       ToastAndroid.show(
@@ -213,12 +410,20 @@ const MainDashboard = ({navigation, route}) => {
       <TopBar navigation={navigation} title={'Dashboard'} />
       <View style={styles.blueLayer}>
         <View style={styles.account}>
-          <Ionicons name="person-circle-outline" size={80} color={'white'} />
+          <ModalBranch
+            open={modal.branch}
+            close={() => setModal(prev => ({...prev, branch: false}))}
+          />
+          {/* <Ionicons name="person-circle-outline" size={80} color={'white'} /> */}
+          <Image
+            source={User}
+            style={{width: 80, height: 80, borderRadius: 100, marginRight: 15}}
+          />
           <View style={{justifyContent: 'center', rowGap: 5}}>
             <Text variant="titleMedium" style={{fontSize: 18}}>
-              name
+              Muhammad Garma
             </Text>
-            <Text variant="titleMedium">role</Text>
+            <Text variant="titleMedium">General manager</Text>
           </View>
         </View>
         <View style={styles.employee}>
@@ -229,12 +434,11 @@ const MainDashboard = ({navigation, route}) => {
           </View>
           <TouchableOpacity
             style={styles.pilihCabang}
-            onPress={() => setModal(true)}>
+            onPress={() => setModal(prev => ({...prev, branch: true}))}>
             <Text style={{color: 'white'}} variant="bodyMedium">
               {selectBranch ? selectBranch.name : 'Pilih Cabang'}
             </Text>
           </TouchableOpacity>
-          <ModalBranch open={modal} close={() => setModal(false)} />
         </View>
       </View>
 
@@ -257,6 +461,7 @@ const MainDashboard = ({navigation, route}) => {
               onPress={() => handlePress('Pending')}
             /> */}
           {/* </View> */}
+          {modalChart(modal.chart)}
           <View style={{rowGap: 10}}>
             <View>
               <TitleDashboard title="Bisnis Hari Ini" />
@@ -296,7 +501,13 @@ const MainDashboard = ({navigation, route}) => {
               </View>
             </View>
             <View>
-              <TitleDashboard title="Prediksi Hari Ini" />
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <TitleDashboard title="Prediksi Hari Ini" />
+                <TouchableOpacity
+                  onPress={prev => setModal({...prev, chart: true})}>
+                  <Text style={styles.textDetails}>Detail</Text>
+                </TouchableOpacity>
+              </View>
               <View
                 style={{
                   flexDirection: 'row',
@@ -320,6 +531,18 @@ const MainDashboard = ({navigation, route}) => {
                 />
               </View>
             </View>
+
+            <BarChartComponent
+              suffix={' trs'}
+              data={transactionData}
+              title={'Weekly Transaction Predictions'}
+            />
+            <BarChartComponent
+              suffix={' jt'}
+              label={'Rp. '}
+              data={salesData}
+              title={'Weekly Income Predictions'}
+            />
           </View>
         </ScrollView>
         <View style={{marginTop: 10}}>
@@ -386,5 +609,51 @@ const styles = StyleSheet.create({
     width: 320,
     height: 160,
     borderRadius: 5,
+  },
+  textDetails: {
+    fontWeight: '900',
+    fontSize: 18,
+    textDecorationLine: 'underline',
+  },
+  textHeader: {
+    fontWeight: '900',
+    fontSize: 18,
+    marginVertical: 20,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 10,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    alignItems: 'center',
+    width: '48%',
+    padding: 10,
+    borderWidth: 1, // Add black border
+    borderColor: '#000', // Black border color
+    borderRadius: 10, // Optional, add if you want rounded corners
+  },
+  textValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
 });

@@ -27,42 +27,67 @@ import {addItem, saveItem} from '../../../redux/cartSlice';
 
 const PendingTransaction = ({navigation}) => {
   const dispatch = useDispatch();
-  const allTransaction = useSelector(
-    state => state.showTransaction.allTransaction,
-  );
-  const branch = useSelector(s => s.branch.selectedBranch);
+  const branch = useSelector(state => state.branch.selectedBranch);
   const menuCompany = useSelector(state => state.menu.allMenu);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [transaction, setTransaction] = useState({});
+  const [transaction, setTransaction] = useState([]);
+  const [error, setError] = useState(null);
 
-  const filteredTransaction = Object.values(allTransaction).filter(
-    item => item.branchid === branch.id,
+  // useEffect(() => {
+  //   async function fetchData(params) {
+  //     setLoading(true);
+  //     try {
+  //       const data = await getDataQuery({
+  //         operation: TRANSACTION_ENDPOINT,
+  //         endpoint: 'showTransactions',
+  //         resultKey: 'transactions',
+  //         query: `branch=${branch.id}&status=1`,
+  //       });
+  //       console.log('data useEffect: ', data);
+  //       if (data) {
+  //         setTransaction(data);
+  //       }
+  //     } catch (error) {
+  //       console.log('error: ', error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+  //   fetchData();
+  // }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        setLoading(true);
+        try {
+          const data = await getDataQuery({
+            operation: TRANSACTION_ENDPOINT,
+            endpoint: 'showTransactions',
+            resultKey: 'transactions',
+            query: `branch=${branch.id}`,
+          });
+          if (data) {
+            setTransaction(data);
+          }
+        } catch (error) {
+          setError('Transaction not found');
+          setTransaction([]);
+          console.log('error: ', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+      fetchData();
+    }, [branch?.id]),
   );
 
-  useEffect(() => {
-    async function fetchData(params) {
-      setLoading(true);
-      try {
-        const data = await getDataQuery({
-          operation: TRANSACTION_ENDPOINT,
-          endpoint: 'showTransactions',
-          resultKey: 'transactions',
-          query: `branch=${branch.id}`,
-        });
-        console.log('data: ', data);
-      } catch (error) {
-        console.log('error: ', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  if (filteredTransaction.length > 0) {
-    filteredTransaction.map(async item => {
-      let transactionId = item.id;
+  const pendingMenu = Object.values(transaction).filter(
+    item => item.status === 1,
+  );
+  if (pendingMenu.length > 0) {
+    pendingMenu.map(async item => {
       try {
         const data = await getDataQuery({
           operation: ITEM_ENDPOINT,
@@ -107,9 +132,7 @@ const PendingTransaction = ({navigation}) => {
   if (loading) {
     return <LoadingIndicator />;
   }
-  const pendingMenu = Object.values(filteredTransaction).filter(
-    item => item.status === 1,
-  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>

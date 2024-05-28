@@ -4,17 +4,18 @@ import React from 'react';
 import {BarChart} from 'react-native-chart-kit';
 import {Colors} from '../utils/colors';
 
-const BarChartComponent = ({data, title}) => {
+const BarChartComponent = ({data, title, suffix, label, barSize}) => {
   const chartConfig = {
     backgroundColor: '#FFFFFF',
     backgroundGradientFrom: '#f7f7f7',
     // backgroundGradientFrom: Colors.deleteColor,
     backgroundGradientTo: 'white',
     color: (opacity = 0.2) => `rgba(0, 0, 0, 0.7)`,
-    barPercentage: 0.6,
+    barPercentage: barSize ? barSize : 0.6,
     useShadowColorFromDataset: false,
     propsForLabels: {
-      fontSize: '8',
+      fontSize: '10',
+      fontWeight: '900',
     },
     decimalPlaces: 0,
   };
@@ -22,6 +23,8 @@ const BarChartComponent = ({data, title}) => {
     <View style={styles.container}>
       <Text style={styles.titleText}>{title}</Text>
       <BarChart
+        yAxisLabel={label}
+        yAxisSuffix={suffix}
         data={data}
         style={{alignItems: 'center', paddingVertical: 15}}
         width={Dimensions.get('window').width * 0.92}
@@ -53,7 +56,7 @@ const styles = StyleSheet.create({
     color: 'black',
     fontSize: 16,
     fontWeight: 'bold',
-    userSelect: 'all',
+    userSelect: 'auto',
     letterSpacing: 0.6,
   },
 });

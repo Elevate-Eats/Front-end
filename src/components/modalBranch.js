@@ -17,7 +17,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ModalBranch = props => {
   const dispatch = useDispatch();
   const branch = useSelector(state => state.branch.allBranch);
-  console.log('branch: ', branch);
   const [checked, setChecked] = useState(null);
 
   function handleCheck(params) {

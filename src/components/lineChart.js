@@ -1,8 +1,24 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {
+  Dimensions,
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {Text} from 'react-native-paper';
 import React from 'react';
 import {LineChart} from 'react-native-chart-kit';
 
-const LineChartComponent = ({title, chartConfig, data, width}) => {
+const LineChartComponent = ({
+  title,
+  chartConfig,
+  data,
+  width,
+  label,
+  suffix,
+  onPress,
+}) => {
+  const screenWidth = Dimensions.get('window').width;
   const adjustedChartConfig = {
     ...chartConfig,
     paddingLeft: '0px',
@@ -24,42 +40,38 @@ const LineChartComponent = ({title, chartConfig, data, width}) => {
     showDataPoints: chartConfig.showDataPoints || false,
   };
 
-  const data1 = {
-    labels: [
-      '9a',
-      '10a',
-      '11a',
-      '12p',
-      '1p',
-      '2p',
-      '3p',
-      '4p',
-      '5p',
-      '6p',
-      '7p',
-      '8p',
-      '9p',
-    ],
-    datasets: [
-      {
-        data: [45, 30, 60, 50, 20, 30, 15, 45, 50, 40, 30, 10, 20],
-      },
-    ],
-  };
-
   return (
-    <View style={styles.lineChart}>
-      <Text>{title}</Text>
+    <Pressable style={styles.lineChart} onPress={onPress}>
+      <View style={{flexDirection: 'row', paddingVertical: 10}}>
+        <Text style={[styles.titleText, {alignSelf: 'flex-start', flex: 1}]}>
+          {title}
+        </Text>
+        <TouchableOpacity onPress={onPress}>
+          <Text
+            style={[
+              styles.titleText,
+              {
+                alignSelf: 'flex-end',
+                textDecorationLine: 'underline',
+                fontSize: 12,
+              },
+            ]}>
+            Details
+          </Text>
+        </TouchableOpacity>
+      </View>
       <LineChart
+        yAxisSuffix={suffix}
         data={data}
-        width={width}
+        width={width || screenWidth - 20}
         height={220}
-        yAxisLabel=""
-        chartConfig={chartConfig}
+        yAxisLabel={label}
+        chartConfig={adjustedChartConfig}
         bezier
         style={{marginVertical: 8, borderRadius: 8}}
+        verticalLabelRotation={-90}
       />
-    </View>
+    </Pressable>
   );
 };
 
@@ -77,5 +89,12 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
     elevation: 3,
     alignItems: 'center',
+  },
+  titleText: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.6,
+    // alignSelf: 'flex-start',
   },
 });

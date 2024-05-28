@@ -19,15 +19,13 @@ import {TRANSACTION_ENDPOINT, API_URL, ANALYTICS_ENDPOINT} from '@env';
 
 const Pembayaran = ({route}) => {
   const navigation = useNavigation();
-  const data = route.params;
-  console.log('data bottomSheet : ', data);
+  const {data} = route.params;
   const {totalprice} = route.params;
   // console.log('total price: ', totalprice);
   const {transactionId} = useSelector(state => state.transaction);
   const customer = useSelector(state => state.customer.customerInfo);
-  console.log('ID: ', transactionId);
-  console.log('customer: ', customer);
-  console.log('data: ', data);
+
+  // console.log('data: ', data);
   const [checked, setChecked] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,17 +33,17 @@ const Pembayaran = ({route}) => {
     if (checked === null || checked === undefined) {
       ToastAndroid.show('Pilih Metode Pembayaran !!', ToastAndroid.SHORT);
     } else {
-      const prevData = data.data.filter(item => item.id === transactionId);
+      const prevData = data.filter(item => item.id === transactionId);
+      // console.log('Prev Data: ', prevData);
       const payloadUpdate = {
         ...prevData[0],
         paymentmethod: checked,
         status: 0,
-        tableNumber: prevData[0].tablenumber,
-        totalprice: data.totalprice,
+        tableNumber: customer ? customer.table : 0,
+        totalprice: totalprice,
       };
       const {companyid, tablenumber, ...payload} = payloadUpdate;
-      console.log('payload: ', payload);
-      // console.log('transactionid: ', transactionId);
+      // console.log('payload: ', payload);
       try {
         setLoading(true);
         const action = await PostData({
@@ -60,7 +58,7 @@ const Pembayaran = ({route}) => {
         });
         if (action && record) {
           setLoading(false);
-          // ToastAndroid.show('Transaksi berhasil', ToastAndroid.SHORT);
+          ToastAndroid.show('Transaksi berhasil', ToastAndroid.SHORT);
           navigation.navigate('Detail Pembayaran', {data: payload});
         }
       } catch (error) {
@@ -89,7 +87,7 @@ const Pembayaran = ({route}) => {
             fontWeight: '700',
             // backgroundColor: 'red',
           }}>
-          {FormatRP(data.totalprice)}
+          {FormatRP(totalprice)}
         </Text>
       </View>
       <View style={styles.whiteLayer}>

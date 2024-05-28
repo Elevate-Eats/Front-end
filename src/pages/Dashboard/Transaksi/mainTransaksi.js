@@ -33,14 +33,11 @@ import {
 import {addTransaction as addTrans} from '../../../redux/showTransaction';
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
-  console.log('prev: ', prevData);
   const dispatch = useDispatch();
   const selectBranch = useSelector(s => s.branch.selectedBranch);
   const transactionId = useSelector(s => s.transaction.transactionId);
   const reduxItems = useSelector(state => state.cart.reduxItems); // !redux
   const backendItems = useSelector(state => state.cart.backendItems); // !backend
-  console.log('item backend: ', backendItems);
-  console.log('item redux: ', reduxItems);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(false);
   const [query, setQuery] = useState('');
@@ -108,6 +105,7 @@ const MainTransaksi = ({navigation, route}) => {
       customername: customer.name,
       tableNumber: parseInt(customer.table, 10),
     };
+    console.log('payload ADd Trnasac: ', payloadAdd);
     try {
       setLoading(true);
       const data = await PostData({
@@ -116,6 +114,7 @@ const MainTransaksi = ({navigation, route}) => {
         payload: payloadAdd,
       });
       if (data) {
+        ToastAndroid.show('Add Transaction', ToastAndroid.BOTTOM);
         dispatch(setTransactionId(parseInt(data.id, 10)));
         dispatch(setCustomerInfo(customer));
         setPrompt(false);
@@ -166,6 +165,7 @@ const MainTransaksi = ({navigation, route}) => {
               />
               <View style={{marginTop: 25}}>
                 <ConstButton
+                  loading={loading}
                   title="Submit"
                   onPress={async () => {
                     if (!customer.name || !customer.table) {
@@ -176,7 +176,7 @@ const MainTransaksi = ({navigation, route}) => {
                       ToastAndroid.showWithGravity(
                         errorMessage,
                         ToastAndroid.LONG,
-                        ToastAndroid.CENTER,
+                        ToastAndroid.BOTTOM,
                       );
                     } else {
                       await addTransaction();

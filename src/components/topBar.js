@@ -17,7 +17,7 @@ const TopBar = ({navigation, title}) => {
         title={title}
         color={'#000'}
         titleStyle={{
-          fontWeight: '500',
+          fontWeight: '900',
         }}
       />
     </Appbar.Header>

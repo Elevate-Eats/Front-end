@@ -1,4 +1,5 @@
 import {
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -53,6 +54,8 @@ const DataPrediksi = () => {
     shift2: {},
   });
 
+  const [visible, setVisible] = useState(false);
+  const toggleModal = () => setVisible(!visible);
   useEffect(() => {
     if (dropdown.value && calendar.start && calendar.end) {
       async function fetchPredictData() {
@@ -69,70 +72,72 @@ const DataPrediksi = () => {
             query: query,
           });
           if (dataPredict) {
-            const dataDummy = [
-              {
-                DayType: 'Weekend',
-                Days: 6,
-                Holiday: false,
-                'Jumlah Transaksi': 23,
-                Months: 5,
-                Prev_Week_Transactions: 145,
-                Ramadhan: false,
-                Shift: 1,
-                Tanggal: '2023-05-21',
-                Total: 4664616,
-                Weekend: true,
-              },
-              {
-                DayType: 'Non-Holiday+Non-Weekend',
-                Days: 0,
-                Holiday: false,
-                'Jumlah Transaksi': 16,
-                Months: 5,
-                Prev_Week_Transactions: 144,
-                Ramadhan: false,
-                Shift: 1,
-                Tanggal: '2023-05-22',
-                Total: 2839186,
-                Weekend: false,
-              },
-              {
-                DayType: 'Weekend',
-                Days: 6,
-                Holiday: false,
-                'Jumlah Transaksi': 28,
-                Months: 5,
-                Prev_Week_Transactions: 195,
-                Ramadhan: false,
-                Shift: 2,
-                Tanggal: '2023-05-21',
-                Total: 4078994,
-                Weekend: true,
-              },
-              {
-                DayType: 'Non-Holiday+Non-Weekend',
-                Days: 0,
-                Holiday: false,
-                'Jumlah Transaksi': 19,
-                Months: 5,
-                Prev_Week_Transactions: 185,
-                Ramadhan: false,
-                Shift: 2,
-                Tanggal: '2023-05-22',
-                Total: 2888092,
-                Weekend: false,
-              },
-            ];
+            // const dataDummy = [
+            //   {
+            //     DayType: 'Weekend',
+            //     Days: 6,
+            //     Holiday: false,
+            //     'Jumlah Transaksi': 23,
+            //     Months: 5,
+            //     Prev_Week_Transactions: 145,
+            //     Ramadhan: false,
+            //     Shift: 1,
+            //     Tanggal: '2023-05-21',
+            //     Total: 4664616,
+            //     Weekend: true,
+            //   },
+            //   {
+            //     DayType: 'Non-Holiday+Non-Weekend',
+            //     Days: 0,
+            //     Holiday: false,
+            //     'Jumlah Transaksi': 16,
+            //     Months: 5,
+            //     Prev_Week_Transactions: 144,
+            //     Ramadhan: false,
+            //     Shift: 1,
+            //     Tanggal: '2023-05-22',
+            //     Total: 2839186,
+            //     Weekend: false,
+            //   },
+            //   {
+            //     DayType: 'Weekend',
+            //     Days: 6,
+            //     Holiday: false,
+            //     'Jumlah Transaksi': 28,
+            //     Months: 5,
+            //     Prev_Week_Transactions: 195,
+            //     Ramadhan: false,
+            //     Shift: 2,
+            //     Tanggal: '2023-05-21',
+            //     Total: 4078994,
+            //     Weekend: true,
+            //   },
+            //   {
+            //     DayType: 'Non-Holiday+Non-Weekend',
+            //     Days: 0,
+            //     Holiday: false,
+            //     'Jumlah Transaksi': 19,
+            //     Months: 5,
+            //     Prev_Week_Transactions: 185,
+            //     Ramadhan: false,
+            //     Shift: 2,
+            //     Tanggal: '2023-05-22',
+            //     Total: 2888092,
+            //     Weekend: false,
+            //   },
+            // ];
             setData(prev => ({
               ...prev,
               predict: dataPredict,
               chart: {
                 labels: readableLabels(
-                  processData(dataDummy).map(item => item.date),
+                  processData(dataPredict).map(item => item.date),
                 ),
                 datasets: [
                   {
-                    data: processData(dataDummy).map(item => item.transactions),
+                    data: processData(dataPredict).map(
+                      item => item.transactions,
+                    ),
                     color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`,
                     strokeWidth: 2,
                   },
@@ -223,11 +228,26 @@ const DataPrediksi = () => {
     return {dataShift1, dataShift2};
   }
 
+  function modalChart(params) {
+    return (
+      <SafeAreaView>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={visible}
+          onRequestClose={toggleModal}>
+          <SafeAreaView style={styles.centeredView}>
+            <View style={styles.modalView}></View>
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    );
+  }
+
   // console.log('income shift1: ', incomeData(data.predict).dataShift1);
   // console.log('income shift2: ', incomeData(data.predict).dataShift2);
 
   const chartConfig = {
-    paddingLeft: '0px',
     backgroundColor: '#ffffff',
     backgroundGradientFrom: '#ffffff',
     backgroundGradientTo: '#ffffff',
@@ -242,6 +262,11 @@ const DataPrediksi = () => {
       strokeWidth: '2',
       stroke: '#ffa726',
     },
+    propsForLabels: {
+      fontSize: '10',
+      fontWeight: '900',
+    },
+    showDataPoints: false,
   };
 
   function chartData(datas) {
@@ -250,14 +275,16 @@ const DataPrediksi = () => {
     let dataset2 = [];
     if (datas) {
       datas.forEach(item => {
+        const stringValue = item.Total.toString();
+        const formatedValue = `${stringValue.slice(0, 1)}.${stringValue.slice(1, 2)}`;
         const formatDate = FormatDateTime(item['Tanggal']).realDate;
         if (!labels.includes(formatDate)) {
           labels.push(formatDate);
         }
         if (item['Shift'] === 1) {
-          dataset1.push(item.Total);
+          dataset1.push(formatedValue);
         } else {
-          dataset2.push(item.Total);
+          dataset2.push(formatedValue);
         }
       });
       // return FormatDateTime(datas[0]['Tanggal']).realDate;
@@ -266,16 +293,21 @@ const DataPrediksi = () => {
   }
 
   const dataTotalRevenueShift1 = {
-    datasets: [{data: chartData(data.predict).dataset1}],
-    labels: chartData(data.predict).labels,
+    datasets: [{data: chartData(data.predict).dataset1.slice(0, 14)}],
+    labels: chartData(data.predict).labels.slice(0, 14),
+  };
+
+  const dataDummy = {
+    datasets: [{data: [0, 0, 0, 0, 0]}],
+    labels: ['0', '0', '0', '0', '0'],
   };
 
   const dataTotalRevenueShift2 = {
-    datasets: [{data: chartData(data.predict).dataset2}],
-    labels: chartData(data.predict).labels,
+    datasets: [{data: chartData(data.predict).dataset2.slice(0, 14)}],
+    labels: chartData(data.predict).labels.slice(0, 14),
   };
 
-  console.log('rev: ', dataTotalRevenueShift1.datasets[0].data.length);
+  // console.log('SHIFT 1: ', dataTotalRevenueShift1.labels);
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -404,26 +436,34 @@ const DataPrediksi = () => {
             right={incomeData(data.predict).dataShift2.jumlahTransaksi}
           />
         </View>
-        <View style={{marginVertical: 10}}>
-          <BarChartComponent
-            title={'Total Revenue Chart Shift 1'}
-            data={dataTotalRevenueShift1}
-          />
-        </View>
-        <View style={{marginVertical: 10}}>
-          <BarChartComponent
-            title={'Total Revenue Chart Shift 2'}
-            data={dataTotalRevenueShift2}
-          />
-        </View>
-        {/* <View style={{flexDirection: 'row', gap: 20, marginTop: 10}}>
+        <View style={{marginVertical: 5}}>
           <LineChartComponent
-            title={'Line Chart'}
-            data={data.chart}
-            width={320}
+            onPress={toggleModal}
+            label={'Rp.'}
+            suffix={' jt'}
+            title={'Total Revenue Chart Shift 1'}
+            data={
+              dataTotalRevenueShift1.datasets[0].data.length > 0
+                ? dataTotalRevenueShift1
+                : dataDummy
+            }
             chartConfig={chartConfig}
           />
-        </View> */}
+        </View>
+        <View style={{marginVertical: 5}}>
+          <LineChartComponent
+            onPress={toggleModal}
+            label={'Rp.'}
+            suffix={' jt'}
+            title={'Total Revenue Chart Shift 2'}
+            data={
+              dataTotalRevenueShift2.datasets[0].data.length > 0
+                ? dataTotalRevenueShift2
+                : dataDummy
+            }
+            chartConfig={chartConfig}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -460,5 +500,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     padding: 10,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  textHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 });

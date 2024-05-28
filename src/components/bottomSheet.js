@@ -77,7 +77,7 @@ const BottomSheet = props => {
   const slide = useRef(new Animated.Value(700)).current;
 
   async function handlePay(params) {
-    console.log('selected Trans: ', selectedTransaction.transactions);
+    // console.log('selected: ', selectedTransaction.transactions);
     await handleSave();
     navigation.navigate('Pembayaran', {
       data: selectedTransaction.transactions,
@@ -154,9 +154,6 @@ const BottomSheet = props => {
     }
   }
   async function updateTransaction(params) {
-    // console.log('params updateTrans:', params);
-    // !selectedTransaction = transaksi branch tertentu
-    // console.log('seelcted: ', selectedTransaction);
     const filtered = selectedTransaction.transactions.filter(
       item => item.id === transactionId,
     );
@@ -231,7 +228,7 @@ const BottomSheet = props => {
       navigation.goBack();
     } catch (error) {
       console.log('Error save', error);
-      ToastAndroid.show('Items failed to save', ToastAndroid.SHORT);
+      // ToastAndroid.show('Items failed to save', ToastAndroid.SHORT);
     }
 
     // ! ----------------------------------------------------------

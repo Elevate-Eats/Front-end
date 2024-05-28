@@ -3,12 +3,13 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
+  ToastAndroid,
   View,
 } from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {Text} from 'react-native-paper';
 import {MENU_COMPANY_ENDPOINT, MENU_BRANCH_ENDPOINT} from '@env';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import PostData from '../../../utils/postData';
 import {
   AddPhoto,
@@ -16,11 +17,13 @@ import {
   DeleteButton,
   FormInput,
   LoadingIndicator,
+  TopBar,
 } from '../../../components';
 import {Colors} from '../../../utils/colors';
 import {SelectList} from 'react-native-dropdown-select-list';
 
-const EditProduk = ({navigation, route}) => {
+const EditProduk = ({route}) => {
+  const navigation = useNavigation();
   const {item} = route.params;
   const [menu, setMenu] = useState({});
   const [loading, setLoading] = useState(false);
@@ -62,32 +65,40 @@ const EditProduk = ({navigation, route}) => {
       baseOnlinePrice: menu.baseonlineprice,
     };
     try {
+      setLoading(true);
       const action = await PostData({
         operation: MENU_BRANCH_ENDPOINT,
         endpoint: 'updateMenu',
         payload: payloadUpdate,
       });
-      Alert.alert(action.message, `${menu.name} successfully updated`, [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      if (action) {
+        ToastAndroid.show(action.message, ToastAndroid.SHORT);
+        navigation.navigate('Pilih Produk');
+      }
     } catch (error) {
       Alert.alert('Failed to Update Menu');
+    } finally {
+      setLoading(false);
     }
   }
 
   async function deleteMenu(params) {
     async function handleDelete(params) {
       try {
+        setLoading(true);
         const action = await PostData({
           operation: MENU_BRANCH_ENDPOINT,
           endpoint: 'deleteMenu',
           payload: {menuId: item.menuid, branchId: item.branchid},
         });
-        Alert.alert(action.message, `${menu.name} successfully deleted`, [
-          {text: 'OK', onPress: () => navigation.goBack()},
-        ]);
+        if (action) {
+          ToastAndroid.show(action.message, ToastAndroid.SHORT);
+          navigation.navigate('Pilih Produk');
+        }
       } catch (error) {
         Alert.alert('Failed to Delete Menu');
+      } finally {
+        setLoading(false);
       }
     }
     Alert.alert(
@@ -172,7 +183,11 @@ const EditProduk = ({navigation, route}) => {
         <View style={{flexDirection: 'row', columnGap: 10}}>
           <DeleteButton onPress={() => deleteMenu()} />
           <View style={{flex: 1}}>
-            <ConstButton title="Simpan" onPress={() => updateMenu()} />
+            <ConstButton
+              title="Simpan"
+              onPress={() => updateMenu()}
+              loading={loading}
+            />
           </View>
         </View>
       </View>

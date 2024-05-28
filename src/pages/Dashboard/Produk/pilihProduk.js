@@ -19,7 +19,7 @@ import {
 } from '../../../components';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {MENU_COMPANY_ENDPOINT, BRANCH_ENDPOINT} from '@env';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useSelector, useDispatch} from 'react-redux';
 import PostData from '../../../utils/postData';
 import {MENU_BRANCH_ENDPOINT, API_URL} from '@env';
@@ -29,11 +29,12 @@ import axios from 'axios';
 import getDataQuery from '../../../utils/getDataQuery';
 import Empty from '../../../assets/icons/empty-menu.svg';
 
-const PilihProduk = ({navigation}) => {
+const PilihProduk = () => {
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const [modal, setModal] = useState(false);
   const [menu, setMenu] = useState({});
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -42,15 +43,6 @@ const PilihProduk = ({navigation}) => {
   const branch = useSelector(state => state.branch.allBranch);
   const menuCompany = useSelector(state => state.menu.allMenu);
   const allMenuBranch = useSelector(state => state.menu.allMenuBranch);
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     if (!selectBranch) {
-  //       Alert.alert('Failed', 'Silakan pilih cabang terlebih dahulu', [
-  //         {text: 'OK', onPress: () => navigation.goBack()},
-  //       ]);
-  //     }
-  //   }, []),
-  // );
 
   useFocusEffect(
     useCallback(() => {
@@ -63,15 +55,19 @@ const PilihProduk = ({navigation}) => {
             resultKey: 'menuData',
             query: `branchid=${selectBranch.id}`,
           });
-          setMenu(data);
+          if (data) {
+            setMenu(data);
+          }
         } catch (error) {
+          setMenu([]);
           setError('Menu not Found');
+          console.log('error: ', error);
         } finally {
           setLoading(false);
         }
       }
       fetchData();
-    }, [dispatch]),
+    }, [dispatch, selectBranch?.id]),
   );
 
   if (loading) {
@@ -88,15 +84,15 @@ const PilihProduk = ({navigation}) => {
               onChangeText={text => setQuery(text)}
             />
           </View>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.receipt}
             onPress={() => setModal(true)}>
             <Icon name="options" size={28} />
             <ModalBranchCheckBox open={modal} close={() => setModal(false)} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
         <View style={{flex: 1, marginVertical: 10}}>
-          {error ? (
+          {menu.length === 0 ? (
             <View style={styles.dataError}>
               <Empty width={200} height={200} />
               <DataError data={error} />

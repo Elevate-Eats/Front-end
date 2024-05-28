@@ -203,8 +203,8 @@ const DataAnalisis = () => {
   };
 
   const dataItems = {
-    datasets: [{data: chartData('item').dataset}],
-    labels: chartData('item').labels,
+    datasets: [{data: chartData('item').dataset.slice(0, 10)}],
+    labels: chartData('item').labels.slice(0, 10),
   };
 
   return (
@@ -319,6 +319,7 @@ const DataAnalisis = () => {
         </View>
         <View style={{marginVertical: 10}}>
           <IncomeItem
+            type={'money'}
             loading={data.loading}
             title={'Sales Information'}
             centerName={'Profit'}
@@ -345,9 +346,12 @@ const DataAnalisis = () => {
           <BarChartComponent
             title="Hourly Performance Chart"
             data={dataHourly}
+            suffix={' trs'}
           />
           <View style={{marginVertical: 10}}>
             <BarChartComponent
+              barSize={0.9}
+              suffix={' pcs'}
               title={'Menu Item Sales Chart'}
               data={dataItems}
             />

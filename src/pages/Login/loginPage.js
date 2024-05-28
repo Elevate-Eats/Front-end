@@ -22,6 +22,7 @@ const LoginPage = ({navigation}) => {
     email: '',
     password: '',
   });
+
   const PostLogin = async () => {
     try {
       setLoading(true);
@@ -32,7 +33,7 @@ const LoginPage = ({navigation}) => {
         },
       });
       console.log('data: ', action.data);
-      // console.log('login: ', login);vv
+      // console.log('login: ', login);
 
       if (action.data) {
         // console.log('token: ', action.data.token);
@@ -92,8 +93,8 @@ const LoginPage = ({navigation}) => {
           />
 
           <BtnLogReg
-            // onPress={PostLogin}
-            onPress={() => navigation.replace('Bottom Tab')}
+            onPress={PostLogin}
+            // onPress={() => navigation.replace('Bottom Tab')}
             disabled={false}
             name="Log In"
             loading={loading}

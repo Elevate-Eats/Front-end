@@ -56,7 +56,10 @@ import RegisterPage from './Register/registerPage';
 //+++++ Account +++++
 import CompanyAccount from './Account/companyAccount';
 
+import SplashScreen from './Splashscreen/splashScreen';
+
 export {
+  SplashScreen,
   DataPrediksi,
   DataAnalisis,
   EditExpense,

@@ -1,11 +1,17 @@
-import {StyleSheet, View, FlatList, TouchableOpacity} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  FlatList,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import {Text} from 'react-native-paper';
 import React from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ListColumn = props => {
   return (
-    <View style={{}}>
+    <View style={{alignItems: 'center'}}>
       <FlatList
         data={props.data}
         keyExtractor={item => item.id.toString()}
@@ -26,7 +32,7 @@ const ListColumn = props => {
               <TouchableOpacity style={styles.employee} onPress={handlePress}>
                 <Ionicons name="person-circle-outline" size={70} />
                 <Text style={{textAlign: 'center'}}>
-                  {sliceName(item.name, 12)}
+                  {sliceName(item.name, 8)}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -42,7 +48,7 @@ export default ListColumn;
 const styles = StyleSheet.create({
   employee: {
     backgroundColor: '#eaeaea',
-    width: 95,
+    width: Dimensions.get('screen').width / 3.7,
     height: 140,
     marginHorizontal: 5,
     marginVertical: 10,

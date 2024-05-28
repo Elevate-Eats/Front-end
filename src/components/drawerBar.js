@@ -1,4 +1,4 @@
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {SafeAreaView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native-paper';
 import React, {useState} from 'react';
 import {
@@ -38,6 +38,7 @@ import {
   EditExpense,
   DataAnalisis,
   DataPrediksi,
+  SplashScreen,
 } from '../pages';
 import {BottomBar, ItemDashboard} from '.';
 import Route from '../routes/route';
@@ -45,6 +46,9 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {Colors} from '../utils/colors';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ImgIcons from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
+import {CommonActions} from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -53,8 +57,26 @@ const DrawerBar = ({route}) => {
     <Drawer.Navigator
       initialRouteName="Home"
       drawerContent={props => {
+        const {navigation} = props;
+
+        function handleLogOut(params) {
+          navigation.navigate('Home');
+          navigation.closeDrawer();
+          AsyncStorage.clear()
+            .then(() => {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{name: 'Login'}],
+                }),
+              );
+            })
+            .catch(error => {
+              console.log('Error clearing AsyncStorage: ', error);
+            });
+        }
         return (
-          <SafeAreaView>
+          <SafeAreaView style={{flex: 1}}>
             <View style={styles.drawer}>
               <ImgIcons
                 name="person-circle-outline"
@@ -68,6 +90,21 @@ const DrawerBar = ({route}) => {
               </Text>
             </View>
             <DrawerItemList {...props} />
+            <TouchableOpacity
+              onPress={() => handleLogOut()}
+              style={[
+                styles.logoutButton,
+                {alignItems: 'flex-end', position: 'absolute', bottom: 20},
+              ]}>
+              <Icon
+                name="log-out-outline"
+                size={25}
+                color={Colors.deleteColor}
+              />
+              <Text style={{color: Colors.deleteColor, fontWeight: 'bold'}}>
+                Log Out
+              </Text>
+            </TouchableOpacity>
           </SafeAreaView>
         );
       }}
@@ -81,9 +118,10 @@ const DrawerBar = ({route}) => {
       }}>
       <Drawer.Group>
         <Drawer.Screen
-          name="Dashboard"
+          name="Home"
           component={HomeStackNavigator}
           options={{
+            title: 'Dashboard',
             headerShown: false,
             drawerIcon: ({focused}) => {
               const iconName = focused ? 'home' : 'home';
@@ -107,7 +145,7 @@ const DrawerBar = ({route}) => {
           }}
         />
         <Drawer.Screen
-          name="Menu Branch"
+          name="Pilih Produk"
           component={PilihProduk}
           options={{
             drawerLabel: 'Menu Branch',
@@ -152,7 +190,13 @@ const DrawerBar = ({route}) => {
 
 function HomeStackNavigator(params) {
   return (
-    <Stack.Navigator initialRouteName="Login">
+    <Stack.Navigator initialRouteName="Splash Screen">
+      <Stack.Screen
+        name="Splash Screen"
+        component={SplashScreen}
+        options={{headerShown: false}}
+      />
+
       <Stack.Screen
         name="Bottom Tab"
         component={BottomBar}
@@ -276,12 +320,20 @@ export default DrawerBar;
 
 const styles = StyleSheet.create({
   drawer: {
-    height: 150,
+    height: 200,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.btnColor,
     marginBottom: 10,
     rowGap: 10,
+  },
+  logoutButton: {
+    marginTop: 50,
+    marginHorizontal: 10,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 30,
   },
 });
