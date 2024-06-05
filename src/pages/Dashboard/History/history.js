@@ -27,19 +27,23 @@ import getDataQuery from '../../../utils/getDataQuery';
 import {TRANSACTION_ENDPOINT} from '@env';
 import PostData from '../../../utils/postData';
 import FormatDateTime from '../../../utils/formatDateTime';
-import {allTransaction} from '../../../redux/showTransaction';
-import FormatDateToISO from '../../../utils/formatDateToIso';
+import StoreFront from '../../../assets/icons/store.svg';
 
 const History = ({route}) => {
-  const {data} = route.params;
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const [isFocus, setIsFocus] = useState(false);
-  const [value, setValue] = useState(data);
+  const selectedBranch = useSelector(state => state.branch.selectedBranch);
+  // console.log('branchId: ', selectedBranch.id);
   const [loading, setLoading] = useState(false);
-  const [transaction, setTransaction] = useState([]);
-  const [page, setPage] = useState(1);
-  const [fetchingMore, setFetchingMore] = useState(false);
+  const [data, setData] = useState({
+    transaction: [],
+    loading: false,
+    page: 1,
+  });
+
+  const [dropdown, setDropdown] = useState({
+    focus: false,
+    value: null,
+  });
 
   const allBranch = useSelector(state => state.branch.allBranch);
   const listBranch = useMemo(() => {
@@ -54,37 +58,31 @@ const History = ({route}) => {
     return branches;
   }, [allBranch]);
 
-  const fetchData = useCallback(async () => {
+  async function fetchData(params) {
     try {
-      if (page === 1) {
-        setLoading(true);
-      } else {
-        setFetchingMore(true);
-      }
+      setData(prev => ({...prev, loading: true}));
       const response = await getDataQuery({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'showTransactions',
         resultKey: 'transactions',
-        query: `branch=${value}&page=${page}&limit=15`,
+        query: `branch=${dropdown.value}&limit=50`,
       });
       if (response) {
-        setTransaction(prev =>
-          page === 1 ? response : [...prev, ...response],
-        );
-      } else if (page === 1) {
-        setTransaction([]);
+        setData(prev => ({...prev, transaction: response}));
       }
     } catch (error) {
-      console.log(error);
+      setData(prev => ({...prev, transaction: []}));
     } finally {
-      setLoading(false);
-      setFetchingMore(false);
+      setData(prev => ({
+        ...prev,
+        loading: false,
+      }));
     }
-  }, [page, value]);
+  }
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [dropdown.value]);
 
   const handleDelete = useCallback(
     async id => {
@@ -149,25 +147,23 @@ const History = ({route}) => {
       <Text>Please Wait ...</Text>
     </View>
   );
-  if (loading) {
+
+  if (data.loading) {
     return <LoadingIndicator />;
   }
+
+  console.log('length: ', data.transaction.length);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="arrow-left" size={25} color="black" />
-          </TouchableOpacity>
-          <Text variant="titleMedium" style={styles.headerTitle}>
-            Riwayat Transaksi
-          </Text>
-        </View>
         <View style={styles.dropdownContainer}>
           <Dropdown
             mode="modal"
-            style={[styles.dropdown, isFocus && {borderColor: Colors.btnColor}]}
+            style={[
+              styles.dropdown,
+              dropdown.focus && {borderColor: Colors.btnColor},
+            ]}
             placeholderStyle={styles.placeholderStyle}
             selectedTextStyle={styles.selectedTextStyle}
             inputSearchStyle={styles.inputSearchStyle}
@@ -179,14 +175,16 @@ const History = ({route}) => {
             valueField="value"
             placeholder="Pilih Cabang"
             searchPlaceholder="Search ..."
-            value={value}
-            onFocus={() => setIsFocus(true)}
-            onBlur={() => setIsFocus(false)}
-            onChange={item => {
-              setValue(item.value);
-              setPage(1); // Reset page to 1 when branch changes
-              setIsFocus(false);
-            }}
+            value={dropdown.value}
+            onFocus={() => setDropdown(prev => ({...prev, focus: true}))}
+            onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
+            onChange={item =>
+              setDropdown(prev => ({
+                ...prev,
+                value: item.value,
+                focus: false,
+              }))
+            }
             renderLeftIcon={() => (
               <View style={styles.iconContainer}>
                 <Icon name="storefront" size={25} color={Colors.btnColor} />
@@ -196,7 +194,35 @@ const History = ({route}) => {
         </View>
       </View>
       <View style={styles.listContainer}>
-        {transaction.length > 0 ? (
+        {dropdown.value !== null ? (
+          data.transaction.length !== 0 ? (
+            <View>
+              <FlatList
+                data={data.transaction.sort((a, b) =>
+                  b.transactiondate.localeCompare(a.transactiondate),
+                )}
+                keyExtractor={item => item.id.toString()}
+                renderItem={renderItem}
+              />
+            </View>
+          ) : (
+            <View></View>
+          )
+        ) : (
+          <View
+            style={{alignItems: 'center', justifyContent: 'center', flex: 1}}>
+            <StoreFront width={250} height={250} />
+            <Text
+              style={{
+                fontSize: 20,
+                fontStyle: 'italic',
+                color: Colors.btnColor,
+              }}>
+              Silakan pilih cabang terlebih dahulu
+            </Text>
+          </View>
+        )}
+        {/* {transaction.length > 0 ? (
           <FlatList
             data={transaction}
             keyExtractor={item => item.id.toString()}
@@ -217,7 +243,7 @@ const History = ({route}) => {
               Transaction not found
             </Text>
           </View>
-        )}
+        )} */}
       </View>
     </SafeAreaView>
   );
@@ -233,8 +259,6 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
   },
   headerRow: {
     flexDirection: 'row',

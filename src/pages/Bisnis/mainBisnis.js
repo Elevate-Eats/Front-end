@@ -1,31 +1,47 @@
-import {StyleSheet, View} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import React from 'react';
 import {Colors} from '../../utils/colors';
 import {ItemBisnis, TopBar} from '../../components';
+import {Text} from 'react-native-paper';
+import ContentPage from '../../components/contentPage';
+import Building from '../../assets/icons/store-bulk.svg';
+import Manager from '../../assets/icons/user-bulk.svg';
+import Employee from '../../assets/icons/user-group-bulk.svg';
+import MenuCompany from '../../assets/icons/box-bulk.svg';
+import {useNavigation} from '@react-navigation/native';
 
-const MainBisnis = ({navigation}) => {
+const MainBisnis = () => {
+  const navigation = useNavigation();
+  function handlePress(screen) {
+    navigation.navigate(screen);
+  }
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <TopBar navigation={navigation} title={'Bisnis'} />
-      <View style={styles.whiteLayer}>
-        <ItemBisnis
-          title="Cabang"
-          onPress={() => navigation.navigate('Pilih Cabang')}
+      <ScrollView style={styles.whiteLayer}>
+        <Text style={styles.textOpsi}>Pilih Opsi</Text>
+        <ContentPage
+          title={'List Cabang'}
+          Icon={Building}
+          onPress={() => handlePress('Pilih Cabang')}
         />
-        <ItemBisnis
-          title="Manager"
-          onPress={() => navigation.navigate('Pilih Manager')}
+        <ContentPage
+          title={'List Manager'}
+          Icon={Manager}
+          onPress={() => handlePress('Pilih Manager')}
         />
-        <ItemBisnis
-          title="Pegawai"
-          onPress={() => navigation.navigate('Pilih Pegawai')}
+        <ContentPage
+          title={'List Pegawai'}
+          Icon={Employee}
+          onPress={() => handlePress('Pilih Pegawai')}
         />
-        <ItemBisnis
-          title="Menu Company"
-          onPress={() => navigation.navigate('Pilih Menu')}
+        <ContentPage
+          title={'List Menu Company'}
+          Icon={MenuCompany}
+          onPress={() => handlePress('Pilih Menu')}
         />
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -36,12 +52,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.backgroundColor,
   },
+  textOpsi: {
+    fontSize: 20,
+    fontWeight: '700',
+    padding: 10,
+  },
   whiteLayer: {
     flex: 1,
+    flexGrow: 1,
     backgroundColor: 'white',
     margin: 5,
     borderRadius: 5,
-    elevation: 1,
-    padding: 10,
+    paddingHorizontal: 10,
   },
 });

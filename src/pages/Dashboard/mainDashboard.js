@@ -8,6 +8,7 @@ import {
   Image,
   SafeAreaView,
   Modal,
+  Pressable,
 } from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {Colors} from '../../utils/colors';
@@ -35,7 +36,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import GetData from '../../utils/getData';
 import {allBranch} from '../../redux/branchSlice';
 import {allMenu} from '../../redux/menuSlice';
-import {allEmployee} from '../../redux/employee';
+import employee, {allEmployee} from '../../redux/employee';
 import getDataQuery from '../../utils/getDataQuery';
 import {allManager} from '../../redux/manager';
 import SalesToday from '../../components/salesToday';
@@ -47,7 +48,7 @@ import Close from '../../assets/icons/close-bold.svg';
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
-  // console.log('select branch: ', selectBranch.id);
+  const employee = useSelector(state => state.employee.allEmployee);
   const [modal, setModal] = useState({
     chart: false,
     branch: false,
@@ -92,19 +93,19 @@ const MainDashboard = ({navigation, route}) => {
             endpoint: 'showDailySummary',
             resultKey: 'data',
             // query: `companyId=1&branchId=12&startDate=2024-05-01&endDate=2024-05-01`,
-            query: `companyId=1&branchId=2&startDate=2024-05-29&endDate=2024-05-29`,
+            query: `companyId=1&branchId=${selectBranch ? selectBranch.id : 1}&startDate=2024-05-29&endDate=2024-05-29`,
           });
           const dataPredict = await getDataQuery({
             operation: REPORT_ENDPOINT,
             endpoint: 'predictTransaction',
             resultKey: 'data',
-            query: `branchId=2&startDate=2024-05-29&endDate=2024-05-29`,
+            query: `branchId=${selectBranch ? selectBranch.id : 1}&startDate=2024-05-29&endDate=2024-05-29`,
           });
           const dataWeekly = await getDataQuery({
             operation: REPORT_ENDPOINT,
             endpoint: 'predictTransaction',
             resultKey: 'data',
-            query: `branchId=2&startDate=2024-05-29&endDate=2024-06-05`,
+            query: `branchId=${selectBranch ? selectBranch.id : 1}&startDate=2024-05-29&endDate=2024-06-04`,
           });
           let revenueShift1 = 0;
           let revenueShift2 = 0;
@@ -184,7 +185,7 @@ const MainDashboard = ({navigation, route}) => {
               ...prev,
               dailySummary: [dataDaily],
               predict: [dataPrediction],
-              shift: shiftData,
+              shiftData: shiftData,
               weekly: [weeklyData],
             }));
           } else {
@@ -276,7 +277,7 @@ const MainDashboard = ({navigation, route}) => {
         }
       }
       fetchData();
-    }, [dispatch]),
+    }, [dispatch, selectBranch?.id]),
   );
 
   // if (loading) {
@@ -415,10 +416,17 @@ const MainDashboard = ({navigation, route}) => {
             close={() => setModal(prev => ({...prev, branch: false}))}
           />
           {/* <Ionicons name="person-circle-outline" size={80} color={'white'} /> */}
-          <Image
-            source={User}
-            style={{width: 80, height: 80, borderRadius: 100, marginRight: 15}}
-          />
+          <Pressable onPress={() => navigation.navigate('Account')}>
+            <Image
+              source={User}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 100,
+                marginRight: 15,
+              }}
+            />
+          </Pressable>
           <View style={{justifyContent: 'center', rowGap: 5}}>
             <Text variant="titleMedium" style={{fontSize: 18}}>
               Muhammad Garma
@@ -430,7 +438,7 @@ const MainDashboard = ({navigation, route}) => {
           <View
             style={{flexDirection: 'row', alignItems: 'center', columnGap: 5}}>
             <Ionicons name="people-outline" size={25} color="black" />
-            <Text variant="titleLarge">10</Text>
+            <Text variant="titleLarge">{employee.length}</Text>
           </View>
           <TouchableOpacity
             style={styles.pilihCabang}

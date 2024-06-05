@@ -36,5 +36,6 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
+    height: 55,
   },
 });

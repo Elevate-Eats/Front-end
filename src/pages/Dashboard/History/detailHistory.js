@@ -17,10 +17,12 @@ import FormatDateTime from '../../../utils/formatDateTime';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FormatRP from '../../../utils/formatRP';
 import {Colors} from '../../../utils/colors';
+import Share from '../../../assets/icons/share-outline.svg';
 
 const DetailHistory = ({route}) => {
   const navigation = useNavigation();
   const {data} = route.params;
+  console.log('data:', data);
   console.log('date: ', FormatDateTime(data.transactiondate).realDate);
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(false);
@@ -81,19 +83,14 @@ const DetailHistory = ({route}) => {
       </View>
 
       <View style={{flex: 1}}>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => console.log('Share')}>
-          <Icon name="share-variant" size={30} color="white" />
-        </TouchableOpacity>
         <View
           style={[
             styles.detailTransaksi,
             {borderBottomWidth: 0.25, paddingVertical: 20},
           ]}>
-          <Text variant="titleMedium">Detail Transaksi</Text>
-          <Text variant="titleMedium" style={{fontWeight: '700', fontSize: 14}}>
-            {data.transactiondate}
+          <Text variant="titleMedium">Customer Name</Text>
+          <Text variant="titleMedium" style={{fontWeight: '700', fontSize: 18}}>
+            {data.customername}
           </Text>
         </View>
 
@@ -123,8 +120,12 @@ const DetailHistory = ({route}) => {
             </Text>
           </View>
         </View>
-        <View style={{marginHorizontal: 20, marginBottom: 10}}>
+        <View style={{marginHorizontal: 20, marginBottom: 10, gap: 10}}>
           <ConstButton title="Cetak Struk" />
+          <TouchableOpacity style={styles.shareButton}>
+            <Share />
+            <Text variant="titleMedium">Bagikan</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.separator} />
@@ -142,7 +143,7 @@ const DetailHistory = ({route}) => {
           />
         </Pressable>
         {visible ? (
-          <View>
+          <View style={{flex: 1}}>
             <FlatList
               nestedScrollEnabled
               data={updatedItems}
@@ -227,9 +228,7 @@ const styles = StyleSheet.create({
     columnGap: 16,
   },
   detailTransaksi: {
-    // padding: 20,
     paddingHorizontal: 20,
-    // borderBottomWidth: 0.25,
     borderColor: 'black',
     flexDirection: 'row',
     alignItems: 'center',
@@ -269,5 +268,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     elevation: 7,
     zIndex: 999,
+  },
+  shareButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderRadius: 5,
+    flexDirection: 'row',
+    columnGap: 10,
   },
 });

@@ -72,60 +72,6 @@ const DataPrediksi = () => {
             query: query,
           });
           if (dataPredict) {
-            // const dataDummy = [
-            //   {
-            //     DayType: 'Weekend',
-            //     Days: 6,
-            //     Holiday: false,
-            //     'Jumlah Transaksi': 23,
-            //     Months: 5,
-            //     Prev_Week_Transactions: 145,
-            //     Ramadhan: false,
-            //     Shift: 1,
-            //     Tanggal: '2023-05-21',
-            //     Total: 4664616,
-            //     Weekend: true,
-            //   },
-            //   {
-            //     DayType: 'Non-Holiday+Non-Weekend',
-            //     Days: 0,
-            //     Holiday: false,
-            //     'Jumlah Transaksi': 16,
-            //     Months: 5,
-            //     Prev_Week_Transactions: 144,
-            //     Ramadhan: false,
-            //     Shift: 1,
-            //     Tanggal: '2023-05-22',
-            //     Total: 2839186,
-            //     Weekend: false,
-            //   },
-            //   {
-            //     DayType: 'Weekend',
-            //     Days: 6,
-            //     Holiday: false,
-            //     'Jumlah Transaksi': 28,
-            //     Months: 5,
-            //     Prev_Week_Transactions: 195,
-            //     Ramadhan: false,
-            //     Shift: 2,
-            //     Tanggal: '2023-05-21',
-            //     Total: 4078994,
-            //     Weekend: true,
-            //   },
-            //   {
-            //     DayType: 'Non-Holiday+Non-Weekend',
-            //     Days: 0,
-            //     Holiday: false,
-            //     'Jumlah Transaksi': 19,
-            //     Months: 5,
-            //     Prev_Week_Transactions: 185,
-            //     Ramadhan: false,
-            //     Shift: 2,
-            //     Tanggal: '2023-05-22',
-            //     Total: 2888092,
-            //     Weekend: false,
-            //   },
-            // ];
             setData(prev => ({
               ...prev,
               predict: dataPredict,
@@ -228,23 +174,10 @@ const DataPrediksi = () => {
     return {dataShift1, dataShift2};
   }
 
-  function modalChart(params) {
-    return (
-      <SafeAreaView>
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={visible}
-          onRequestClose={toggleModal}>
-          <SafeAreaView style={styles.centeredView}>
-            <View style={styles.modalView}></View>
-          </SafeAreaView>
-        </Modal>
-      </SafeAreaView>
-    );
-  }
-
-  // console.log('income shift1: ', incomeData(data.predict).dataShift1);
+  // console.log(
+  //   'income shift1: ',
+  //   incomeData(data.predict).dataShift1['jumlahTransaksi'],
+  // );
   // console.log('income shift2: ', incomeData(data.predict).dataShift2);
 
   const chartConfig = {
@@ -287,7 +220,6 @@ const DataPrediksi = () => {
           dataset2.push(formatedValue);
         }
       });
-      // return FormatDateTime(datas[0]['Tanggal']).realDate;
     }
     return {labels, dataset1, dataset2};
   }
@@ -296,6 +228,8 @@ const DataPrediksi = () => {
     datasets: [{data: chartData(data.predict).dataset1.slice(0, 14)}],
     labels: chartData(data.predict).labels.slice(0, 14),
   };
+
+  // console.log('chartData: ', chartData(data.predict));
 
   const dataDummy = {
     datasets: [{data: [0, 0, 0, 0, 0]}],

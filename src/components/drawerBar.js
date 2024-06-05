@@ -52,16 +52,17 @@ import ImgIcons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 import {CommonActions} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 const DrawerBar = ({route}) => {
+  const selectedBranch = useSelector(state => state.branch.selectedBranch);
   return (
     <Drawer.Navigator
-      initialRouteName="Home"
+      // initialRouteName="Home"
       drawerContent={props => {
         const {navigation} = props;
-
         function handleLogOut(params) {
           navigation.navigate('Home');
           navigation.closeDrawer();
@@ -139,7 +140,7 @@ const DrawerBar = ({route}) => {
           options={{
             drawerLabel: 'Account',
             title: 'My Account',
-            headerShown: true,
+            headerShown: false,
             drawerIcon: ({focused}) => {
               const iconName = focused ? 'person-circle' : 'person-circle';
               const color = focused ? 'white' : 'gray';
@@ -160,7 +161,8 @@ const DrawerBar = ({route}) => {
             },
           }}
         />
-        {/* <Drawer.Screen
+        <Drawer.Screen
+          initialParams={selectedBranch}
           name="Riwayat Transaksi"
           component={History}
           options={{
@@ -172,7 +174,7 @@ const DrawerBar = ({route}) => {
               return <Icon name={iconName} size={25} color={color} />;
             },
           }}
-        /> */}
+        />
         <Drawer.Screen
           name="On Going"
           component={PendingTransaction}
@@ -186,6 +188,32 @@ const DrawerBar = ({route}) => {
             },
           }}
         />
+        <Drawer.Screen
+          name="Pilih Cabang"
+          component={PilihCabang}
+          options={{
+            drawerLabel: 'List Cabang',
+            title: 'Pilih Cabang',
+            drawerIcon: ({focused}) => {
+              const iconName = focused ? 'storefront' : 'storefront-outline';
+              const color = focused ? 'white' : 'gray';
+              return <Icon name={iconName} size={25} color={color} />;
+            },
+          }}
+        />
+        <Drawer.Screen
+          name="Pilih Manager"
+          component={PilihManager}
+          options={{
+            drawerLabel: 'List Manager',
+            title: 'Pilih Cabang',
+            drawerIcon: ({focused}) => {
+              const iconName = focused ? 'person' : 'person-outline';
+              const color = focused ? 'white' : 'gray';
+              return <Icon name={iconName} size={25} color={color} />;
+            },
+          }}
+        />
       </Drawer.Group>
     </Drawer.Navigator>
   );
@@ -193,7 +221,7 @@ const DrawerBar = ({route}) => {
 
 function HomeStackNavigator(params) {
   return (
-    <Stack.Navigator initialRouteName="Splash Screen">
+    <Stack.Navigator>
       <Stack.Screen
         name="Splash Screen"
         component={SplashScreen}
@@ -263,8 +291,12 @@ function HomeStackNavigator(params) {
           statusBarStyle: 'inverted',
           statusBarColor: Colors.btnColor,
         }}>
-        <Stack.Screen name="Pilih Produk" component={PilihProduk} />
-        <Stack.Screen name="Edit Produk" component={EditProduk} />
+        {/* <Stack.Screen name="Pilih Produk" component={PilihProduk} /> */}
+        <Stack.Screen
+          name="Edit Produk"
+          component={EditProduk}
+          options={{headerShown: false}}
+        />
         <Stack.Screen name="Tambah Produk" component={TambahProduk} />
       </Stack.Group>
       <Stack.Group

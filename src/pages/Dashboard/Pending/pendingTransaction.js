@@ -19,9 +19,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {LoadingIndicator, SearchBox} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
 import Receipt from '../../../assets/icons/receipt.svg';
-import {selectBranch} from '../../../redux/branchSlice';
-import transactionSlice from '../../../redux/transactionSlice';
-import {addItemsInfo, addPcsInfo} from '../../../redux/pcsSlice';
 import {deleteTransaction} from '../../../redux/showTransaction';
 import {addItem, saveItem} from '../../../redux/cartSlice';
 
@@ -41,11 +38,12 @@ const PendingTransaction = ({navigation}) => {
   async function fetchData(params) {
     setData(prev => ({...prev, loading: true}));
     try {
+      console.log('branchId: ', branch.id);
       const response = await getDataQuery({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'showTransactions',
         resultKey: 'transactions',
-        query: `branch=${branch.id}&limit=100`,
+        query: `branch=${branch.id}&limit=50`,
       });
       if (response) {
         setData(prev => ({...prev, transaction: response}));
@@ -61,14 +59,10 @@ const PendingTransaction = ({navigation}) => {
     }
   }
 
-  useEffect(() => {
-    fetchData();
-  }, [branch?.id]);
-
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [branch.id]),
+    }, [branch?.id]),
   );
 
   const pendingMenu = Object.values(data.transaction).filter(

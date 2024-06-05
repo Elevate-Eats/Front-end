@@ -7,8 +7,8 @@ import {
   View,
 } from 'react-native';
 import React, {useCallback, useState} from 'react';
-import {Text} from 'react-native-paper';
-import {MENU_COMPANY_ENDPOINT, MENU_BRANCH_ENDPOINT} from '@env';
+import {Appbar, Text} from 'react-native-paper';
+import {MENU_BRANCH_ENDPOINT} from '@env';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import PostData from '../../../utils/postData';
 import {
@@ -17,7 +17,6 @@ import {
   DeleteButton,
   FormInput,
   LoadingIndicator,
-  TopBar,
 } from '../../../components';
 import {Colors} from '../../../utils/colors';
 import {SelectList} from 'react-native-dropdown-select-list';
@@ -46,7 +45,7 @@ const EditProduk = ({route}) => {
           });
           setMenu(dataMenu.menuData);
         } catch (error) {
-          Alert.alert('Failed to Fetch Data !');
+          Alert.alert('Failed to Fetch Data !', error);
         } finally {
           setLoading(false);
         }
@@ -73,7 +72,7 @@ const EditProduk = ({route}) => {
       });
       if (action) {
         ToastAndroid.show(action.message, ToastAndroid.SHORT);
-        navigation.navigate('Pilih Produk');
+        navigation.goBack();
       }
     } catch (error) {
       Alert.alert('Failed to Update Menu');
@@ -93,7 +92,7 @@ const EditProduk = ({route}) => {
         });
         if (action) {
           ToastAndroid.show(action.message, ToastAndroid.SHORT);
-          navigation.navigate('Pilih Produk');
+          navigation.goBack();
         }
       } catch (error) {
         Alert.alert('Failed to Delete Menu');
@@ -109,13 +108,22 @@ const EditProduk = ({route}) => {
     );
   }
 
-  // console.log(payloadUpdate);
-
   if (loading) {
     return <LoadingIndicator />;
   }
+
+  console.log('items: ', item.name);
   return (
-    <KeyboardAvoidingView enabled style={styles.container}>
+    <KeyboardAvoidingView style={styles.container}>
+      <Appbar.Header>
+        <Appbar.BackAction
+          onPress={() => navigation.navigate('Pilih Produk')}
+        />
+        <Appbar.Content
+          title={`${item.name}, ${item.category}`}
+          titleStyle={{fontSize: 18, fontWeight: '700'}}
+        />
+      </Appbar.Header>
       <View style={styles.whiteLayer}>
         <ScrollView>
           <AddPhoto icon="fast-food" />

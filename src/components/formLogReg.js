@@ -13,7 +13,7 @@ const FormLogReg = props => {
       placeholder={props.placeholder} //"email-address"
       secureTextEntry={props.secureTextEntry}
       keyboardType={props.keyboardType} //"email-address"
-      right={<TextInput.Icon icon={props.right} />} //eye
+      right={<TextInput.Icon icon={props.right} onPress={props.onPress} />} //eye
       left={<TextInput.Icon icon={props.left} size={30} color={'grey'} />}
       outlineColor={'#878787'}
       activeOutlineColor={Colors.btnColor}

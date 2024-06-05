@@ -14,6 +14,7 @@ import {
   PilihCabang,
 } from '../pages';
 import {Colors} from '../utils/colors';
+import {LightTheme} from '../themes';
 
 const Tab = createBottomTabNavigator();
 
@@ -24,6 +25,9 @@ const BottomBar = ({route}) => {
       initialRouteName="Dashboard"
       tabBar={({navigation, state, descriptors, insets}) => (
         <BottomNavigation.Bar
+          activeIndicatorStyle={{
+            backgroundColor: LightTheme.colors.btnColorContainer,
+          }}
           shifting={true}
           inactiveColor={Colors.btnOpacity}
           navigationState={state}

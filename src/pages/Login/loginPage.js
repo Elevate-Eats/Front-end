@@ -22,6 +22,7 @@ const LoginPage = ({navigation}) => {
     email: '',
     password: '',
   });
+  const [visible, setVisible] = useState(true);
 
   const PostLogin = async () => {
     try {
@@ -32,7 +33,7 @@ const LoginPage = ({navigation}) => {
           apikey: API_KEY, // Ensure header keys are correctly expected by your backend
         },
       });
-      console.log('data: ', action.data);
+      console.log('data: ', action.data.credentials);
       // console.log('login: ', login);
 
       if (action.data) {
@@ -41,6 +42,10 @@ const LoginPage = ({navigation}) => {
         await AsyncStorage.setItem(
           'companyId',
           action.data.credentials.companyid.toString(),
+        );
+        await AsyncStorage.setItem(
+          'credentials',
+          JSON.stringify(action.data.credentials),
         );
         navigation.replace('Bottom Tab');
         ToastAndroid.show(action.data.message, ToastAndroid.SHORT);
@@ -84,9 +89,10 @@ const LoginPage = ({navigation}) => {
           <FormLogReg
             label="Password"
             placeholder="password"
-            secureTextEntry={true}
+            secureTextEntry={visible}
             keyboardType="default"
-            right="eye"
+            right={visible ? 'eye-off' : 'eye'}
+            onPress={() => setVisible(!visible)}
             left="key-variant"
             value={login.password}
             onChangeText={text => setLogin({...login, password: text})}
