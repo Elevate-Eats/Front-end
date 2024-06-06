@@ -59,8 +59,6 @@ const LoginPage = ({navigation}) => {
   };
 
   const themes = useTheme();
-
-  console.log('theme: ', Appearance.getColorScheme());
   return (
     <KeyboardAvoidingView
       style={[

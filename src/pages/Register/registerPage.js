@@ -6,17 +6,21 @@ import {
   ScrollView,
   TouchableOpacity,
   ToastAndroid,
+  Appearance,
 } from 'react-native';
 import React, {useState} from 'react';
-import {Text} from 'react-native-paper';
+import {Text, useTheme} from 'react-native-paper';
 import {BtnLogReg, FormLogReg} from '../../components';
 import {Colors} from '../../utils/colors';
 import {REGISTER_ENDPOINT, API_KEY, API_URL} from '@env';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LogoLight from '../../assets/icons/logo-light.svg';
+import LogoDark from '../../assets/icons/logo-dark.svg';
 
 const RegisterPage = ({navigation}) => {
   const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [regist, setRegist] = useState({
     name: '',
     nickname: '',
@@ -27,6 +31,8 @@ const RegisterPage = ({navigation}) => {
     passwordConfirm: '',
     phone: '',
   });
+
+  const {colors} = useTheme();
 
   async function PostRegist(params) {
     try {
@@ -54,18 +60,29 @@ const RegisterPage = ({navigation}) => {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.KeyboardAvoidingView}>
+    <KeyboardAvoidingView
+      style={[
+        styles.KeyboardAvoidingView,
+        {backgroundColor: colors.backgroundColorContainer},
+      ]}
+      enabled={true}>
       <ScrollView>
-        <View>
-          <Image
-            source={require('../../assets/images/elevate.png')}
-            style={styles.img}
-          />
+        <View style={{alignItems: 'center', marginTop: 20}}>
+          {Appearance.getColorScheme() === 'dark' ? (
+            <LogoDark width={250} height={150} />
+          ) : (
+            <LogoLight width={250} height={150} />
+          )}
         </View>
 
         <View style={{}}>
           <View style={{marginHorizontal: 30}}>
-            <Text variant="headlineSmall" style={styles.create}>
+            <Text
+              variant="headlineSmall"
+              style={[
+                styles.create,
+                {color: colors.onBackgroundColorContainer},
+              ]}>
               Create your account
             </Text>
             <FormLogReg
@@ -117,11 +134,12 @@ const RegisterPage = ({navigation}) => {
             <FormLogReg
               label="Password"
               placeholder="password"
-              secureTextEntry={true}
+              secureTextEntry={visible}
               keyboardType="default"
               left="key-outline"
-              right="eye"
+              right={visible ? 'eye-off' : 'eye'}
               value={regist.password}
+              onPress={() => setVisible(!visible)}
               onChangeText={text => setRegist({...regist, password: text})}
             />
             <FormLogReg
@@ -130,20 +148,44 @@ const RegisterPage = ({navigation}) => {
               secureTextEntry={true}
               keyboardType="default"
               left="lock-outline"
-              right="eye"
+              right={visible ? 'eye-off' : 'eye'}
               value={regist.passwordConfirm}
+              onPress={() => setVisible(!visible)}
               onChangeText={text =>
                 setRegist({...regist, passwordConfirm: text})
               }
             />
 
-            <BtnLogReg name="Sign Up" onPress={() => PostRegist()} />
+            <BtnLogReg
+              name="SIGN UP"
+              onPress={() => PostRegist()}
+              loading={loading}
+              disabled={
+                !regist.name ||
+                !regist.nickname ||
+                !regist.company ||
+                !regist.phone ||
+                !regist.email ||
+                !regist.password ||
+                !regist.passwordConfirm
+              }
+            />
             <View style={styles.have_account}>
-              <Text variant="titleSmall" style={{fontSize: 18}}>
+              <Text
+                variant="titleSmall"
+                style={{
+                  fontSize: 18,
+                  color: colors.onBackgroundColorContainer,
+                }}>
                 Don't have an account?
               </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text variant="titleSmall" style={styles.signup}>
+                <Text
+                  variant="titleSmall"
+                  style={[
+                    styles.signup,
+                    {color: colors.onBackgroundColorContainer},
+                  ]}>
                   Sign In
                 </Text>
               </TouchableOpacity>
@@ -159,7 +201,6 @@ export default RegisterPage;
 
 const styles = StyleSheet.create({
   KeyboardAvoidingView: {
-    backgroundColor: Colors.thirdColor,
     flex: 1,
   },
   img: {
