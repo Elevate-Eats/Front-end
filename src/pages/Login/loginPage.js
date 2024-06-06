@@ -4,17 +4,18 @@ import {
   Image,
   KeyboardAvoidingView,
   TouchableOpacity,
-  Alert,
   ToastAndroid,
+  Appearance,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, createContext} from 'react';
 import {Colors} from '../../utils/colors';
-import {Text} from 'react-native-paper';
+import {Text, useTheme} from 'react-native-paper';
 import {BtnLogReg, FormLogReg} from '../../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {API_KEY, API_URL, LOGIN_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
-import getDataQuery from '../../utils/getDataQuery';
+import LogoLight from '../../assets/icons/logo-light.svg';
+import LogoDark from '../../assets/icons/logo-dark.svg';
 
 const LoginPage = ({navigation}) => {
   const [loading, setLoading] = useState(false);
@@ -33,11 +34,7 @@ const LoginPage = ({navigation}) => {
           apikey: API_KEY, // Ensure header keys are correctly expected by your backend
         },
       });
-      console.log('data: ', action.data.credentials);
-      // console.log('login: ', login);
-
       if (action.data) {
-        // console.log('token: ', action.data.token);
         await AsyncStorage.setItem('userToken', action.data.token);
         await AsyncStorage.setItem(
           'companyId',
@@ -51,9 +48,7 @@ const LoginPage = ({navigation}) => {
         ToastAndroid.show(action.data.message, ToastAndroid.SHORT);
       }
     } catch (error) {
-      // console.log('login: ', login);
       console.log('err: ', error);
-      // Alert.alert('Login Error', 'Check your email or password!');
       ToastAndroid.show(
         'Login Error, Check your email or password!',
         ToastAndroid.SHORT,
@@ -63,17 +58,32 @@ const LoginPage = ({navigation}) => {
     }
   };
 
+  const themes = useTheme();
+
+  console.log('theme: ', Appearance.getColorScheme());
   return (
-    <KeyboardAvoidingView style={styles.KeyboardAvoidingView} enabled={true}>
-      <View style={{flex: 1 / 5, justifyContent: 'center'}}>
-        <Image
-          source={require('../../assets/images/elevate.png')}
-          style={styles.img}
-        />
+    <KeyboardAvoidingView
+      style={[
+        styles.KeyboardAvoidingView,
+        {backgroundColor: themes.colors.backgroundColorContainer},
+      ]}
+      enabled={true}>
+      <View style={{alignItems: 'center'}}>
+        {Appearance.getColorScheme() === 'light' ? (
+          <LogoLight width={250} height={150} />
+        ) : (
+          <LogoDark width={250} height={150} />
+        )}
       </View>
+      <View style={{alignItems: 'center'}}></View>
       <View style={{flex: 1 / 2, justifyContent: 'center'}}>
         <View style={{marginHorizontal: 30}}>
-          <Text variant="headlineSmall" style={styles.login}>
+          <Text
+            variant="headlineSmall"
+            style={[
+              styles.login,
+              {color: themes.colors.onBackgroundColorContainer},
+            ]}>
             Login to your account
           </Text>
 
@@ -100,17 +110,26 @@ const LoginPage = ({navigation}) => {
 
           <BtnLogReg
             onPress={PostLogin}
-            // onPress={() => navigation.replace('Bottom Tab')}
-            disabled={false}
-            name="Log In"
+            disabled={!login.email || !login.password}
+            name="LOGIN"
             loading={loading}
           />
           <View style={styles.have_account}>
-            <Text variant="titleSmall" style={{fontSize: 18}}>
+            <Text
+              variant="titleSmall"
+              style={{
+                fontSize: 18,
+                color: themes.colors.onBackgroundColorContainer,
+              }}>
               Don't have an account?
             </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Sign Up')}>
-              <Text variant="titleSmall" style={styles.signup}>
+              <Text
+                variant="titleSmall"
+                style={[
+                  styles.signup,
+                  {color: themes.colors.onBackgroundColorContainer},
+                ]}>
                 Sign Up
               </Text>
             </TouchableOpacity>
@@ -125,7 +144,7 @@ export default LoginPage;
 
 const styles = StyleSheet.create({
   KeyboardAvoidingView: {
-    backgroundColor: Colors.thirdColor,
+    // backgroundColor: Colors.thirdColor,
     flex: 1,
     justifyContent: 'center',
     rowGap: 20,
@@ -143,7 +162,7 @@ const styles = StyleSheet.create({
   },
   have_account: {
     flexDirection: 'row',
-    marginTop: 10,
+    marginTop: 30,
     justifyContent: 'center',
     columnGap: 5,
   },

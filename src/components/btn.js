@@ -1,14 +1,15 @@
 import React from 'react';
-import {Text, Button} from 'react-native-paper';
+import {Text, Button, useTheme} from 'react-native-paper';
 import {Colors} from '../utils/colors';
 const ConstButton = props => {
+  const {colors} = useTheme();
   return (
     <Button
       loading={props.loading}
       disabled={props.disabled}
       onPress={props.onPress}
       mode="elevated"
-      buttonColor={Colors.btnColor}
+      buttonColor={colors.onBtnColorContainer}
       style={{paddingVertical: 5, borderRadius: 5}}>
       <Text variant="titleMedium" style={{color: 'white'}}>
         {props.title}
