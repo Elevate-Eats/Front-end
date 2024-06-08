@@ -62,7 +62,7 @@ const PilihManager = () => {
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>
-        <SearchBox search="Cari cabang ..." />
+        <SearchBox search="Cari manager ..." />
         <View style={{flex: 1, marginVertical: 10}}>
           {data.error || data.manager.length === 0 ? (
             <View style={styles.dataError}>

@@ -116,6 +116,14 @@ const History = ({route}) => {
         <View style={[styles.icon, {flexDirection: 'row'}]}>
           <Receipt width={35} height={35} />
           <TouchableOpacity
+            onLongPress={() =>
+              Alert.alert(
+                'Delete Transaction',
+                'Delete transaction',
+                [{text: 'Batal'}, {text: 'OK', onPress: () => handleDelete()}],
+                {cancelable: true},
+              )
+            }
             onPress={() => navigation.navigate('Detail History', {data: item})}
             style={styles.itemContainer}>
             <View style={styles.itemRow}>

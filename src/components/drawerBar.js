@@ -1,4 +1,10 @@
-import {SafeAreaView, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {Text} from 'react-native-paper';
 import React, {useState} from 'react';
 import {
@@ -53,6 +59,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 import {CommonActions} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
+import {Chart, MoneySend, StatusUp} from '../assets/icons';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -80,7 +87,7 @@ const DrawerBar = ({route}) => {
             });
         }
         return (
-          <SafeAreaView style={{flex: 1}}>
+          <ScrollView contentContainerStyle={{flex: 1, flexGrow: 1}}>
             <View style={styles.drawer}>
               <ImgIcons
                 name="person-circle-outline"
@@ -109,7 +116,7 @@ const DrawerBar = ({route}) => {
                 Log Out
               </Text>
             </TouchableOpacity>
-          </SafeAreaView>
+          </ScrollView>
         );
       }}
       screenOptions={{
@@ -149,11 +156,59 @@ const DrawerBar = ({route}) => {
           }}
         />
         <Drawer.Screen
+          name="Catatan Pengeluaran"
+          component={MainExpense}
+          options={{
+            drawerLabel: 'Catatan Pengeluaran',
+            title: 'Catatan Pengeluaran',
+            headerShown: false,
+            drawerIcon: ({focused}) => {
+              return focused ? (
+                <MoneySend width={25} height={25} />
+              ) : (
+                <MoneySend width={25} height={25} />
+              );
+            },
+          }}
+        />
+        <Drawer.Screen
+          name="Data Analisis"
+          component={DataAnalisis}
+          options={{
+            drawerLabel: 'Data Analisis',
+            title: 'Data Analisis',
+            headerShown: false,
+            drawerIcon: ({focused}) => {
+              return focused ? (
+                <StatusUp width={25} height={25} />
+              ) : (
+                <StatusUp width={25} height={25} />
+              );
+            },
+          }}
+        />
+        <Drawer.Screen
+          name="Data Prediksi"
+          component={DataPrediksi}
+          options={{
+            drawerLabel: 'Data Prediksi',
+            title: 'Data Prediksi',
+            headerShown: false,
+            drawerIcon: ({focused}) => {
+              return focused ? (
+                <Chart width={25} height={25} />
+              ) : (
+                <Chart width={25} height={25} />
+              );
+            },
+          }}
+        />
+        <Drawer.Screen
           name="Pilih Produk"
           component={PilihProduk}
           options={{
-            drawerLabel: 'Menu Branch',
-            title: 'Menu Branch',
+            drawerLabel: 'List Menu Branch',
+            title: 'Pilih Produk',
             drawerIcon: ({focused}) => {
               const iconName = focused ? 'fast-food' : 'fast-food-outline';
               const color = focused ? 'white' : 'gray';
@@ -206,11 +261,37 @@ const DrawerBar = ({route}) => {
           component={PilihManager}
           options={{
             drawerLabel: 'List Manager',
-            title: 'Pilih Cabang',
+            title: 'Pilih Manager',
             drawerIcon: ({focused}) => {
               const iconName = focused ? 'person' : 'person-outline';
               const color = focused ? 'white' : 'gray';
               return <Icon name={iconName} size={25} color={color} />;
+            },
+          }}
+        />
+        <Drawer.Screen
+          name="Pilih Pegawai"
+          component={PilihPegawai}
+          options={{
+            drawerLabel: 'List Pegawai',
+            title: 'Pilih Pegawai',
+            drawerIcon: ({focused}) => {
+              const iconName = focused ? 'people' : 'people-outline';
+              const color = focused ? 'white' : 'gray';
+              return <Icon name={iconName} color={color} size={25} />;
+            },
+          }}
+        />
+        <Drawer.Screen
+          name="Pilih Menu"
+          component={PilihMenu}
+          options={{
+            drawerLabel: 'List Menu Company',
+            title: 'Pilih Menu',
+            drawerIcon: ({focused}) => {
+              const iconName = focused ? 'cube' : 'cube-outline';
+              const color = focused ? 'white' : 'gray';
+              return <Icon name={iconName} color={color} size={25} />;
             },
           }}
         />

@@ -9,7 +9,8 @@ const ConstButton = props => {
       disabled={props.disabled}
       onPress={props.onPress}
       mode="elevated"
-      buttonColor={colors.onBtnColorContainer}
+      // buttonColor={colors.onBtnColorContainer}
+      buttonColor={Colors.btnColor}
       style={{paddingVertical: 5, borderRadius: 5}}>
       <Text variant="titleMedium" style={{color: 'white'}}>
         {props.title}

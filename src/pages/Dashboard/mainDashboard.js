@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {Colors} from '../../utils/colors';
-import {Text} from 'react-native-paper';
+import {Text, useTheme} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   MANAGER_ENDPOINT,
@@ -47,6 +47,7 @@ import Close from '../../assets/icons/close-bold.svg';
 
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
+  const {colors} = useTheme();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
   const employee = useSelector(state => state.employee.allEmployee);
   const [modal, setModal] = useState({
@@ -409,7 +410,8 @@ const MainDashboard = ({navigation, route}) => {
   return (
     <View style={styles.container}>
       <TopBar navigation={navigation} title={'Dashboard'} />
-      <View style={styles.blueLayer}>
+      <View
+        style={[styles.blueLayer, {backgroundColor: Colors.secondaryColor}]}>
         <View style={styles.account}>
           <ModalBranch
             open={modal.branch}
@@ -428,7 +430,9 @@ const MainDashboard = ({navigation, route}) => {
             />
           </Pressable>
           <View style={{justifyContent: 'center', rowGap: 5}}>
-            <Text variant="titleMedium" style={{fontSize: 18}}>
+            <Text
+              variant="titleMedium"
+              style={{fontSize: 18, color: colors.onBackground}}>
               Muhammad Garma
             </Text>
             <Text variant="titleMedium">General manager</Text>
@@ -574,7 +578,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   blueLayer: {
-    backgroundColor: Colors.secondaryColor,
+    // backgroundColor: Colors.secondaryColor,
     flex: 1 / 5,
     marginHorizontal: 5,
     marginTop: 5,

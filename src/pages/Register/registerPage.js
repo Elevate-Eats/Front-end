@@ -145,7 +145,7 @@ const RegisterPage = ({navigation}) => {
             <FormLogReg
               label="Confirm Password"
               placeholder="confirm password"
-              secureTextEntry={true}
+              secureTextEntry={visible}
               keyboardType="default"
               left="lock-outline"
               right={visible ? 'eye-off' : 'eye'}
