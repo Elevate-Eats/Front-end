@@ -96,7 +96,6 @@ const MainLaporan = () => {
         if (!isDir) {
           await RNFetchBlob.fs.mkdir(`${dirs.DownloadDir}/Elevate`);
         }
-
         await RNFetchBlob.fs.writeFile(path, base64, 'base64');
         setPdfFile(prev => ({...prev, path: path}));
         ToastAndroid.show(`File successfully downloaded`, ToastAndroid.BOTTOM);
@@ -104,8 +103,6 @@ const MainLaporan = () => {
         ToastAndroid.show(`Storage Permission Denied`, ToastAndroid.BOTTOM);
         throw new Error('Storage Permission Denied');
       }
-      // await RNFetchBlob.fs.writeFile(path, base64, 'base64');
-      // setPdfFile(prev => ({...prev, path: path}));
     } catch (error) {
       console.log('error: ', error);
       ToastAndroid.show(`Failed to download file`, ToastAndroid.BOTTOM);

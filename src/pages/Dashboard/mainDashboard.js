@@ -100,7 +100,7 @@ const MainDashboard = ({navigation, route}) => {
             operation: REPORT_ENDPOINT,
             endpoint: 'predictTransaction',
             resultKey: 'data',
-            query: `branchId=${selectBranch ? selectBranch.id : 1}&startDate=2024-05-29&endDate=2024-05-29`,
+            query: `branchId=${selectBranch ? selectBranch.id : 1}&startDate=${new Date()}&endDate=${new Date()}`,
           });
           const dataWeekly = await getDataQuery({
             operation: REPORT_ENDPOINT,

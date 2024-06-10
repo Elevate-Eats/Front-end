@@ -8,7 +8,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SplashScreen = () => {
   const navigation = useNavigation();
-
   useEffect(() => {
     setTimeout(() => {
       AsyncStorage.getItem('userToken').then(value => {

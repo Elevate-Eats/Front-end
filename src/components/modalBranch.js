@@ -76,7 +76,6 @@ const ModalBranch = props => {
               const b = branch.find(b => b.id === checked);
               if (selectBranch) {
                 dispatch(selectBranch(b));
-                // saveBranchName(b.name);
                 props.close();
               }
               props.close();
