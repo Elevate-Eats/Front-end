@@ -10,7 +10,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text, useTheme} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,7 +19,6 @@ import {
   BRANCH_ENDPOINT,
   MENU_COMPANY_ENDPOINT,
   EMPLOYEE_ENDPOINT,
-  TRANSACTION_ENDPOINT,
   ANALYTICS_ENDPOINT,
   REPORT_ENDPOINT,
 } from '@env';
@@ -44,6 +43,7 @@ import FormatRP from '../../utils/formatRP';
 import BarChartComponent from '../../components/barChart';
 import User from '../../assets/images/user-profile.jpg';
 import Close from '../../assets/icons/close-bold.svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
@@ -55,19 +55,26 @@ const MainDashboard = ({navigation, route}) => {
     branch: false,
   });
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState(new Date());
   const [todayData, setTodayData] = useState({
     dailySummary: [],
     predict: [],
     weekly: [],
     shiftData: [],
+    localData: {},
   });
+
+  useEffect(() => {
+    async function fetchLocalStorage(params) {
+      const response = await AsyncStorage.getItem('credentials');
+      setTodayData(prev => ({...prev, localData: JSON.parse(response)}));
+    }
+    fetchLocalStorage();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
         setLoading(true);
-        const dateNow = date.toISOString().split('T')[0];
         try {
           const branch = await GetData({
             operation: BRANCH_ENDPOINT,
@@ -108,6 +115,7 @@ const MainDashboard = ({navigation, route}) => {
             resultKey: 'data',
             query: `branchId=${selectBranch ? selectBranch.id : 1}&startDate=2024-05-29&endDate=2024-06-04`,
           });
+
           let revenueShift1 = 0;
           let revenueShift2 = 0;
           let transactionShift1 = 0;
@@ -407,6 +415,8 @@ const MainDashboard = ({navigation, route}) => {
     }
   }
 
+  console.log('local data: ', todayData.localData);
+
   return (
     <View style={styles.container}>
       <TopBar navigation={navigation} title={'Dashboard'} />
@@ -432,10 +442,20 @@ const MainDashboard = ({navigation, route}) => {
           <View style={{justifyContent: 'center', rowGap: 5}}>
             <Text
               variant="titleMedium"
-              style={{fontSize: 18, color: colors.onBackground}}>
-              Muhammad Garma
+              style={{
+                fontSize: 18,
+                color: colors.onBackground,
+                textTransform: 'lowercase',
+              }}>
+              {todayData.localData.nickname}
             </Text>
-            <Text variant="titleMedium">General manager</Text>
+            {todayData.localData.role === 'general_manager' ? (
+              <Text variant="titleMedium">General Manager</Text>
+            ) : todayData.localData.role === 'store_manager' ? (
+              <Text variant="titleMedium">Store Manager</Text>
+            ) : (
+              <Text variant="titleMedium">Area Manager</Text>
+            )}
           </View>
         </View>
         <View style={styles.employee}>
@@ -456,23 +476,6 @@ const MainDashboard = ({navigation, route}) => {
 
       <View style={styles.whiteLayer}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* <View style={{flexDirection: 'row', marginBottom: 100}}> */}
-          {/* <ItemDashboard
-              iconName="fast-food"
-              name="Menu"
-              onPress={() => handlePress('Pilih Produk')}
-            />
-            <ItemDashboard
-              iconName="clipboard-outline"
-              name="History"
-              onPress={() => handlePress('History')}
-            />
-            <ItemDashboard
-              iconName="hourglass-outline"
-              name="On Going"
-              onPress={() => handlePress('Pending')}
-            /> */}
-          {/* </View> */}
           {modalChart(modal.chart)}
           <View style={{rowGap: 10}}>
             <View>

@@ -1,17 +1,13 @@
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
+  Appearance,
 } from 'react-native';
-import {Text} from 'react-native-paper';
-import React, {useState} from 'react';
-import {
-  createDrawerNavigator,
-  DrawerItem,
-  DrawerItemList,
-} from '@react-navigation/drawer';
+import {Text, useTheme} from 'react-native-paper';
+import React from 'react';
+import {createDrawerNavigator, DrawerItemList} from '@react-navigation/drawer';
 import {
   History,
   CompanyAccount,
@@ -21,8 +17,6 @@ import {
   EditPegawai,
   EditProduk,
   LoginPage,
-  MainBisnis,
-  MainDashboard,
   MainTransaksi,
   PilihCabang,
   PilihMenu,
@@ -48,15 +42,14 @@ import {
   PilihManager,
   EditManager,
   TambahManager,
+  MainLaporan,
 } from '../pages';
-import {BottomBar, ItemDashboard} from '.';
-import Route from '../routes/route';
+import {BottomBar} from '.';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {Colors} from '../utils/colors';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ImgIcons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
 import {CommonActions} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {Chart, MoneySend, StatusUp} from '../assets/icons';
@@ -64,10 +57,10 @@ import {Chart, MoneySend, StatusUp} from '../assets/icons';
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 const DrawerBar = ({route}) => {
+  const {colors} = useTheme();
   const selectedBranch = useSelector(state => state.branch.selectedBranch);
   return (
     <Drawer.Navigator
-      // initialRouteName="Home"
       drawerContent={props => {
         const {navigation} = props;
         function handleLogOut(params) {
@@ -87,7 +80,7 @@ const DrawerBar = ({route}) => {
             });
         }
         return (
-          <ScrollView contentContainerStyle={{flex: 1, flexGrow: 1}}>
+          <ScrollView contentContainerStyle={{flexGrow: 1}}>
             <View style={styles.drawer}>
               <ImgIcons
                 name="person-circle-outline"
@@ -105,14 +98,28 @@ const DrawerBar = ({route}) => {
               onPress={() => handleLogOut()}
               style={[
                 styles.logoutButton,
-                {alignItems: 'flex-end', position: 'absolute', bottom: 20},
+                {
+                  alignItems: 'flex-end',
+                  backgroundColor: colors.errorContainer,
+                },
               ]}>
               <Icon
                 name="log-out-outline"
                 size={25}
-                color={Colors.deleteColor}
+                color={
+                  Appearance.getColorScheme() === 'light'
+                    ? colors.error
+                    : colors.onErrorContainer
+                }
               />
-              <Text style={{color: Colors.deleteColor, fontWeight: 'bold'}}>
+              <Text
+                style={{
+                  color:
+                    Appearance.getColorScheme() === 'light'
+                      ? colors.error
+                      : colors.onErrorContainer,
+                  fontWeight: '900',
+                }}>
                 Log Out
               </Text>
             </TouchableOpacity>
@@ -461,11 +468,13 @@ const styles = StyleSheet.create({
     rowGap: 10,
   },
   logoutButton: {
-    marginTop: 50,
+    marginTop: 20,
     marginHorizontal: 10,
+    marginVertical: 10,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 30,
+    borderRadius: 10,
   },
 });

@@ -15,7 +15,7 @@ const BtnLogReg = props => {
       mode="elevated"
       buttonColor={props.disabled ? colors.surfaceDisabled : colors.btnColor}
       // textColor={colors.onBtnColor}
-      style={{paddingVertical: 5, borderRadius: 3, marginTop: 20}}>
+      style={{paddingVertical: 5, borderRadius: 3, marginTop: 10}}>
       {props.name}
     </Button>
   );

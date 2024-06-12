@@ -1,60 +1,94 @@
 import {
   StyleSheet,
   View,
-  Image,
   KeyboardAvoidingView,
   TouchableOpacity,
   ToastAndroid,
   Appearance,
+  Image,
+  ScrollView,
 } from 'react-native';
-import React, {useState, createContext} from 'react';
+import React, {createRef, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text, useTheme} from 'react-native-paper';
-import {BtnLogReg, FormLogReg} from '../../components';
+import {BtnLogReg, ConstButton, FormLogReg} from '../../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {API_KEY, API_URL, LOGIN_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
 import LogoLight from '../../assets/icons/logo-light.svg';
 import LogoDark from '../../assets/icons/logo-dark.svg';
+import {useNavigation, useRoute} from '@react-navigation/native';
 
-const LoginPage = ({navigation}) => {
-  const [loading, setLoading] = useState(false);
+const LoginPage = () => {
+  const navigation = useNavigation();
   const [login, setLogin] = useState({
     email: '',
     password: '',
   });
+  const [form, setForm] = useState({
+    errorEmail: '',
+    errorPassword: '',
+    hasEmailError: false,
+    hasPasswordError: false,
+    loading: false,
+  });
+
   const [visible, setVisible] = useState(true);
 
   const PostLogin = async () => {
     try {
-      setLoading(true);
-      const action = await axios.post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
+      setForm(prev => ({...prev, loading: true}));
+      const response = await axios.post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
         headers: {
           'Content-Type': 'application/json',
-          apikey: API_KEY, // Ensure header keys are correctly expected by your backend
+          apikey: API_KEY,
         },
       });
-      if (action.data) {
-        await AsyncStorage.setItem('userToken', action.data.token);
+      if (response.status === 200) {
+        await AsyncStorage.setItem('userToken', response.data.token);
         await AsyncStorage.setItem(
           'companyId',
-          action.data.credentials.companyid.toString(),
+          response.data.credentials.companyid.toString(),
         );
         await AsyncStorage.setItem(
           'credentials',
-          JSON.stringify(action.data.credentials),
+          JSON.stringify(response.data.credentials),
         );
+        setForm(prev => ({
+          ...prev,
+          hasEmailError: false,
+          hasPasswordError: false,
+          errorEmail: '',
+          errorPassword: '',
+        }));
+        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
         navigation.replace('Bottom Tab');
-        ToastAndroid.show(action.data.message, ToastAndroid.SHORT);
       }
     } catch (error) {
-      console.log('err: ', error);
-      ToastAndroid.show(
-        'Login Error, Check your email or password!',
-        ToastAndroid.SHORT,
-      );
+      const fullMessage = error.response?.data?.message;
+      const errorMessage = fullMessage.split(':').pop().trim();
+      if (fullMessage.includes('Email')) {
+        setForm(prev => ({
+          ...prev,
+          errorEmail: errorMessage,
+          hasEmailError: true,
+        }));
+      } else if (fullMessage.includes('Password')) {
+        setForm(prev => ({
+          ...prev,
+          errorPassword: errorMessage,
+          hasPasswordError: true,
+        }));
+      } else if (fullMessage) {
+        setForm(prev => ({
+          ...prev,
+          errorEmail: 'Email Invalid',
+          hasEmailError: true,
+        }));
+      }
+      console.log('Login Error: ', errorMessage);
     } finally {
-      setLoading(false);
+      setForm(prev => ({...prev, loading: false}));
     }
   };
 
@@ -73,7 +107,6 @@ const LoginPage = ({navigation}) => {
           <LogoDark width={250} height={150} />
         )}
       </View>
-      <View style={{alignItems: 'center'}}></View>
       <View style={{flex: 1 / 2, justifyContent: 'center'}}>
         <View style={{marginHorizontal: 30}}>
           <Text
@@ -86,22 +119,26 @@ const LoginPage = ({navigation}) => {
           </Text>
 
           <FormLogReg
+            hasError={form.hasEmailError}
+            error={form.errorEmail}
             label="Email"
             placeholder="email address"
             secureTextEntry={false}
             keyboardType="email-address"
-            left="email"
+            left="email-outline"
             value={login.email}
             onChangeText={text => setLogin({...login, email: text})}
           />
           <FormLogReg
+            hasError={form.hasPasswordError}
+            error={form.errorPassword}
             label="Password"
             placeholder="password"
             secureTextEntry={visible}
             keyboardType="default"
             right={visible ? 'eye-off' : 'eye'}
             onPress={() => setVisible(!visible)}
-            left="key-variant"
+            left="key-outline"
             value={login.password}
             onChangeText={text => setLogin({...login, password: text})}
           />
@@ -110,7 +147,7 @@ const LoginPage = ({navigation}) => {
             onPress={PostLogin}
             disabled={!login.email || !login.password}
             name="LOGIN"
-            loading={loading}
+            loading={form.loading}
           />
           <View style={styles.have_account}>
             <Text
@@ -169,5 +206,22 @@ const styles = StyleSheet.create({
     color: Colors.btnColor,
     fontSize: 18,
     textDecorationLine: 'underline',
+  },
+  header: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#333333',
+    shadowOffset: {width: -1, height: -3},
+    shadowRadius: 2,
+    shadowOpacity: 0.4,
+    paddingTop: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  panelHandle: {
+    width: 40,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#00000040',
+    marginBottom: 10,
   },
 });

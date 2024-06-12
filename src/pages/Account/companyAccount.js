@@ -20,10 +20,8 @@ import {MANAGER_ENDPOINT} from '@env';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {ConstButton} from '../../components';
-import {useSelector} from 'react-redux';
 
 const CompanyAccount = () => {
-  const {allBranch} = useSelector(state => state.branch);
   const navigation = useNavigation();
   const [form, setForm] = useState({
     user: {}, // data backend
@@ -79,6 +77,9 @@ const CompanyAccount = () => {
             {form.user.name}
           </Text>
           <Text style={{fontSize: 16, color: 'grey'}}>{form.user.role}</Text>
+          <Text style={{fontSize: 16, color: 'grey', marginVertical: 10}}>
+            Edit Profile
+          </Text>
         </View>
         <View style={{gap: 20, paddingVertical: 30}}>
           <FormProfile

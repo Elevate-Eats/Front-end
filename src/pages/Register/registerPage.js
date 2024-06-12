@@ -17,8 +17,10 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LogoLight from '../../assets/icons/logo-light.svg';
 import LogoDark from '../../assets/icons/logo-dark.svg';
+import {useNavigation} from '@react-navigation/native';
 
-const RegisterPage = ({navigation}) => {
+const RegisterPage = () => {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(true);
   const [regist, setRegist] = useState({
@@ -34,28 +36,48 @@ const RegisterPage = ({navigation}) => {
 
   const {colors} = useTheme();
 
-  async function PostRegist(params) {
-    try {
-      setLoading(true);
-      const action = await axios.post(
-        `${API_URL}/${REGISTER_ENDPOINT}`,
-        regist,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: API_KEY,
+  function validateEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  }
+
+  async function PostRegist() {
+    if (!validateEmail(regist.email)) {
+      ToastAndroid.show('Masukkan email yang valid', ToastAndroid.SHORT);
+    } else if (regist.password.length < 8) {
+      ToastAndroid.show('Password minimal 8 karakter', ToastAndroid.SHORT);
+    } else if (regist.password !== regist.passwordConfirm) {
+      ToastAndroid.show('Password tidak sama', ToastAndroid.SHORT);
+    } else {
+      try {
+        setLoading(true);
+        const response = await axios.post(
+          `${API_URL}/${REGISTER_ENDPOINT}`,
+          regist,
+          {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              apikey: API_KEY,
+            },
           },
-        },
-      );
-      if (action.data) {
-        console.log('action.data: ', action.data);
-        await AsyncStorage.setItem('userToken', action.data.token);
-        ToastAndroid.show(action.data.message, ToastAndroid.SHORT);
-        navigation.replace('Bottom Tab');
+        );
+        if (response.status === 200) {
+          ToastAndroid.show(
+            'Registrasi berhasil, Silakan Login',
+            ToastAndroid.SHORT,
+          );
+          navigation.replace('Login');
+        }
+      } catch (error) {
+        ToastAndroid.show(
+          error.response?.data?.message || 'Registrasi gagal',
+          ToastAndroid.SHORT,
+        );
+        console.log('error: ', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -75,7 +97,7 @@ const RegisterPage = ({navigation}) => {
           )}
         </View>
 
-        <View style={{}}>
+        <View style={{marginTop: 30}}>
           <View style={{marginHorizontal: 30}}>
             <Text
               variant="headlineSmall"
@@ -160,17 +182,17 @@ const RegisterPage = ({navigation}) => {
               name="SIGN UP"
               onPress={() => PostRegist()}
               loading={loading}
-              disabled={
-                !regist.name ||
-                !regist.nickname ||
-                !regist.company ||
-                !regist.phone ||
-                !regist.email ||
-                !regist.password ||
-                !regist.passwordConfirm
-              }
+              // disabled={
+              //   !regist.name ||
+              //   !regist.nickname ||
+              //   !regist.company ||
+              //   !regist.phone ||
+              //   !regist.email ||
+              //   !regist.password ||
+              //   !regist.passwordConfirm
+              // }
             />
-            <View style={styles.have_account}>
+            <View style={[styles.have_account, {marginTop: 30}]}>
               <Text
                 variant="titleSmall"
                 style={{
