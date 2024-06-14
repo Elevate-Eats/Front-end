@@ -3,20 +3,18 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  Alert,
   ToastAndroid,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {AddPhoto, ConstButton, FormInput} from '../../../components';
 import {Text} from 'react-native-paper';
-import PostData from '../../../utils/postData';
-import {BRANCH_ENDPOINT, API_URL} from '@env';
+import {BRANCH_ENDPOINT} from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch} from 'react-redux';
 import {addBranch as tambahBranch} from '../../../redux/branchSlice';
-import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
+import {PostAPI} from '../../../api';
 
 const TambahCabang = () => {
   const navigation = useNavigation();
@@ -65,19 +63,13 @@ const TambahCabang = () => {
       ...branch,
       managerId: credentials.id,
     };
-    const token = await AsyncStorage.getItem('userToken');
     try {
       setLoading(true);
-      const response = await axios.post(
-        `${API_URL}/${BRANCH_ENDPOINT}/addBranch`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const response = await PostAPI({
+        operation: BRANCH_ENDPOINT,
+        endpoint: 'addBranch',
+        payload: payload,
+      });
       if (response.status === 200) {
         dispatch(tambahBranch(branch));
         ToastAndroid.show(`${branch.name} successfully added`, 1000);
