@@ -12,7 +12,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../utils/colors';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectBranch} from '../redux/branchSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {BRANCH_ENDPOINT} from '@env';
+import GetData from '../utils/getData';
 
 const ModalBranch = props => {
   const dispatch = useDispatch();
@@ -21,20 +22,29 @@ const ModalBranch = props => {
   const [checked, setChecked] = useState(null);
   const [data, setData] = useState({
     branch: [],
+    loading: false,
   });
 
   function handleCheck(params) {
     setChecked(params);
   }
-
-  // console.log('branch: ', branch);
-
   useEffect(() => {
-    async function fetchDataLocal(params) {
-      const localData = await AsyncStorage.getItem('allBranch');
-      setData(prev => ({...prev, branch: JSON.parse(localData)}));
+    async function fetchData(params) {
+      try {
+        setData(prev => ({...prev, loading: true}));
+        const response = await GetData({
+          operation: BRANCH_ENDPOINT,
+          endpoint: 'showBranches',
+          resultKey: 'branchData',
+        });
+        setData(prev => ({...prev, branch: response}));
+      } catch (error) {
+        console.log('error: ', error);
+      } finally {
+        setData(prev => ({...prev, loading: false}));
+      }
     }
-    fetchDataLocal();
+    fetchData();
   }, []);
 
   return (

@@ -76,110 +76,22 @@ const TambahManager = () => {
     {key: 'store_manager', value: 'store_manager'},
   ];
 
-  // async function addManager(managerRole) {
-  //   resetFormError();
-  //   let branchAccess;
-  //   if (managerRole === 'general_manager') {
-  //     branchAccess = '{all}';
-  //   } else if (managerRole === 'area_manager') {
-  //     branchAccess = '{1}';
-  //   } else if (managerRole === 'store_manager') {
-  //     branchAccess = '{2}';
-  //   }
-
-  //   const token = await AsyncStorage.getItem('userToken');
-  //   const payload = {
-  //     ...data.manager,
-  //     branchAccess: branchAccess,
-  //   };
-  //   try {
-  //     setData(prev => ({...prev, loading: true}));
-  //     const response = await axios.post(
-  //       `${API_URL}/${MANAGER_ENDPOINT}/addManager`,
-  //       payload,
-  //       {
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       },
-  //     );
-  //     ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
-  //     navigation.goBack();
-  //   } catch (error) {
-  //     const fullMessage = error.response?.data?.details;
-  //     fullMessage.some(item => {
-  //       if (item.includes('"name"')) {
-  //         const error = 'name is required';
-  //         setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
-  //       } else if (item.includes('"nickname"')) {
-  //         const error = 'nickname is required';
-  //         setForm(prev => ({
-  //           ...prev,
-  //           errorNickname: error,
-  //           hasErrorNickaname: true,
-  //         }));
-  //       } else if (item.includes('"role"')) {
-  //         const error = 'role is required';
-  //         setForm(prev => ({...prev, errorRole: error, hasErrorRole: true}));
-  //       } else if (item.includes('"email"')) {
-  //         const error = 'email is required';
-  //         setForm(prev => ({...prev, errorEmail: error, hasErrorEmail: true}));
-  //       } else if (item.includes('"password"')) {
-  //         const error = 'password is required';
-  //         setForm(prev => ({
-  //           ...prev,
-  //           errorPassword: error,
-  //           hasErrorPassword: true,
-  //         }));
-  //       } else if (item.includes('"phone"')) {
-  //         if (item.includes('empty')) {
-  //           const error = 'phone number is required';
-  //           setForm(prev => ({
-  //             ...prev,
-  //             errorPhone: error,
-  //             hasErrorPhone: true,
-  //           }));
-  //         } else if (item.includes('fails')) {
-  //           if (payload.phone.length < 9) {
-  //             const error = 'phone number must be longer than 9 number';
-  //             setForm(prev => ({
-  //               ...prev,
-  //               errorPhone: error,
-  //               hasErrorPhone: true,
-  //             }));
-  //           } else {
-  //             const error = `invalid phone number it's should +62`;
-  //             setForm(prev => ({
-  //               ...prev,
-  //               errorPhone: error,
-  //               hasErrorPhone: true,
-  //             }));
-  //           }
-  //         }
-  //       }
-  //     });
-  //   } finally {
-  //     setData(prev => ({...prev, loading: false}));
-  //   }
-  // }
-
   async function addManager(managerRole) {
     resetFormError();
-
-    const branchAccess =
-      managerRole === 'general_manager'
-        ? '{all}'
-        : managerRole === 'area_manager'
-          ? '{1}'
-          : '{2}';
+    let branchAccess;
+    if (managerRole === 'general_manager') {
+      branchAccess = '{all}';
+    } else if (managerRole === 'area_manager') {
+      branchAccess = '{1}';
+    } else if (managerRole === 'store_manager') {
+      branchAccess = '{2}';
+    }
 
     const token = await AsyncStorage.getItem('userToken');
     const payload = {
       ...data.manager,
-      branchAccess,
+      branchAccess: branchAccess,
     };
-
     try {
       setData(prev => ({...prev, loading: true}));
       const response = await axios.post(
@@ -196,54 +108,93 @@ const TambahManager = () => {
       navigation.goBack();
     } catch (error) {
       const fullMessage = error.response?.data?.details;
-      if (fullMessage) {
-        fullMessage.forEach(item => {
-          let error = '';
-          let hasError = '';
-
-          if (item.includes('"name"')) {
-            error = 'name is required';
-            hasError = 'hasErrorName';
-          } else if (item.includes('"nickname"')) {
-            error = 'nickname is required';
-            hasError = 'hasErrorNickname';
-          } else if (item.includes('"role"')) {
-            error = 'role is required';
-            hasError = 'hasErrorRole';
-          } else if (item.includes('"email"')) {
-            error = 'email is required';
-            hasError = 'hasErrorEmail';
-          } else if (item.includes('"password"')) {
-            error = 'password is required';
-            hasError = 'hasErrorPassword';
-          } else if (item.includes('"phone"')) {
-            if (item.includes('empty')) {
-              error = 'phone number is required';
-              hasError = 'hasErrorPhone';
-            } else if (item.includes('fails')) {
-              if (payload.phone.length < 9) {
-                error = 'phone number must be longer than 9 number';
-                hasError = 'hasErrorPhone';
-              } else {
-                error = `invalid phone number it's should +62`;
-                hasError = 'hasErrorPhone';
-              }
-            }
-          }
-
-          if (error && hasError) {
+      console.log('full message: ', fullMessage);
+      fullMessage.some(item => {
+        if (item.includes('"name"')) {
+          const error = 'name is required';
+          setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
+        } else if (item.includes('"nickname"')) {
+          const error = 'nickname is required';
+          setForm(prev => ({
+            ...prev,
+            errorNickname: error,
+            hasErrorNickaname: true,
+          }));
+        } else if (item.includes('"role"')) {
+          const error = 'role is required';
+          setForm(prev => ({...prev, errorRole: error, hasErrorRole: true}));
+        } else if (item.includes('"email"')) {
+          const error = 'email is required';
+          setForm(prev => ({...prev, errorEmail: error, hasErrorEmail: true}));
+          if (item.includes('valid')) {
+            const error = 'must be a valid email';
             setForm(prev => ({
               ...prev,
-              [error]: error,
-              [hasError]: true,
+              errorEmail: error,
+              hasErrorEmail: true,
             }));
           }
-        });
-      }
+        } else if (item.includes('"password"')) {
+          const error = 'password is required';
+          setForm(prev => ({
+            ...prev,
+            errorPassword: error,
+            hasErrorPassword: true,
+          }));
+          if (payload.password.length < 8) {
+            const error = 'password length must be at least 8 characters long';
+            setForm(prev => ({
+              ...prev,
+              errorPassword: error,
+              hasErrorPassword: true,
+            }));
+          }
+        } else if (item.includes('"phone"')) {
+          const error = 'phone number is required';
+          setForm(prev => ({
+            ...prev,
+            errorPhone: error,
+            hasErrorPhone: true,
+          }));
+          if (item.includes('empty')) {
+            const error = 'phone number is required';
+            setForm(prev => ({
+              ...prev,
+              errorPhone: error,
+              hasErrorPhone: true,
+            }));
+          } else if (item.includes('fails')) {
+            if (payload.phone.length < 9) {
+              const error = 'phone number must be longer than 9 number';
+              setForm(prev => ({
+                ...prev,
+                errorPhone: error,
+                hasErrorPhone: true,
+              }));
+            } else {
+              const error = `invalid phone number it's should +62`;
+              setForm(prev => ({
+                ...prev,
+                errorPhone: error,
+                hasErrorPhone: true,
+              }));
+            }
+          }
+        } else if (payload.passwordConfirm !== payload.password) {
+          const error = `password doesn't match`;
+          setForm(prev => ({
+            ...prev,
+            errorConfirmPassword: error,
+            hasErrorConfirmPassword: true,
+          }));
+        }
+      });
+      // console.log('payload: ', payload);
     } finally {
       setData(prev => ({...prev, loading: false}));
     }
   }
+
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>

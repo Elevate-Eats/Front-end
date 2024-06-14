@@ -81,7 +81,6 @@ const MainDashboard = ({navigation, route}) => {
             endpoint: 'showBranches',
             resultKey: 'branchData',
           });
-          // console.log('branch: ', JSON.stringify(branch));
           await AsyncStorage.setItem('allBranch', JSON.stringify(branch));
           const menuCompany = await GetData({
             operation: MENU_COMPANY_ENDPOINT,
@@ -102,7 +101,6 @@ const MainDashboard = ({navigation, route}) => {
             operation: ANALYTICS_ENDPOINT,
             endpoint: 'showDailySummary',
             resultKey: 'data',
-            // query: `companyId=1&branchId=12&startDate=2024-05-01&endDate=2024-05-01`,
             query: `companyId=${todayData.localData.companyid}&branchId=${selectBranch ? selectBranch.id : 1}&startDate=${new Date()}&endDate=${new Date()}`,
           });
           const dataPredict = await getDataQuery({
