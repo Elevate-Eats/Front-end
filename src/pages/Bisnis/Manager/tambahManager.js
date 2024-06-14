@@ -141,7 +141,7 @@ const TambahManager = () => {
             errorPassword: error,
             hasErrorPassword: true,
           }));
-          if (payload.password.length < 8) {
+          if (payload.password?.length < 8) {
             const error = 'password length must be at least 8 characters long';
             setForm(prev => ({
               ...prev,
@@ -189,7 +189,7 @@ const TambahManager = () => {
           }));
         }
       });
-      // console.log('payload: ', payload);
+      console.log('payload: ', payload);
     } finally {
       setData(prev => ({...prev, loading: false}));
     }

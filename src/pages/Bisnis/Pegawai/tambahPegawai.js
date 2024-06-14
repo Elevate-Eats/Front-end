@@ -3,6 +3,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
+  ToastAndroid,
   View,
 } from 'react-native';
 import React, {useState} from 'react';
@@ -10,50 +11,93 @@ import {Text} from 'react-native-paper';
 
 import {EMPLOYEE_ENDPOINT} from '@env';
 import PostData from '../../../utils/postData';
-import {CollapsedItem} from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
 import {Colors} from '../../../utils/colors';
-import {
-  AddPhoto,
-  ConstButton,
-  DeleteButton,
-  FormInput,
-} from '../../../components';
+import {AddPhoto, ConstButton, FormInput} from '../../../components';
+import {PostAPI} from '../../../api';
+import {useNavigation} from '@react-navigation/native';
 
-const TambahPegawai = ({navigation}) => {
+const TambahPegawai = () => {
+  const navigation = useNavigation();
   const [employee, setEmployee] = useState({
     name: '',
     salary: '',
     bonus: '',
   });
 
+  const [form, setForm] = useState({
+    errorName: '',
+    errorSalary: '',
+    errorBonus: '',
+    hasErrorName: false,
+    hasErrorSalary: false,
+    hasErrorBonus: false,
+  });
+
+  function resetFormError(params) {
+    setForm(prev => ({
+      ...prev,
+      errorName: '',
+      errorSalary: '',
+      errorBonus: '',
+      hasErrorName: false,
+      hasErrorSalary: false,
+      hasErrorBonus: false,
+    }));
+  }
+
   async function addEmployee(params) {
+    const payload = {
+      ...employee,
+      bonus: parseInt(employee.bonus.replace(/\./g, ''), 10),
+      salary: parseInt(employee.salary.replace(/\./g, ''), 10),
+    };
+    // console.log('payload: ', payload);
+    resetFormError();
     try {
-      const action = await PostData({
+      const response = await PostAPI({
         operation: EMPLOYEE_ENDPOINT,
         endpoint: 'addEmployee',
-        payload: employee,
+        payload: payload,
       });
-      Alert.alert(action.message, `${employee.name} successfully added`, [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      if (response.status === 200) {
+        // console.log('response: ', response.data);
+        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+        navigation.goBack();
+      }
     } catch (error) {
-      Alert.alert('Failed to Add Employee');
+      const fullMessage = error.response?.data?.details;
+      console.log('fullmessage: ', fullMessage);
+      fullMessage.forEach(item => {
+        if (item.includes('"name"')) {
+          const error = 'name is required';
+          setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
+        } else if (item.includes('"salary"')) {
+          const error = 'salary is required';
+          setForm(prev => ({
+            ...prev,
+            errorSalary: error,
+            hasErrorSalary: true,
+          }));
+        } else if (item.includes('"bonus"')) {
+          const error = 'bonus is required';
+          setForm(prev => ({
+            ...prev,
+            errorBonus: error,
+            hasErrorBonus: true,
+          }));
+        }
+      });
     }
   }
-  const formatRupiah = angka => {
-    let number_string = angka.toString(),
-      split = number_string.split(','),
-      sisa = split[0].length % 3,
-      rupiah = split[0].substr(0, sisa),
-      ribuan = split[0].substr(sisa).match(/\d{3}/g);
+  function formatNumber(number) {
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
 
-    if (ribuan) {
-      let separator = sisa ? '.' : '';
-      rupiah += separator + ribuan.join('.');
-    }
-
-    return rupiah;
-  };
+  function formatMoney(text, field) {
+    const rawText = text.replace(/\D/g, '');
+    const formatedText = formatNumber(rawText);
+    setEmployee({...employee, [field]: formatedText});
+  }
   return (
     <KeyboardAvoidingView enabled style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -71,26 +115,28 @@ const TambahPegawai = ({navigation}) => {
               left="account"
               value={employee.name}
               onChangeText={text => setEmployee({...employee, name: text})}
+              hasError={form.hasErrorName}
+              error={form.errorName}
             />
             <FormInput
               label="Gaji Pegawai"
               placeholder="Masukkan gaji pegawai ..."
               keyboardType="numeric"
               left="cash"
-              value={formatRupiah(employee.salary)}
-              onChangeText={text =>
-                setEmployee({...employee, salary: parseInt(text, 10 || 0)})
-              }
+              value={employee.salary}
+              onChangeText={text => formatMoney(text, 'salary')}
+              hasError={form.hasErrorSalary}
+              error={form.errorSalary}
             />
             <FormInput
               label="Bonus Pegawai"
               placeholder="Masukkan bonus pegawai ..."
               keyboardType="numeric"
               left="percent"
-              value={formatRupiah(employee.bonus)}
-              onChangeText={text =>
-                setEmployee({...employee, bonus: parseInt(text, 10 || 0)})
-              }
+              value={employee.bonus}
+              onChangeText={text => formatMoney(text, 'bonus')}
+              hasError={form.hasErrorBonus}
+              error={form.errorBonus}
             />
           </View>
         </ScrollView>
