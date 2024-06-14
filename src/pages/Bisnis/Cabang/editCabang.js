@@ -19,8 +19,6 @@ import {
 } from '../../../components';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Text} from 'react-native-paper';
-import PostData from '../../../utils/postData';
-import GetData from '../../../utils/getData';
 import {
   useFocusEffect,
   useNavigation,
@@ -29,7 +27,7 @@ import {
 import {useDispatch} from 'react-redux';
 import {deleteBranch as delBranch} from '../../../redux/branchSlice';
 
-import {BRANCH_ENDPOINT, EMPLOYEE_ENDPOINT} from '@env';
+import {BRANCH_ENDPOINT} from '@env';
 import {PostAPI} from '../../../api';
 
 const EditCabang = () => {
@@ -38,7 +36,6 @@ const EditCabang = () => {
   const dispatch = useDispatch();
   const {item} = route.params; // prev page
   const [modal, setModal] = useState(false); // open Modal content
-  const [loading, setLoading] = useState(false);
   const [employee, setEmployee] = useState({}); // dari database
   const [selectedEmp, setSelectedEmp] = useState([]);
 
@@ -110,7 +107,6 @@ const EditCabang = () => {
         endpoint: 'updateBranch',
         payload: payload,
       });
-      console.log('response: ', response.data);
       ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
       navigation.goBack();
     } catch (error) {
@@ -198,7 +194,7 @@ const EditCabang = () => {
     setSelectedEmp(delEmp);
   }
 
-  if (loading) {
+  if (data.loading) {
     return <LoadingIndicator />;
   }
   return (
@@ -304,7 +300,7 @@ const EditCabang = () => {
             <ConstButton
               title="Simpan"
               onPress={() => updateBranch()}
-              loading={loading}
+              loading={data.loading}
             />
           </View>
         </View>
