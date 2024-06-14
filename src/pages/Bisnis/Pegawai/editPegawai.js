@@ -3,6 +3,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
+  ToastAndroid,
   View,
 } from 'react-native';
 import {Text} from 'react-native-paper';
@@ -15,36 +16,73 @@ import {
   FormInput,
   LoadingIndicator,
 } from '../../../components';
-import {useFocusEffect} from '@react-navigation/native';
-
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import {EMPLOYEE_ENDPOINT} from '@env';
-import PostData from '../../../utils/postData';
+import {PostAPI} from '../../../api';
 
-const EditPegawai = ({route, navigation}) => {
+const EditPegawai = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
   const {item} = route.params;
 
-  const [employee, setEmployee] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState({
+    employee: [],
+    loading: false,
+  });
+
+  const [form, setForm] = useState({
+    errorName: '',
+    errorSalary: '',
+    errorBonus: '',
+    hasErrorName: false,
+    hasErrorSalary: false,
+    hasErrorBonus: false,
+  });
+
+  function resetFormError(params) {
+    setForm(prev => ({
+      ...prev,
+      errorName: '',
+      errorSalary: '',
+      errorBonus: '',
+      hasErrorName: false,
+      hasErrorSalary: false,
+      hasErrorBonus: false,
+    }));
+  }
 
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
-        setLoading(true);
+        setData(prev => ({...prev, loading: true}));
         try {
-          const dataEmployee = await PostData({
+          const response = await PostAPI({
             operation: EMPLOYEE_ENDPOINT,
             endpoint: 'showSingleEmployee',
             payload: {id: item.id},
           });
-          setEmployee(dataEmployee.employeeData);
+          if (response.status === 200) {
+            const employeeData = response.data.employeeData;
+            setData({
+              employee: {
+                ...employeeData,
+                salary: formatRupiah(employeeData.salary),
+                bonus: formatRupiah(employeeData.bonus),
+              },
+              loading: false,
+            });
+          }
         } catch (error) {
-          Alert.alert('Failed to Fetch Data !');
         } finally {
-          setLoading(false);
+          setData(prev => ({...prev, loading: false}));
         }
       };
       fetchData();
-    }, []),
+    }, [item.id]),
   );
 
   const formatRupiah = angka => {
@@ -62,53 +100,103 @@ const EditPegawai = ({route, navigation}) => {
     return rupiah;
   };
 
-  async function updateEmployee(params) {
-    const payloadUpdate = {
-      id: item.id,
-      name: employee.name,
-      salary: employee.salary,
-      bonus: employee.bonus,
-    };
+  function formatNumber(number) {
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
 
+  function formatMoney(text, field) {
+    const rawText = text.replace(/\D/g, '');
+    const formatedText = formatNumber(rawText);
+    setData(prev => ({
+      ...prev,
+      employee: {
+        ...prev.employee,
+        [field]: formatedText,
+      },
+    }));
+  }
+
+  async function updateEmployee(params) {
+    resetFormError();
+    setData(prev => ({...prev, loading: true}));
+    const payload = {
+      id: item.id,
+      name: data.employee.name,
+      salary: parseInt(data.employee.salary.replace(/\./g, ''), 10),
+      bonus: parseInt(data.employee.bonus.replace(/\./g, ''), 10),
+    };
     try {
-      const action = await PostData({
+      const response = await PostAPI({
         operation: EMPLOYEE_ENDPOINT,
         endpoint: 'updateEmployee',
-        payload: payloadUpdate,
+        payload: payload,
       });
-      Alert.alert(action.message, `${employee.name} successfully updated`, [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      if (response.status === 200) {
+        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+        navigation.goBack();
+      }
     } catch (error) {
-      Alert.alert('Failed to Update Employee');
+      const fullMessage = error.response?.data?.details;
+      // console.log('full: ', fullMessage);
+      fullMessage.forEach(item => {
+        if (item.includes('"name"')) {
+          const error = 'name is required';
+          setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
+        } else if (item.includes('"salary"')) {
+          const error = 'salary is required';
+          setForm(prev => ({
+            ...prev,
+            errorSalary: error,
+            hasErrorSalary: true,
+          }));
+        } else if (item.includes('"bonus"')) {
+          const error = 'bonus is required';
+          setForm(prev => ({
+            ...prev,
+            errorBonus: error,
+            hasErrorBonus: true,
+          }));
+        }
+      });
+    } finally {
+      setData(prev => ({...prev, loading: false}));
     }
   }
 
   async function deleteEmployee(params) {
     async function handleDelete(params) {
       try {
-        const action = await PostData({
+        setData(prev => ({...prev, loading: true}));
+        const response = await PostAPI({
           operation: EMPLOYEE_ENDPOINT,
           endpoint: 'deleteEmployee',
           payload: {id: item.id},
         });
-        Alert.alert(action.message, `${employee.name} successfully deleted`, [
-          {text: 'OK', onPress: () => navigation.goBack()},
-        ]);
+        if (response.status === 200) {
+          ToastAndroid.show(
+            `${data.employee.name} successfully deleted`,
+            ToastAndroid.SHORT,
+          );
+          navigation.goBack();
+        }
       } catch (error) {
-        Alert.alert('Failed to Delete Employee')
+        ToastAndroid.show(
+          `Failed to delete ${data.employee.name}`,
+          ToastAndroid.SHORT,
+        );
+      } finally {
+        setData(prev => ({...prev, loading: false}));
       }
     }
-
     Alert.alert(
       'Employee Deleted',
-      `Delete ${employee.name} ?`,
+      `Delete ${data.employee.name} ?`,
       [{text: 'Cancel'}, {text: 'OK', onPress: handleDelete}],
       {cancelable: true},
     );
   }
 
-  if (loading) {
+  if (data.loading) {
     return <LoadingIndicator />;
   }
 
@@ -128,8 +216,15 @@ const EditPegawai = ({route, navigation}) => {
               keyboardType="default"
               left="account"
               secureTextEntry={false}
-              value={employee.name}
-              onChangeText={text => setEmployee({...employee, name: text})}
+              value={data.employee.name}
+              onChangeText={text =>
+                setData(prev => ({
+                  ...prev,
+                  employee: {...prev.employee, name: text},
+                }))
+              }
+              hasError={form.hasErrorName}
+              error={form.errorName}
             />
             <FormInput
               label="Gaji Pegawai"
@@ -137,10 +232,10 @@ const EditPegawai = ({route, navigation}) => {
               keyboardType="numeric"
               left="cash"
               secureTextEntry={false}
-              value={employee.salary ? formatRupiah(employee.salary) : ''}
-              onChangeText={text =>
-                setEmployee({...employee, salary: parseInt(text, 10 || 0)})
-              }
+              value={data.employee.salary}
+              onChangeText={text => formatMoney(text, 'salary')}
+              hasError={form.hasErrorSalary}
+              error={form.errorSalary}
             />
             <FormInput
               label="Bonus Pegawai"
@@ -148,17 +243,21 @@ const EditPegawai = ({route, navigation}) => {
               keyboardType="numeric"
               left="percent"
               secureTextEntry={false}
-              value={employee.bonus ? formatRupiah(employee.bonus) : ''}
-              onChangeText={text =>
-                setEmployee({...employee, bonus: parseInt(text, 10 || 0)})
-              }
+              value={data.employee.bonus}
+              onChangeText={text => formatMoney(text, 'bonus')}
+              hasError={form.hasErrorBonus}
+              error={form.errorBonus}
             />
           </View>
         </ScrollView>
         <View style={{flexDirection: 'row', columnGap: 10}}>
           <DeleteButton onPress={() => deleteEmployee()} />
           <View style={{flex: 1}}>
-            <ConstButton title="Simpan" onPress={() => updateEmployee()} />
+            <ConstButton
+              title="Simpan"
+              onPress={() => updateEmployee()}
+              loading={data.loading}
+            />
           </View>
         </View>
       </View>

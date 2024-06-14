@@ -172,7 +172,12 @@ const EditCabang = () => {
           navigation.goBack();
         }
       } catch (error) {
-        ToastAndroid.show('Failed to Delete', ToastAndroid.SHORT);
+        ToastAndroid.show(
+          `Failed to delete ${data.branch.name}`,
+          ToastAndroid.SHORT,
+        );
+      } finally {
+        setData(prev => ({...prev, loading: false}));
       }
     }
     // !-------------------------

@@ -1,58 +1,107 @@
-import {KeyboardAvoidingView, StyleSheet, View} from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  StyleSheet,
+  ToastAndroid,
+  View,
+} from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 import GetData from '../../../utils/getData';
-import {useSelector} from 'react-redux';
 import {EMPLOYEE_ENDPOINT} from '@env';
 import {Colors} from '../../../utils/colors';
 import {
   BtnAdd,
   DataError,
   ListColumn,
-  ListRow,
+  LoadingIndicator,
   SearchBox,
 } from '../../../components';
 import Employee from '../../../assets/icons/employee.svg';
+import {GetAPI, PostAPI} from '../../../api';
 const PilihPegawai = ({navigation}) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [employee, setEmployee] = useState({});
-  // const employee = useSelector(state => state.employee.allEmployee);
+  const [data, setData] = useState({
+    employee: [],
+    loading: false,
+    error: null,
+  });
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
+        setData(prev => ({...prev, loading: true}));
         try {
-          const action = await GetData({
+          const response = await GetAPI({
             operation: EMPLOYEE_ENDPOINT,
             endpoint: 'showEmployees',
-            resultKey: 'employeeData',
           });
-          if (action) {
-            setEmployee(action);
+          if (response.status === 200) {
+            setData(prev => ({...prev, employee: response.data.employeeData}));
           }
         } catch (error) {
-          setError('Employee not found');
+          const fullMessage = error.response?.data?.message;
+          if (fullMessage) {
+            setData(prev => ({...prev, error: 'No Data Found'}));
+          }
+        } finally {
+          setData(prev => ({...prev, loading: false}));
         }
       }
       fetchData();
     }, []),
   );
-  // const [employee, setEmployee] = useState({});
 
+  async function handleDelete(item) {
+    setData(prev => ({...prev, loading: true}));
+    try {
+      const response = await PostAPI({
+        operation: EMPLOYEE_ENDPOINT,
+        endpoint: 'deleteEmployee',
+        payload: {id: item.id},
+      });
+      if (response.status === 200) {
+        ToastAndroid.show(
+          `${item.name} successfully deleted`,
+          ToastAndroid.SHORT,
+        );
+        setData(prev => ({
+          ...prev,
+          employee: prev.employee.filter(element => element.id !== item.id),
+        }));
+      }
+    } catch (error) {
+      ToastAndroid.show(`Failed to delete ${item.name}`, ToastAndroid.SHORT);
+    } finally {
+      setData(prev => ({...prev, loading: false}));
+    }
+  }
+  if (data.loading) {
+    return <LoadingIndicator />;
+  }
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>
         <SearchBox search="Cari pegawai ..." />
         <View style={{flex: 1, marginVertical: 10}}>
-          {error ? (
+          {data.employee.length === 0 ? (
             <View style={styles.dataError}>
               <Employee width={200} height={200} />
-              <DataError data={error} />
+              <DataError data={data.error} />
             </View>
           ) : (
             <ListColumn
-              data={employee}
+              data={data.employee.sort((a, b) => a.name.localeCompare(b.name))}
               onPress={item => navigation.navigate('Edit Pegawai', {item})}
+              onLongPress={item => {
+                Alert.alert(
+                  'Delete Employee',
+                  `Delete ${item.name} ?`,
+                  [
+                    {text: 'Cancel'},
+                    {text: 'OK', onPress: () => handleDelete(item)},
+                  ],
+                  {cancelable: true},
+                );
+              }}
             />
           )}
         </View>
