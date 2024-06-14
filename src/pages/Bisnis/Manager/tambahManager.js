@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {HelperText, Text} from 'react-native-paper';
+import {HelperText, Text, useTheme} from 'react-native-paper';
 import React, {useState} from 'react';
 import {
   AddPhoto,
@@ -25,6 +25,7 @@ import axios from 'axios';
 import {API_URL, MANAGER_ENDPOINT} from '@env';
 
 const TambahManager = () => {
+  const {colors} = useTheme();
   const navigation = useNavigation();
   const [data, setData] = useState({
     manager: {},
@@ -182,6 +183,13 @@ const TambahManager = () => {
           }
         } else if (payload.passwordConfirm !== payload.password) {
           const error = `password doesn't match`;
+          setForm(prev => ({
+            ...prev,
+            errorConfirmPassword: error,
+            hasErrorConfirmPassword: true,
+          }));
+        } else if (!payload.passwordConfirm) {
+          const error = 'confirm password is required';
           setForm(prev => ({
             ...prev,
             errorConfirmPassword: error,
@@ -345,7 +353,13 @@ const TambahManager = () => {
                     manager: {...prev.manager, role: text},
                   }))
                 }
-                boxStyles={styles.boxStyles}
+                boxStyles={[
+                  styles.boxStyles,
+                  {
+                    borderColor: form.hasErrorRole ? colors.error : 'grey',
+                    backgroundColor: colors.background,
+                  },
+                ]}
                 dropdownStyles={styles.dropdownStyles}
                 placeholder="Pilih role"
                 searchPlaceholder="Cari role ..."
@@ -391,9 +405,9 @@ const styles = StyleSheet.create({
   },
   boxStyles: {
     flex: 1,
-    borderColor: '#878787',
     borderWidth: 1.5,
     borderRadius: 5,
+    paddingVertical: 15,
   },
   dropdownStyles: {
     borderRadius: 5,
