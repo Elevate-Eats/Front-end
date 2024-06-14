@@ -1,18 +1,23 @@
-import {KeyboardAvoidingView, StyleSheet, Text, View} from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  StyleSheet,
+  ToastAndroid,
+  View,
+} from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import GetData from '../../../utils/getData';
 import {MANAGER_ENDPOINT} from '@env';
 import {
   BtnAdd,
   DataError,
   ListColumn,
-  ListRow,
   LoadingIndicator,
   SearchBox,
 } from '../../../components';
 import {Colors} from '../../../utils/colors';
 import Store from '../../../assets/icons/store.svg';
+import {GetAPI, PostAPI} from '../../../api';
 
 const PilihManager = () => {
   const navigation = useNavigation();
@@ -25,35 +30,52 @@ const PilihManager = () => {
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
-        setData(prev => ({
-          ...prev,
-          loading: true,
-        }));
+        setData(prev => ({...prev, loading: true}));
         try {
-          const response = await GetData({
+          const response = await GetAPI({
             operation: MANAGER_ENDPOINT,
             endpoint: 'showManagers',
-            resultKey: 'managerData',
           });
-          if (response) {
-            setData(prev => ({...prev, manager: response}));
+          if (response.status === 200) {
+            setData(prev => ({...prev, manager: response.data.managerData}));
           }
         } catch (error) {
-          setData(prev => ({
-            ...prev,
-            error: 'Manager not found',
-            manager: [],
-          }));
+          const fullMessage = error.response?.data?.message;
+          if (fullMessage) {
+            setData(prev => ({...prev, error: 'No Data Found'}));
+          }
         } finally {
-          setData(prev => ({
-            ...prev,
-            loading: false,
-          }));
+          setData(prev => ({...prev, loading: false}));
         }
       }
       fetchData();
     }, []),
   );
+
+  async function handleDelete(item) {
+    setData(prev => ({...prev, loading: true}));
+    try {
+      const response = await PostAPI({
+        operation: MANAGER_ENDPOINT,
+        endpoint: 'deleteManager',
+        payload: {id: item.id},
+      });
+      if (response.status === 200) {
+        ToastAndroid.show(
+          `${item.name} successfully deleted`,
+          ToastAndroid.SHORT,
+        );
+        setData(prev => ({
+          ...prev,
+          manager: prev.manager.filter(element => element.id !== item.id),
+        }));
+      }
+    } catch (error) {
+      ToastAndroid.show(`Failed to delete ${item.name}`, ToastAndroid.SHORT);
+    } finally {
+      setData(prev => ({...prev, loading: false}));
+    }
+  }
 
   if (data.loading) {
     return <LoadingIndicator />;
@@ -70,13 +92,20 @@ const PilihManager = () => {
               <DataError data={data.error} />
             </View>
           ) : (
-            // <ListRow
-            //   data={data.manager}
-            //   onPress={item => navigation.navigate('Edit Manager', {item})}
-            // />
             <ListColumn
-              data={data.manager}
+              data={data.manager.sort((a, b) => a.name.localeCompare(b.name))}
               onPress={item => navigation.navigate('Edit Manager', {item})}
+              onLongPress={item => {
+                Alert.alert(
+                  'Delete Manager',
+                  `Delete ${item.name} ?`,
+                  [
+                    {text: 'Cancel'},
+                    {text: 'OK', onPress: () => handleDelete(item)},
+                  ],
+                  {cancelable: true},
+                );
+              }}
             />
           )}
         </View>

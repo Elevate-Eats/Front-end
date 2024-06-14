@@ -67,7 +67,7 @@ const PilihCabang = () => {
         );
         setData(prev => ({
           ...prev,
-          branch: prev.branch.filter(branchItem => branchItem.id !== item.id),
+          branch: prev.branch.filter(element => element.id !== item.id),
         }));
       }
     } catch (error) {
@@ -96,7 +96,7 @@ const PilihCabang = () => {
               onPress={item => navigation.navigate('Edit Cabang', {item})}
               onLongPress={item => {
                 Alert.alert(
-                  'Branch Deleted',
+                  'Delete Branch',
                   `Delete ${item.name} ?`,
                   [
                     {text: 'Cancel'},

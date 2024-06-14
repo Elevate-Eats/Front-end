@@ -11,7 +11,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ListColumn = props => {
   return (
-    <View style={{alignItems: 'center'}}>
+    <View style={{}}>
       <FlatList
         data={props.data}
         keyExtractor={item => item.id.toString()}
@@ -19,6 +19,9 @@ const ListColumn = props => {
         renderItem={({item}) => {
           const handlePress = () => {
             props.onPress(item);
+          };
+          const handleLongPress = () => {
+            props.onLongPress(item);
           };
           const sliceName = (str, num) => {
             if (str.length <= num) {
@@ -29,7 +32,10 @@ const ListColumn = props => {
 
           return (
             <View style={{alignItems: 'center'}}>
-              <TouchableOpacity style={styles.employee} onPress={handlePress}>
+              <TouchableOpacity
+                style={styles.employee}
+                onPress={handlePress}
+                onLongPress={handleLongPress}>
                 <Ionicons name="person-circle-outline" size={70} />
                 <Text style={{textAlign: 'center'}}>
                   {sliceName(item.name, 8)}
