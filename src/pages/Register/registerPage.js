@@ -182,15 +182,15 @@ const RegisterPage = () => {
               name="SIGN UP"
               onPress={() => PostRegist()}
               loading={loading}
-              // disabled={
-              //   !regist.name ||
-              //   !regist.nickname ||
-              //   !regist.company ||
-              //   !regist.phone ||
-              //   !regist.email ||
-              //   !regist.password ||
-              //   !regist.passwordConfirm
-              // }
+              disabled={
+                !regist.name ||
+                !regist.nickname ||
+                !regist.company ||
+                !regist.phone ||
+                !regist.email ||
+                !regist.password ||
+                !regist.passwordConfirm
+              }
             />
             <View style={[styles.have_account, {marginTop: 30}]}>
               <Text

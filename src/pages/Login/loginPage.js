@@ -36,6 +36,13 @@ const LoginPage = () => {
   const [visible, setVisible] = useState(true);
 
   const PostLogin = async () => {
+    setForm(prev => ({
+      ...prev,
+      hasEmailError: false,
+      hasPasswordError: false,
+      errorEmail: '',
+      errorPassword: '',
+    }));
     try {
       setForm(prev => ({...prev, loading: true}));
       const response = await axios.post(`${API_URL}/${LOGIN_ENDPOINT}`, login, {
@@ -45,6 +52,7 @@ const LoginPage = () => {
         },
       });
       if (response.status === 200) {
+        console.log('token: ', response.data.token);
         await AsyncStorage.setItem('userToken', response.data.token);
         await AsyncStorage.setItem(
           'companyId',
@@ -86,7 +94,7 @@ const LoginPage = () => {
           hasEmailError: true,
         }));
       }
-      console.log('Login Error: ', errorMessage);
+      // console.log('Login Error: ', errorMessage);
     } finally {
       setForm(prev => ({...prev, loading: false}));
     }

@@ -6,9 +6,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Text} from 'react-native-paper';
+import {HelperText, Text} from 'react-native-paper';
 import React, {useState} from 'react';
-import {MANAGER_ENDPOINT} from '@env';
 import {
   AddPhoto,
   ConstButton,
@@ -21,15 +20,55 @@ import EyeClose from '../../../assets/icons/eye-slash-grey-outline.svg';
 import {SelectList} from 'react-native-dropdown-select-list';
 import PostData from '../../../utils/postData';
 import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import {API_URL, MANAGER_ENDPOINT} from '@env';
 
 const TambahManager = () => {
   const navigation = useNavigation();
   const [data, setData] = useState({
-    manager: [],
+    manager: {},
     loading: false,
     error: null,
     visible: true,
   });
+
+  const [form, setForm] = useState({
+    errorName: '',
+    errorNickname: '',
+    errorPhone: '',
+    errorEmail: '',
+    errorPassword: '',
+    errorRole: '',
+    errorConfirmPassword: '',
+    hasErrorName: false,
+    hasErrorNickaname: false,
+    hasErrorPhone: false,
+    hasErrorEmail: false,
+    hasErrorPassword: false,
+    hasErrorConfirmPassword: false,
+    hasErrorRole: false,
+  });
+
+  function resetFormError(params) {
+    setForm(prev => ({
+      ...prev,
+      errorName: '',
+      errorNickname: '',
+      errorPhone: '',
+      errorEmail: '',
+      errorPassword: '',
+      errorConfirmPassword: '',
+      errorRole: '',
+      hasErrorName: false,
+      hasErrorNickaname: false,
+      hasErrorPhone: false,
+      hasErrorEmail: false,
+      hasErrorPassword: false,
+      hasErrorConfirmPassword: false,
+      hasErrorRole: false,
+    }));
+  }
 
   const roles = [
     {key: 'general_manager', value: 'general_manager'},
@@ -37,38 +76,174 @@ const TambahManager = () => {
     {key: 'store_manager', value: 'store_manager'},
   ];
 
-  async function addManager(managerRole) {
-    let branchAccess;
-    if (managerRole === 'general_manager') {
-      branchAccess = '{all}';
-    } else if (managerRole === 'area_manager') {
-      branchAccess = '{1}';
-    } else if (managerRole === 'store_manager') {
-      branchAccess = '{2}';
-    }
+  // async function addManager(managerRole) {
+  //   resetFormError();
+  //   let branchAccess;
+  //   if (managerRole === 'general_manager') {
+  //     branchAccess = '{all}';
+  //   } else if (managerRole === 'area_manager') {
+  //     branchAccess = '{1}';
+  //   } else if (managerRole === 'store_manager') {
+  //     branchAccess = '{2}';
+  //   }
 
+  //   const token = await AsyncStorage.getItem('userToken');
+  //   const payload = {
+  //     ...data.manager,
+  //     branchAccess: branchAccess,
+  //   };
+  //   try {
+  //     setData(prev => ({...prev, loading: true}));
+  //     const response = await axios.post(
+  //       `${API_URL}/${MANAGER_ENDPOINT}/addManager`,
+  //       payload,
+  //       {
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       },
+  //     );
+  //     ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+  //     navigation.goBack();
+  //   } catch (error) {
+  //     const fullMessage = error.response?.data?.details;
+  //     fullMessage.some(item => {
+  //       if (item.includes('"name"')) {
+  //         const error = 'name is required';
+  //         setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
+  //       } else if (item.includes('"nickname"')) {
+  //         const error = 'nickname is required';
+  //         setForm(prev => ({
+  //           ...prev,
+  //           errorNickname: error,
+  //           hasErrorNickaname: true,
+  //         }));
+  //       } else if (item.includes('"role"')) {
+  //         const error = 'role is required';
+  //         setForm(prev => ({...prev, errorRole: error, hasErrorRole: true}));
+  //       } else if (item.includes('"email"')) {
+  //         const error = 'email is required';
+  //         setForm(prev => ({...prev, errorEmail: error, hasErrorEmail: true}));
+  //       } else if (item.includes('"password"')) {
+  //         const error = 'password is required';
+  //         setForm(prev => ({
+  //           ...prev,
+  //           errorPassword: error,
+  //           hasErrorPassword: true,
+  //         }));
+  //       } else if (item.includes('"phone"')) {
+  //         if (item.includes('empty')) {
+  //           const error = 'phone number is required';
+  //           setForm(prev => ({
+  //             ...prev,
+  //             errorPhone: error,
+  //             hasErrorPhone: true,
+  //           }));
+  //         } else if (item.includes('fails')) {
+  //           if (payload.phone.length < 9) {
+  //             const error = 'phone number must be longer than 9 number';
+  //             setForm(prev => ({
+  //               ...prev,
+  //               errorPhone: error,
+  //               hasErrorPhone: true,
+  //             }));
+  //           } else {
+  //             const error = `invalid phone number it's should +62`;
+  //             setForm(prev => ({
+  //               ...prev,
+  //               errorPhone: error,
+  //               hasErrorPhone: true,
+  //             }));
+  //           }
+  //         }
+  //       }
+  //     });
+  //   } finally {
+  //     setData(prev => ({...prev, loading: false}));
+  //   }
+  // }
+
+  async function addManager(managerRole) {
+    resetFormError();
+
+    const branchAccess =
+      managerRole === 'general_manager'
+        ? '{all}'
+        : managerRole === 'area_manager'
+          ? '{1}'
+          : '{2}';
+
+    const token = await AsyncStorage.getItem('userToken');
     const payload = {
       ...data.manager,
-      branchAccess: branchAccess,
+      branchAccess,
     };
+
     try {
       setData(prev => ({...prev, loading: true}));
-      const response = await PostData({
-        operation: MANAGER_ENDPOINT,
-        endpoint: 'addManager',
-        payload: payload,
-      });
-      if (response) {
-        ToastAndroid.show(response.message, ToastAndroid.SHORT);
-        navigation.goBack();
-      }
+      const response = await axios.post(
+        `${API_URL}/${MANAGER_ENDPOINT}/addManager`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+      navigation.goBack();
     } catch (error) {
-      ToastAndroid.show('Failed to add manager', ToastAndroid.SHORT);
+      const fullMessage = error.response?.data?.details;
+      if (fullMessage) {
+        fullMessage.forEach(item => {
+          let error = '';
+          let hasError = '';
+
+          if (item.includes('"name"')) {
+            error = 'name is required';
+            hasError = 'hasErrorName';
+          } else if (item.includes('"nickname"')) {
+            error = 'nickname is required';
+            hasError = 'hasErrorNickname';
+          } else if (item.includes('"role"')) {
+            error = 'role is required';
+            hasError = 'hasErrorRole';
+          } else if (item.includes('"email"')) {
+            error = 'email is required';
+            hasError = 'hasErrorEmail';
+          } else if (item.includes('"password"')) {
+            error = 'password is required';
+            hasError = 'hasErrorPassword';
+          } else if (item.includes('"phone"')) {
+            if (item.includes('empty')) {
+              error = 'phone number is required';
+              hasError = 'hasErrorPhone';
+            } else if (item.includes('fails')) {
+              if (payload.phone.length < 9) {
+                error = 'phone number must be longer than 9 number';
+                hasError = 'hasErrorPhone';
+              } else {
+                error = `invalid phone number it's should +62`;
+                hasError = 'hasErrorPhone';
+              }
+            }
+          }
+
+          if (error && hasError) {
+            setForm(prev => ({
+              ...prev,
+              [error]: error,
+              [hasError]: true,
+            }));
+          }
+        });
+      }
     } finally {
       setData(prev => ({...prev, loading: false}));
     }
   }
-
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -80,6 +255,8 @@ const TambahManager = () => {
             </Text>
 
             <FormInput
+              hasError={form.hasErrorName}
+              error={form.errorName}
               label="Nama Manager"
               placeholder="masukkan nama manager ..."
               keyboardType="default"
@@ -94,6 +271,8 @@ const TambahManager = () => {
               }
             />
             <FormInput
+              hasError={form.hasErrorNickaname}
+              error={form.errorNickname}
               label="Nickname Manager"
               placeholder="masukkan nickname manager ..."
               keyboardType="default"
@@ -108,6 +287,8 @@ const TambahManager = () => {
               }
             />
             <FormInput
+              hasError={form.hasErrorPhone}
+              error={form.errorPhone}
               label="No. HP Manager"
               placeholder="masukkan no HP manager ..."
               keyboardType="phone-pad"
@@ -121,11 +302,13 @@ const TambahManager = () => {
                 }))
               }
             />
-            <View style={{marginTop: 30}}>
+            <View style={{marginTop: 10}}>
               <Text variant="titleLarge" style={{fontWeight: '700'}}>
-                Account Manager
+                Akun Manager
               </Text>
               <FormInput
+                hasError={form.hasErrorEmail}
+                error={form.errorEmail}
                 label="Email Manager"
                 placeholder="masukkan email manager ..."
                 keyboardType="email-address"
@@ -140,6 +323,8 @@ const TambahManager = () => {
                 }
               />
               <FormInput
+                hasError={form.hasErrorPassword}
+                error={form.errorPassword}
                 label="Password"
                 placeholder="masukkan password ..."
                 keyboardType="default"
@@ -154,6 +339,8 @@ const TambahManager = () => {
                 }
               />
               <FormInput
+                hasError={form.hasErrorConfirmPassword}
+                error={form.errorConfirmPassword}
                 label="Confirm Password"
                 placeholder="confirm password ..."
                 keyboardType="default"
@@ -214,6 +401,9 @@ const TambahManager = () => {
                 inputStyles={{color: 'black'}}
                 dropdownTextStyles={styles.dropdownTextStyles}
               />
+              <HelperText type="error" visible={form.hasErrorRole}>
+                {`Error: ${form.errorRole}`}
+              </HelperText>
             </View>
           </View>
         </ScrollView>

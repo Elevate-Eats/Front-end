@@ -2,7 +2,6 @@ import {StyleSheet, View} from 'react-native';
 import React from 'react';
 
 import {Text, TextInput, HelperText, useTheme} from 'react-native-paper';
-import {Colors} from '../utils/colors';
 
 const FormLogReg = props => {
   const {colors} = useTheme();

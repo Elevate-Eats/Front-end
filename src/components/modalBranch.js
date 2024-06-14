@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import {Text, RadioButton} from 'react-native-paper';
 import Modal from 'react-native-modal';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../utils/colors';
 import {useDispatch, useSelector} from 'react-redux';
@@ -19,18 +19,23 @@ const ModalBranch = props => {
   const branch = useSelector(state => state.branch.allBranch);
 
   const [checked, setChecked] = useState(null);
+  const [data, setData] = useState({
+    branch: [],
+  });
 
   function handleCheck(params) {
     setChecked(params);
   }
 
-  async function saveBranchName(branchName) {
-    try {
-      await AsyncStorage.setItem('branchName', branchName);
-    } catch (error) {
-      console.log('error');
+  // console.log('branch: ', branch);
+
+  useEffect(() => {
+    async function fetchDataLocal(params) {
+      const localData = await AsyncStorage.getItem('allBranch');
+      setData(prev => ({...prev, branch: JSON.parse(localData)}));
     }
-  }
+    fetchDataLocal();
+  }, []);
 
   return (
     <View>
@@ -53,7 +58,7 @@ const ModalBranch = props => {
           {/* {LIST CABANG} */}
           <View style={{marginVertical: 30}}>
             <FlatList
-              data={branch}
+              data={data.branch}
               keyExtractor={item => (item.id || item.menuid).toString()}
               renderItem={({item}) => {
                 return (

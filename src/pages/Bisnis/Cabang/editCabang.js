@@ -21,13 +21,19 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Text} from 'react-native-paper';
 import PostData from '../../../utils/postData';
 import GetData from '../../../utils/getData';
-import {useFocusEffect} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {deleteBranch as delBranch} from '../../../redux/branchSlice';
 
 import {BRANCH_ENDPOINT, EMPLOYEE_ENDPOINT} from '@env';
 
-const EditCabang = ({route, navigation}) => {
+const EditCabang = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const {item} = route.params; // prev page
   const [branch, setBranch] = useState({}); // dari database

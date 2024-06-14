@@ -1,7 +1,6 @@
 import {StyleSheet, View} from 'react-native';
-import {Text, TextInput} from 'react-native-paper';
+import {HelperText, Text, TextInput, useTheme} from 'react-native-paper';
 import React from 'react';
-import {Colors} from '../utils/colors';
 
 /*
 USE: 
@@ -10,23 +9,39 @@ USE:
 */
 
 const FormInput = props => {
+  const {colors} = useTheme();
   return (
-    <View style={{marginTop: 10}}>
+    <View style={{gap: -5}}>
       <TextInput
+        style={{backgroundColor: colors.background}}
         disabled={props.disabled}
         mode="outlined"
-        label={props.label} // Nama Cabang
-        placeholder={props.placeholder} // Masukkan nama cabang ...
-        placeholderTextColor={'grey'}
-        keyboardType={props.keyboardType} //default
-        left={<TextInput.Icon icon={props.left} size={25} color={'grey'} />}
-        outlineColor="#878787"
-        activeOutlineColor={Colors.btnColor}
+        label={props.label}
+        placeholder={props.placeholder}
+        placeholderTextColor={colors.outlineVariant}
+        secureTextEntry={props.secureTextEntry}
+        keyboardType={props.keyboardType}
+        left={
+          <TextInput.Icon
+            icon={props.left}
+            size={25}
+            color={props.hasError ? colors.error : 'grey'}
+          />
+        }
+        outlineColor={props.hasError ? colors.error : colors.outline}
+        activeOutlineColor={
+          props.hasError ? colors.error : colors.onBtnColorContainer
+        }
         outlineStyle={{borderWidth: 1.5}}
         value={props.value}
         onChangeText={props.onChangeText}
-        secureTextEntry={props.secureTextEntry}
       />
+      <HelperText
+        type="error"
+        visible={props.hasError || false}
+        style={{marginTop: 0}}>
+        {`Error: ${props.error}`}
+      </HelperText>
     </View>
   );
 };

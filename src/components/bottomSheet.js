@@ -111,8 +111,6 @@ const BottomSheet = props => {
   }
 
   async function addItems(params) {
-    // console.log('params Additem: --->: ', params);
-
     const payload = params
       .map(item => ({
         ...item,
@@ -134,7 +132,6 @@ const BottomSheet = props => {
       });
       if (action) {
         setLoading(false);
-        // ToastAndroid.show(action.message, ToastAndroid.SHORT);
       }
     } catch (error) {
       console.log('Error add Items" ', error);

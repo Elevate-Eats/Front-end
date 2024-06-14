@@ -81,6 +81,8 @@ const MainDashboard = ({navigation, route}) => {
             endpoint: 'showBranches',
             resultKey: 'branchData',
           });
+          // console.log('branch: ', JSON.stringify(branch));
+          await AsyncStorage.setItem('allBranch', JSON.stringify(branch));
           const menuCompany = await GetData({
             operation: MENU_COMPANY_ENDPOINT,
             endpoint: 'showMenus',
@@ -101,7 +103,7 @@ const MainDashboard = ({navigation, route}) => {
             endpoint: 'showDailySummary',
             resultKey: 'data',
             // query: `companyId=1&branchId=12&startDate=2024-05-01&endDate=2024-05-01`,
-            query: `companyId=1&branchId=${selectBranch ? selectBranch.id : 1}&startDate=2024-05-29&endDate=2024-05-29`,
+            query: `companyId=${todayData.localData.companyid}&branchId=${selectBranch ? selectBranch.id : 1}&startDate=${new Date()}&endDate=${new Date()}`,
           });
           const dataPredict = await getDataQuery({
             operation: REPORT_ENDPOINT,
@@ -415,7 +417,7 @@ const MainDashboard = ({navigation, route}) => {
     }
   }
 
-  console.log('local data: ', todayData.localData);
+  // console.log('local data: ', todayData.localData);
 
   return (
     <View style={styles.container}>
