@@ -30,44 +30,61 @@ import {useDispatch} from 'react-redux';
 import {deleteBranch as delBranch} from '../../../redux/branchSlice';
 
 import {BRANCH_ENDPOINT, EMPLOYEE_ENDPOINT} from '@env';
+import {PostAPI} from '../../../api';
 
 const EditCabang = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {item} = route.params; // prev page
-  const [branch, setBranch] = useState({}); // dari database
   const [modal, setModal] = useState(false); // open Modal content
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [employee, setEmployee] = useState({}); // dari database
   const [selectedEmp, setSelectedEmp] = useState([]);
 
+  const [data, setData] = useState({
+    branch: {},
+    loading: false,
+  });
+
+  const [form, setForm] = useState({
+    errorName: '',
+    errorAddress: '',
+    errorPhone: '',
+    hasErrorName: false,
+    hasErrorAddress: false,
+    hasErrorPhone: false,
+  });
+
+  function resetFormError(params) {
+    setForm(prev => ({
+      ...prev,
+      errorName: '',
+      errorAddress: '',
+      errorPhone: '',
+      hasErrorName: false,
+      hasErrorAddress: false,
+      hasErrorPhone: false,
+    }));
+  }
   useFocusEffect(
     useCallback(() => {
-      const fetchData = async () => {
-        setLoading(true);
+      async function fetchData(params) {
+        setData(prev => ({...prev, loading: true}));
         try {
-          const dataBranch = await PostData({
+          const response = await PostAPI({
             operation: BRANCH_ENDPOINT,
             endpoint: 'showSingleBranch',
             payload: {id: item.id},
           });
-          setBranch(dataBranch.branchData);
-
-          const dataEmployee = await GetData({
-            operation: EMPLOYEE_ENDPOINT,
-            endpoint: 'showEmployees',
-            resultKey: 'employeeData',
-          });
-          setEmployee(dataEmployee);
+          if (response.status === 200) {
+            setData(prev => ({...prev, branch: response.data.branchData}));
+          }
         } catch (error) {
-          setError('Data Not Found !');
-          console.log('Error');
         } finally {
-          setLoading(false);
+          setData(prev => ({...prev, loading: false}));
         }
-      };
+      }
       fetchData();
     }, []),
   );
@@ -78,42 +95,82 @@ const EditCabang = () => {
     setSelectedEmp(selectedEmp.concat(newEmp));
   }
 
-  // FINAL UPDATE
   const updateBranch = async () => {
-    const payloadUpdate = {
+    resetFormError();
+    setData(prev => ({...prev, loading: true}));
+    const payload = {
       id: item.id,
-      name: branch.name,
-      phone: branch.phone,
-      address: branch.address,
+      name: data.branch.name,
+      phone: data.branch.phone,
+      address: data.branch.address,
     };
-
     try {
-      const update = await PostData({
+      const response = await PostAPI({
         operation: BRANCH_ENDPOINT,
         endpoint: 'updateBranch',
-        payload: payloadUpdate,
+        payload: payload,
       });
-      Alert.alert(update.message, `${branch.name} successfully updated`, [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      console.log('response: ', response.data);
+      ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+      navigation.goBack();
     } catch (error) {
-      Alert.alert('Failed to Update Branch');
+      const fullMessage = error.response?.data?.details;
+      fullMessage.forEach(item => {
+        if (item.includes('"name"')) {
+          const error = 'name is required';
+          setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
+        } else if (item.includes('"address"')) {
+          const error = 'address is required';
+          setForm(prev => ({
+            ...prev,
+            errorAddress: error,
+            hasErrorAddress: true,
+          }));
+        } else if (item.includes('"phone"')) {
+          if (item.includes('empty')) {
+            const error = 'phone number is required';
+            setForm(prev => ({
+              ...prev,
+              errorPhone: error,
+              hasErrorPhone: true,
+            }));
+          } else if (item.includes('fails')) {
+            if (payload.phone.length < 9) {
+              const error = 'phone number must be longer than 9 number';
+              setForm(prev => ({
+                ...prev,
+                errorPhone: error,
+                hasErrorPhone: true,
+              }));
+            } else {
+              const error = `invalid phone number it's should +62`;
+              setForm(prev => ({
+                ...prev,
+                errorPhone: error,
+                hasErrorPhone: true,
+              }));
+            }
+          }
+        }
+      });
+    } finally {
+      setData(prev => ({...prev, loading: false}));
     }
   };
 
   async function deleteBranch() {
     async function handleDelete() {
       try {
-        setLoading(true);
-        const action = await PostData({
+        setData(prev => ({...prev, loading: true}));
+        const response = await PostAPI({
           operation: BRANCH_ENDPOINT,
           endpoint: 'deleteBranch',
           payload: {id: item.id},
         });
-        if (action) {
+        if (response.status === 200) {
           dispatch(delBranch(item.id));
           ToastAndroid.show(
-            `${branch.name} successfully deleted`,
+            `${data.branch.name} successfully deleted`,
             ToastAndroid.SHORT,
           );
           navigation.goBack();
@@ -125,7 +182,7 @@ const EditCabang = () => {
     // !-------------------------
     Alert.alert(
       'Branch Deleted',
-      `Delete ${branch.name} ?`,
+      `Delete ${data.branch.name} ?`,
       [{text: 'Cancel'}, {text: 'OK', onPress: handleDelete}],
       {cancelable: true},
     );
@@ -158,27 +215,48 @@ const EditCabang = () => {
               placeholder="masukkan nama cabang ..."
               keyboardType="default"
               left="storefront-outline"
-              value={branch.name}
-              onChangeText={text => setBranch({...branch, name: text})}
+              value={data.branch.name}
+              onChangeText={text =>
+                setData(prev => ({
+                  ...prev,
+                  branch: {...prev.branch, name: text},
+                }))
+              }
               secureTextEntry={false}
+              hasError={form.hasErrorName}
+              error={form.errorName}
             />
             <FormInput
               label="No. Telepon Cabang"
               placeholder="masukkan no. telepon cabang ..."
               keyboardType="phone-pad"
               left="phone-outline"
-              value={branch.phone}
-              onChangeText={text => setBranch({...branch, phone: text})}
+              value={data.branch.phone}
+              onChangeText={text =>
+                setData(prev => ({
+                  ...prev,
+                  branch: {...prev.branch, phone: text},
+                }))
+              }
               secureTextEntry={false}
+              hasError={form.hasErrorPhone}
+              error={form.errorPhone}
             />
             <FormInput
               label="Alamat Cabang"
               placeholder="masukkan alamat cabang ..."
               keyboardType="default"
               left="map-marker-outline"
-              value={branch.address}
-              onChangeText={text => setBranch({...branch, address: text})}
+              value={data.branch.address}
+              onChangeText={text =>
+                setData(prev => ({
+                  ...prev,
+                  branch: {...prev.branch, address: text},
+                }))
+              }
               secureTextEntry={false}
+              hasError={form.hasErrorAddress}
+              error={form.errorAddress}
             />
           </View>
 
@@ -223,7 +301,11 @@ const EditCabang = () => {
         <View style={{flexDirection: 'row', columnGap: 10}}>
           <DeleteButton onPress={() => deleteBranch()} />
           <View style={{flex: 1}}>
-            <ConstButton title="Simpan" onPress={() => updateBranch()} />
+            <ConstButton
+              title="Simpan"
+              onPress={() => updateBranch()}
+              loading={loading}
+            />
           </View>
         </View>
       </View>

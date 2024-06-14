@@ -87,7 +87,7 @@ const TambahCabang = () => {
       const fullMessage = error.response?.data?.details;
       fullMessage.some(item => {
         if (item.includes('"name"')) {
-          const error = 'branch name is required';
+          const error = 'name is required';
           setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
         } else if (item.includes('"address"')) {
           const error = 'address is required';

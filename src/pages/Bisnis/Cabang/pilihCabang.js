@@ -1,4 +1,10 @@
-import {StyleSheet, View, KeyboardAvoidingView} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  KeyboardAvoidingView,
+  ToastAndroid,
+  Alert,
+} from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {
@@ -8,38 +14,69 @@ import {
   DataError,
   LoadingIndicator,
 } from '../../../components';
-import {useFocusEffect} from '@react-navigation/native';
-import GetData from '../../../utils/getData';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {BRANCH_ENDPOINT} from '@env';
 import Store from '../../../assets/icons/store.svg';
+import {GetAPI, PostAPI} from '../../../api';
 
-const PilihCabang = ({navigation}) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [branch, setBranch] = useState({});
+const PilihCabang = () => {
+  const navigation = useNavigation();
+  const [data, setData] = useState({
+    branch: [],
+    error: null,
+    loading: false,
+  });
 
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
-        setLoading(true);
+        setData(prev => ({...prev, loading: true}));
         try {
-          const action = await GetData({
+          const response = await GetAPI({
             operation: BRANCH_ENDPOINT,
             endpoint: 'showBranches',
-            resultKey: 'branchData',
           });
-          setBranch(action);
+          if (response.status === 200) {
+            setData(prev => ({...prev, branch: response.data.branchData}));
+          }
         } catch (error) {
-          setError('Branch not found');
+          const fullMessage = error.response?.data?.message;
+          if (fullMessage) {
+            setData(prev => ({...prev, error: 'No Data Found'}));
+          }
         } finally {
-          setLoading(false);
+          setData(prev => ({...prev, loading: false}));
         }
       }
       fetchData();
     }, []),
   );
 
-  if (loading) {
+  async function handleDelete(item) {
+    setData(prev => ({...prev, loading: true}));
+    try {
+      const response = await PostAPI({
+        operation: BRANCH_ENDPOINT,
+        endpoint: 'deleteBranch',
+        payload: {id: item.id},
+      });
+      if (response.status === 200) {
+        ToastAndroid.show(
+          `${item.name} successfully deleted`,
+          ToastAndroid.SHORT,
+        );
+        setData(prev => ({
+          ...prev,
+          branch: prev.branch.filter(branchItem => branchItem.id !== item.id),
+        }));
+      }
+    } catch (error) {
+      ToastAndroid.show(`Failed to delete ${item.name}`, ToastAndroid.SHORT);
+    } finally {
+      setData(prev => ({...prev, loading: false}));
+    }
+  }
+  if (data.loading) {
     return <LoadingIndicator />;
   }
 
@@ -48,15 +85,26 @@ const PilihCabang = ({navigation}) => {
       <View style={styles.whiteLayer}>
         <SearchBox search="Cari cabang ..." />
         <View style={{flex: 1, marginVertical: 10}}>
-          {error ? (
+          {data.branch.length === 0 ? (
             <View style={styles.dataError}>
               <Store width={200} height={200} />
-              <DataError data={error} />
+              <DataError data={data.error} />
             </View>
           ) : (
             <ListRow
-              data={branch}
+              data={data.branch.sort((a, b) => a.name.localeCompare(b.name))}
               onPress={item => navigation.navigate('Edit Cabang', {item})}
+              onLongPress={item => {
+                Alert.alert(
+                  'Branch Deleted',
+                  `Delete ${item.name} ?`,
+                  [
+                    {text: 'Cancel'},
+                    {text: 'OK', onPress: () => handleDelete(item)},
+                  ],
+                  {cancelable: true},
+                );
+              }}
             />
           )}
         </View>
@@ -102,6 +150,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    rowGap: 20,
   },
 });
