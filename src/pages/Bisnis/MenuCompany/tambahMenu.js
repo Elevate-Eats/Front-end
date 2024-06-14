@@ -111,6 +111,8 @@ const TambahMenu = () => {
           }));
         }
       });
+    } finally {
+      setLoading(false);
     }
   }
 
