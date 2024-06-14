@@ -10,7 +10,6 @@ import React, {useState} from 'react';
 import {Text} from 'react-native-paper';
 
 import {EMPLOYEE_ENDPOINT} from '@env';
-import PostData from '../../../utils/postData';
 import {Colors} from '../../../utils/colors';
 import {AddPhoto, ConstButton, FormInput} from '../../../components';
 import {PostAPI} from '../../../api';
@@ -18,12 +17,12 @@ import {useNavigation} from '@react-navigation/native';
 
 const TambahPegawai = () => {
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
   const [employee, setEmployee] = useState({
     name: '',
     salary: '',
     bonus: '',
   });
-
   const [form, setForm] = useState({
     errorName: '',
     errorSalary: '',
@@ -32,7 +31,6 @@ const TambahPegawai = () => {
     hasErrorSalary: false,
     hasErrorBonus: false,
   });
-
   function resetFormError(params) {
     setForm(prev => ({
       ...prev,
@@ -46,12 +44,12 @@ const TambahPegawai = () => {
   }
 
   async function addEmployee(params) {
+    setLoading(true);
     const payload = {
       ...employee,
       bonus: parseInt(employee.bonus.replace(/\./g, ''), 10),
       salary: parseInt(employee.salary.replace(/\./g, ''), 10),
     };
-    // console.log('payload: ', payload);
     resetFormError();
     try {
       const response = await PostAPI({
@@ -60,7 +58,6 @@ const TambahPegawai = () => {
         payload: payload,
       });
       if (response.status === 200) {
-        // console.log('response: ', response.data);
         ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
         navigation.goBack();
       }
@@ -87,6 +84,8 @@ const TambahPegawai = () => {
           }));
         }
       });
+    } finally {
+      setLoading(false);
     }
   }
   function formatNumber(number) {
@@ -142,7 +141,11 @@ const TambahPegawai = () => {
         </ScrollView>
         <View style={{flexDirection: 'row', columnGap: 10}}>
           <View style={{flex: 1}}>
-            <ConstButton title="Tambah" onPress={() => addEmployee()} />
+            <ConstButton
+              title="Tambah"
+              onPress={() => addEmployee()}
+              loading={loading}
+            />
           </View>
         </View>
       </View>
