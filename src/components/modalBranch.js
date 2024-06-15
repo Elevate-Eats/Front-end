@@ -14,6 +14,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {selectBranch} from '../redux/branchSlice';
 import {BRANCH_ENDPOINT} from '@env';
 import GetData from '../utils/getData';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ModalBranch = props => {
   const dispatch = useDispatch();
@@ -25,8 +26,8 @@ const ModalBranch = props => {
     loading: false,
   });
 
-  function handleCheck(params) {
-    setChecked(params);
+  function handleCheck(id) {
+    setChecked(id);
   }
   useEffect(() => {
     async function fetchData(params) {
@@ -88,10 +89,14 @@ const ModalBranch = props => {
             />
           </View>
           <TouchableOpacity
-            onPress={() => {
-              const b = branch.find(b => b.id === checked);
+            onPress={async () => {
+              const branch = data.branch.find(b => b.id === checked);
               if (selectBranch) {
-                dispatch(selectBranch(b));
+                dispatch(selectBranch(branch));
+                await AsyncStorage.setItem(
+                  'selectBranch',
+                  JSON.stringify(branch),
+                );
                 props.close();
               }
               props.close();

@@ -3,14 +3,13 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Alert,
   ToastAndroid,
   Image,
   SafeAreaView,
   Modal,
   Pressable,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text, useTheme} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -23,36 +22,30 @@ import {
   REPORT_ENDPOINT,
 } from '@env';
 import {
-  ItemDashboard,
   TopBar,
   TitleDashboard,
   ConstButton,
   ModalBranch,
-  LoadingIndicator,
 } from '../../components';
-import {useFocusEffect} from '@react-navigation/native';
-import {useSelector, useDispatch} from 'react-redux';
-import GetData from '../../utils/getData';
-import {allBranch} from '../../redux/branchSlice';
-import {allMenu} from '../../redux/menuSlice';
-import employee, {allEmployee} from '../../redux/employee';
-import getDataQuery from '../../utils/getDataQuery';
-import {allManager} from '../../redux/manager';
+import {useSelector} from 'react-redux';
 import SalesToday from '../../components/salesToday';
 import FormatRP from '../../utils/formatRP';
 import BarChartComponent from '../../components/barChart';
 import User from '../../assets/images/user-profile.jpg';
 import Close from '../../assets/icons/close-bold.svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {GetAPI, GetQueryAPI} from '../../api';
+import FormatDateTime from '../../utils/formatDateTime';
+import FormatDateToISO from '../../utils/formatDateToIso';
 
 const MainDashboard = ({navigation, route}) => {
-  const dispatch = useDispatch();
   const {colors} = useTheme();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
   const employee = useSelector(state => state.employee.allEmployee);
   const [modal, setModal] = useState({
     chart: false,
     branch: false,
+    selectBranch: null,
   });
   const [loading, setLoading] = useState(false);
   const [todayData, setTodayData] = useState({
@@ -71,227 +64,255 @@ const MainDashboard = ({navigation, route}) => {
     fetchLocalStorage();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      async function fetchData(params) {
-        setLoading(true);
-        try {
-          const branch = await GetData({
-            operation: BRANCH_ENDPOINT,
-            endpoint: 'showBranches',
-            resultKey: 'branchData',
-          });
-          await AsyncStorage.setItem('allBranch', JSON.stringify(branch));
-          const menuCompany = await GetData({
-            operation: MENU_COMPANY_ENDPOINT,
-            endpoint: 'showMenus',
-            resultKey: 'menuData',
-          });
-          const employee = await GetData({
-            operation: EMPLOYEE_ENDPOINT,
-            endpoint: 'showEmployees',
-            resultKey: 'employeeData',
-          });
-          const manager = await GetData({
-            operation: MANAGER_ENDPOINT,
-            endpoint: 'showManagers',
-            resultKey: 'managerData',
-          });
-          const dataDailySummary = await getDataQuery({
-            operation: ANALYTICS_ENDPOINT,
-            endpoint: 'showDailySummary',
-            resultKey: 'data',
-            query: `companyId=${todayData.localData.companyid}&branchId=${selectBranch ? selectBranch.id : 1}&startDate=${new Date()}&endDate=${new Date()}`,
-          });
-          const dataPredict = await getDataQuery({
-            operation: REPORT_ENDPOINT,
-            endpoint: 'predictTransaction',
-            resultKey: 'data',
-            query: `branchId=${selectBranch ? selectBranch.id : 1}&startDate=${new Date()}&endDate=${new Date()}`,
-          });
-          const dataWeekly = await getDataQuery({
-            operation: REPORT_ENDPOINT,
-            endpoint: 'predictTransaction',
-            resultKey: 'data',
-            query: `branchId=${selectBranch ? selectBranch.id : 1}&startDate=2024-05-29&endDate=2024-06-04`,
+  useEffect(() => {
+    async function getSelectBranch(params) {
+      const response = await AsyncStorage.getItem('selectBranch');
+      setModal(prev => ({...prev, selectBranch: JSON.parse(response)}));
+    }
+    getSelectBranch();
+  }, [modal.branch]);
+
+  useEffect(() => {
+    async function fetchData(params) {
+      setLoading(true);
+      try {
+        const branch = await GetAPI({
+          operation: BRANCH_ENDPOINT,
+          endpoint: 'showBranches',
+        });
+        const menuCompany = await GetAPI({
+          operation: MENU_COMPANY_ENDPOINT,
+          endpoint: 'showMenus',
+        });
+        const employee = await GetAPI({
+          operation: EMPLOYEE_ENDPOINT,
+          endpoint: 'showEmployees',
+        });
+        const manager = await GetAPI({
+          operation: MANAGER_ENDPOINT,
+          endpoint: 'showManagers',
+        });
+        const companyId = todayData.localData.companyid;
+        const branchId = modal.selectBranch.id;
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 7);
+        const dataDailySummary = await GetQueryAPI({
+          operation: ANALYTICS_ENDPOINT,
+          endpoint: 'showDailySummary',
+          query: `companyId=${companyId}&branchId=${modal.selectBranch ? branchId : null}&startDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}&endDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}`,
+          // query: `companyId=${companyId}&branchId=${branchId}&startDate=2024-06-15&endDate=2024-06-15`,
+        });
+        const dataWeekly = await GetQueryAPI({
+          //predict 7 hari
+          operation: REPORT_ENDPOINT,
+          endpoint: 'predictTransaction',
+          query: `branchId=${branchId}&startDate=${FormatDateToISO(FormatDateTime(startDate).realDate)}&endDate=${FormatDateToISO(FormatDateTime(endDate).realDate)}`,
+          // query: `branchId=${branchId}&startDate=2024-06-15&endDate=2024-06-22`,
+        });
+        const dataPredict = await GetQueryAPI({
+          // predict 1 hari
+          operation: REPORT_ENDPOINT,
+          endpoint: 'predictTransaction',
+          query: `branchId=${branchId}&startDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}&endDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}`,
+          // query: `branchId=${branchId}&startDate=2024-06-15&endDate=2024-06-15`,
+        });
+
+        // console.log('data sumary: ', dataDailySummary.data.data.length);
+        // console.log('data weekly: ', dataWeekly.data.data[0]);
+        // console.log('data predict: ', dataPredict.data.data);
+
+        let revenueShift1 = 0;
+        let revenueShift2 = 0;
+        let transactionShift1 = 0;
+        let transactionShift2 = 0;
+
+        if (dataDailySummary.data.data.length > 0) {
+          const {totalsales, numberoftransactions} =
+            dataDailySummary.data.data[0];
+          dataPredict.data.data.forEach(item => {
+            if (item['Shift'] === 1) {
+              transactionShift1 += item['Jumlah Transaksi'];
+              revenueShift1 += item['Total'];
+            } else if (item['Shift'] === 2) {
+              transactionShift2 += item['Jumlah Transaksi'];
+              revenueShift2 += item['Total'];
+            }
           });
 
-          let revenueShift1 = 0;
-          let revenueShift2 = 0;
-          let transactionShift1 = 0;
-          let transactionShift2 = 0;
-          if (dataDailySummary.length > 0) {
-            const {totalsales, numberoftransactions} = dataDailySummary[0];
-            dataPredict.forEach(item => {
-              if (item['Shift'] === 1) {
-                transactionShift1 += item['Jumlah Transaksi'];
-                revenueShift1 += item['Total'];
-              } else if (item['Shift'] === 2) {
-                transactionShift2 += item['Jumlah Transaksi'];
-                revenueShift2 += item['Total'];
-              }
-            });
-            const totalPredictedSales = revenueShift1 + revenueShift2;
-            const totalPredictedTransactions =
-              transactionShift1 + transactionShift2;
-            const salesChange =
-              ((totalsales - totalPredictedSales) / totalPredictedSales) * 100;
-            const transactionChange =
-              ((numberoftransactions - totalPredictedTransactions) /
-                totalPredictedTransactions) *
-              100;
+          const totalPredictedSales = revenueShift1 + revenueShift2;
+          const totalPredictedTransactions =
+            transactionShift1 + transactionShift2;
+          const salesChange =
+            ((totalsales - totalPredictedSales) / totalPredictedSales) * 100;
+          const transactionChange =
+            ((numberoftransactions - totalPredictedTransactions) /
+              totalPredictedTransactions) *
+            100;
 
-            const filteredData = dataWeekly
-              .map(item => ({
-                Tanggal: item['Tanggal'],
-                Shift: item['Shift'],
-                Days: item['Days'],
-                JumlahTransaksi: item['Jumlah Transaksi'],
-                Total: item['Total'] / 1000000,
-              }))
-              .sort((a, b) => a['Days'] - b['Days']);
+          const filteredData = dataWeekly.data.data
+            .map(item => ({
+              Tanggal: item['Tanggal'],
+              Shift: item['Shift'],
+              Days: item['Days'],
+              JumlahTransaksi: item['Jumlah Transaksi'],
+              Total: item['Total'] / 1000000,
+            }))
+            .sort((a, b) => a['Days'] - b['Days']);
 
-            const aggregatedData = filteredData.reduce((acc, cur) => {
-              const existing = acc.find(
-                item => item['Tanggal'] === cur['Tanggal'],
-              );
-              if (existing) {
-                existing['JumlahTransaksi'] += cur['JumlahTransaksi'];
-                existing['Total'] += cur['Total'];
-              } else {
-                acc.push({...cur});
-              }
-              return acc;
-            }, []);
-            const weeklyTransactions = aggregatedData.map(
-              day => day['JumlahTransaksi'],
+          const aggregatedData = filteredData.reduce((acc, cur) => {
+            const existing = acc.find(
+              item => item['Tanggal'] === cur['Tanggal'],
             );
-            const weeklySales = aggregatedData.map(day => day['Total']);
-            // ! ==========================================================================
+            if (existing) {
+              existing['JumlahTransaksi'] += cur['JumlahTransaksi'];
+              existing['Total'] += cur['Total'];
+            } else {
+              acc.push({...cur});
+            }
+            return acc;
+          }, []);
 
-            const dataDaily = {
-              transactions: numberoftransactions,
-              sales: totalsales,
-              salesChange: salesChange.toFixed(2),
-              transactionChange: transactionChange.toFixed(2),
-            };
+          const weeklyTransactions = aggregatedData.map(
+            day => day['JumlahTransaksi'],
+          );
+          const weeklySales = aggregatedData.map(day => day['Total']);
+          const dataDaily = {
+            transactions: numberoftransactions,
+            sales: totalsales,
+            salesChange: salesChange.toFixed(2),
+            transactionChange: transactionChange.toFixed(2),
+          };
 
-            const dataPrediction = {
-              transactions: totalPredictedTransactions,
-              sales: totalPredictedSales,
-            };
+          const dataPrediction = {
+            transactions: totalPredictedTransactions,
+            sales: totalPredictedSales,
+          };
 
-            const shiftData = [
-              {shift: 1, transactions: transactionShift1, sales: revenueShift1},
-              {shift: 2, transactions: transactionShift2, sales: revenueShift2},
-            ];
+          const shiftData = [
+            {shift: 1, transactions: transactionShift1, sales: revenueShift1},
+            {shift: 2, transactions: transactionShift2, sales: revenueShift2},
+          ];
 
-            const weeklyData = {
-              transactions: weeklyTransactions,
-              sales: weeklySales,
-            };
-            setTodayData(prev => ({
-              ...prev,
-              dailySummary: [dataDaily],
-              predict: [dataPrediction],
-              shiftData: shiftData,
-              weekly: [weeklyData],
-            }));
-          } else {
-            dataPredict.forEach(item => {
-              if (item['Shift'] === 1) {
-                transactionShift1 += item['Jumlah Transaksi'];
-                revenueShift1 += item['Total'];
-              } else if (item['Shift'] === 2) {
-                transactionShift2 += item['Jumlah Transaksi'];
-                revenueShift2 += item['Total'];
-              }
-            });
-            const totalPredictedSales = revenueShift1 + revenueShift2;
-            const totalPredictedTransactions =
-              transactionShift1 + transactionShift2;
-            const salesChange =
-              ((0 - totalPredictedSales) / totalPredictedSales) * 100;
-            const transactionChange =
-              ((0 - totalPredictedTransactions) / totalPredictedTransactions) *
-              100;
+          const weeklyData = {
+            transactions: weeklyTransactions,
+            sales: weeklySales,
+          };
+          setTodayData(prev => ({
+            ...prev,
+            dailySummary: [dataDaily],
+            predict: [dataPrediction],
+            shiftData: shiftData,
+            weekly: [weeklyData],
+          }));
+        } else {
+          // console.log('kurang 0');
+          dataPredict.data.data.forEach(item => {
+            if (item['Shift'] === 1) {
+              transactionShift1 += item['Jumlah Transaksi'];
+              revenueShift1 += item['Total'];
+            } else if (item['Shift'] === 2) {
+              transactionShift2 += item['Jumlah Transaksi'];
+              revenueShift2 += item['Total'];
+            }
+          });
 
-            const filteredData = dataWeekly
-              .map(item => ({
-                Tanggal: item['Tanggal'],
-                Shift: item['Shift'],
-                Days: item['Days'],
-                JumlahTransaksi: item['Jumlah Transaksi'],
-                Total: item['Total'] / 1000000,
-              }))
-              .sort((a, b) => a['Days'] - b['Days']);
+          const totalPredictedSales = revenueShift1 + revenueShift2;
+          const totalPredictedTransactions =
+            transactionShift1 + transactionShift2;
+          const salesChange =
+            ((0 - totalPredictedSales) / totalPredictedSales) * 100;
+          const transactionChange =
+            ((0 - totalPredictedTransactions) / totalPredictedTransactions) *
+            100;
 
-            const aggregatedData = filteredData.reduce((acc, cur) => {
-              const existing = acc.find(
-                item => item['Tanggal'] === cur['Tanggal'],
-              );
-              if (existing) {
-                existing['JumlahTransaksi'] += cur['JumlahTransaksi'];
-                existing['Total'] += cur['Total'];
-              } else {
-                acc.push({...cur});
-              }
-              return acc;
-            }, []);
-            const weeklyTransactions = aggregatedData.map(
-              day => day['JumlahTransaksi'],
+          const filteredData = dataWeekly.data.data
+            .map(item => ({
+              Tanggal: item['Tanggal'],
+              Shift: item['Shift'],
+              Days: item['Days'],
+              JumlahTransaksi: item['Jumlah Transaksi'],
+              Total: item['Total'] / 1000000,
+            }))
+            .sort((a, b) => a['Days'] - b['Days']);
+
+          const aggregatedData = filteredData.reduce((acc, cur) => {
+            const existing = acc.find(
+              item => item['Tanggal'] === cur['Tanggal'],
             );
-            const weeklySales = aggregatedData.map(day => day['Total']);
+            if (existing) {
+              existing['JumlahTransaksi'] += cur['JumlahTransaksi'];
+              existing['Total'] += cur['Total'];
+            } else {
+              acc.push({...cur});
+            }
+            return acc;
+          }, []);
 
-            // !============================================================================
-            const dataDaily = {
-              transactions: 0,
-              sales: 0,
-              salesChange: salesChange.toFixed(2),
-              transactionChange: transactionChange.toFixed(2),
-            };
+          const weeklyTransactions = aggregatedData.map(
+            day => day['JumlahTransaksi'],
+          );
+          const weeklySales = aggregatedData.map(day => day['Total']);
 
-            const dataPrediction = {
-              transactions: totalPredictedTransactions,
-              sales: totalPredictedSales,
-            };
+          const dataDaily = {
+            transactions: 0,
+            sales: 0,
+            salesChange: salesChange.toFixed(2),
+            transactionChange: transactionChange.toFixed(2),
+          };
 
-            const shiftData = [
-              {shift: 1, transactions: transactionShift1, sales: revenueShift1},
-              {shift: 2, transactions: transactionShift2, sales: revenueShift2},
-            ];
+          const dataPrediction = {
+            transactions: totalPredictedTransactions,
+            sales: totalPredictedSales,
+          };
 
-            const weeklyData = {
-              transactions: weeklyTransactions,
-              sales: weeklySales,
-            };
-            setTodayData(prev => ({
-              ...prev,
-              dailySummary: [dataDaily],
-              predict: [dataPrediction],
-              shiftData: shiftData,
-              weekly: [weeklyData],
-            }));
-          }
-          if (branch || menuCompany || employee || manager) {
-            dispatch(allBranch(branch));
-            dispatch(allMenu(menuCompany));
-            dispatch(allEmployee(employee));
-            dispatch(allManager(manager));
-          }
-        } catch (error) {
-          console.log('Eror fetching data: ', error);
-        } finally {
-          setLoading(false);
+          const shiftData = [
+            {shift: 1, transactions: transactionShift1, sales: revenueShift1},
+            {shift: 2, transactions: transactionShift2, sales: revenueShift2},
+          ];
+
+          const weeklyData = {
+            transactions: weeklyTransactions,
+            sales: weeklySales,
+          };
+
+          setTodayData(prev => ({
+            ...prev,
+            dailySummary: [dataDaily],
+            predict: [dataPrediction],
+            shiftData: shiftData,
+            weekly: [weeklyData],
+          }));
         }
+        if (
+          branch.status === 200 ||
+          menuCompany.status === 200 ||
+          employee.status === 200 ||
+          manager.status === 200
+        ) {
+          const allMenuCompany = menuCompany.data.menuData;
+          const allBranch = branch.data.branchData;
+          const allEmployee = employee.data.employeeData;
+          const allManager = manager.data.managerData;
+          await AsyncStorage.setItem(
+            'allMenuCompany',
+            JSON.stringify(allMenuCompany),
+          );
+          await AsyncStorage.setItem('allBranch', JSON.stringify(allBranch));
+          await AsyncStorage.setItem('allManager', JSON.stringify(allManager));
+          await AsyncStorage.setItem(
+            'allEmployee',
+            JSON.stringify(allEmployee),
+          );
+        }
+      } catch (error) {
+        console.log('error: ', error);
+      } finally {
+        setLoading(false);
       }
-      fetchData();
-    }, [dispatch, selectBranch?.id]),
-  );
-
-  // if (loading) {
-  //   return <LoadingIndicator message="Please Wait ..." />;
-  // }
+    }
+    fetchData();
+  }, [modal.selectBranch?.id]);
 
   const chartConfig = {
     backgroundGradientFrom: '#ffffff',
@@ -468,13 +489,14 @@ const MainDashboard = ({navigation, route}) => {
             style={styles.pilihCabang}
             onPress={() => setModal(prev => ({...prev, branch: true}))}>
             <Text style={{color: 'white'}} variant="bodyMedium">
-              {selectBranch ? selectBranch.name : 'Pilih Cabang'}
+              {/* {selectBranch ? selectBranch.name : 'Pilih Cabang'} */}
+              {modal.selectBranch ? modal.selectBranch.name : 'Pilih Cabang'}
             </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.whiteLayer}>
+      <View style={[styles.whiteLayer]}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {modalChart(modal.chart)}
           <View style={{rowGap: 10}}>
