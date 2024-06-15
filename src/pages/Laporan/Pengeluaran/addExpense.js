@@ -12,14 +12,16 @@ import Expense from '../../../assets/icons/cash-out.svg';
 import {ConstButton, FormInput} from '../../../components';
 import PostData from '../../../utils/postData';
 import {EXPENSE_ENDPOINT} from '@env';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import FormatDateTime from '../../../utils/formatDateTime';
 import FormatDateToISO from '../../../utils/formatDateToIso';
+import {PostAPI} from '../../../api';
 
-const AddExpense = ({route}) => {
+const AddExpense = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
   const data = route.params;
   const date = FormatDateToISO(FormatDateTime(data.date).realDate);
-  const navigation = useNavigation();
   //   console.log('data: ', data);
   const [loading, setLoading] = useState(false);
   const [expense, setExpense] = useState({
@@ -33,31 +35,90 @@ const AddExpense = ({route}) => {
     branchId: data.branchId.toString(),
   });
 
+  const [form, setForm] = useState({
+    errorName: '',
+    errorCount: '',
+    errorPrice: '',
+    errorNotes: '',
+    errorCategory: '',
+    hasErrorName: false,
+    hasErrorCount: false,
+    hasErrorPrice: false,
+    hasErrorNotes: false,
+    hasErrorCategory: false,
+  });
+
+  function resetFormError(params) {
+    setForm(prev => ({
+      ...prev,
+      errorName: '',
+      errorCount: '',
+      errorPrice: '',
+      errorNotes: '',
+      errorCategory: '',
+      hasErrorName: false,
+      hasErrorCount: false,
+      hasErrorCategory: false,
+    }));
+  }
+
+  function formatNumber(number) {
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function formatMoney(text, field) {
+    const rawText = text.replace(/\D/g, '');
+    const formatedText = formatNumber(rawText);
+    setExpense({...expense, [field]: formatedText});
+  }
   async function handleAdd(params) {
+    resetFormError();
     const payload = {
       ...params,
-      total: params.count * params.price,
+      total: params.count * parseInt(expense.price.replace(/\./g, ''), 10),
+      price: parseInt(expense.price.replace(/\./g, ''), 10),
     };
-    console.log('payload: ', payload);
-    // console.log('date: ', FormatDateToISO(FormatDateTime(data.date).realDate));
     try {
       setLoading(true);
-      const data = await PostData({
+      const response = await PostAPI({
         operation: EXPENSE_ENDPOINT,
         endpoint: 'addExpense',
         payload: payload,
       });
-      if (data) {
-        ToastAndroid.show(data.message, ToastAndroid.SHORT);
+      if (response.status === 200) {
+        ToastAndroid.show(`${response.data.message}`, ToastAndroid.SHORT);
         navigation.goBack();
       }
     } catch (error) {
-      ToastAndroid.show('Failed to Add Expense', ToastAndroid.SHORT);
+      const fullMessage = error.response?.data?.details;
+      console.log('fullMessage: ', fullMessage);
+      fullMessage.forEach(item => {
+        if (item.includes('"name"')) {
+          const error = 'name is required';
+          setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
+        } else if (item.includes('"count"')) {
+          const error = 'count is required';
+          setForm(prev => ({...prev, errorCount: error, hasErrorCount: true}));
+        } else if (item.includes('"price"')) {
+          const error = 'price is required';
+          setForm(prev => ({...prev, errorPrice: error, hasErrorPrice: true}));
+        } else if (item.includes('"notes"')) {
+          const error = 'notes is required';
+          setForm(prev => ({...prev, errorNotes: error, hasErrorNotes: true}));
+        } else if (item.includes('"category"')) {
+          const error = 'category is required';
+          setForm(prev => ({
+            ...prev,
+            errorCategory: error,
+            hasErrorCategory: true,
+          }));
+        }
+      });
     } finally {
       setLoading(false);
     }
+    // console.log('payload: ', payload);
   }
-  //   console.log('expense: ', expense);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -76,6 +137,8 @@ const AddExpense = ({route}) => {
               left="bank-transfer-out"
               value={expense.name}
               onChangeText={text => setExpense({...expense, name: text})}
+              hasError={form.hasErrorName}
+              error={form.errorName}
             />
             <FormInput
               label="Banyak pengeluaran"
@@ -86,16 +149,18 @@ const AddExpense = ({route}) => {
               onChangeText={text =>
                 setExpense({...expense, count: parseInt(text, 10 || 0)})
               }
+              hasError={form.hasErrorCount}
+              error={form.errorCount}
             />
             <FormInput
               label="Harga satuan"
               placeholder="Masukkan harga satuan ..."
               keyboardType="numeric"
               left="cash"
-              value={expense.price ? expense.price.toString() : ''}
-              onChangeText={text =>
-                setExpense({...expense, price: parseInt(text, 10 || 0)})
-              }
+              value={expense.price}
+              onChangeText={text => formatMoney(text, 'price')}
+              hasError={form.hasErrorPrice}
+              error={form.errorPrice}
             />
             <FormInput
               label="Catatan"
@@ -104,6 +169,8 @@ const AddExpense = ({route}) => {
               left="note-outline"
               value={expense.notes}
               onChangeText={text => setExpense({...expense, notes: text})}
+              hasError={form.hasErrorNotes}
+              error={form.errorNotes}
             />
             <FormInput
               label="Kategori"
@@ -112,6 +179,8 @@ const AddExpense = ({route}) => {
               left="shape-outline"
               value={expense.category}
               onChangeText={text => setExpense({...expense, category: text})}
+              hasError={form.hasErrorCategory}
+              error={form.errorCategory}
             />
           </View>
         </ScrollView>

@@ -137,7 +137,6 @@ const EditPegawai = () => {
       }
     } catch (error) {
       const fullMessage = error.response?.data?.details;
-      // console.log('full: ', fullMessage);
       fullMessage.forEach(item => {
         if (item.includes('"name"')) {
           const error = 'name is required';

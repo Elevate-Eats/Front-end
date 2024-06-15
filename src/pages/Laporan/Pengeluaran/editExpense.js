@@ -3,19 +3,18 @@ import {
   ScrollView,
   StyleSheet,
   ToastAndroid,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import Expense from '../../../assets/icons/cash-out.svg';
 import {ConstButton, FormInput} from '../../../components';
-import PostData from '../../../utils/postData';
 import {EXPENSE_ENDPOINT} from '@env';
 import FormatDateToISO from '../../../utils/formatDateToIso';
 import FormatDateTime from '../../../utils/formatDateTime';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {PostAPI} from '../../../api';
 
 const EditExpense = ({route}) => {
   const navigation = useNavigation();
@@ -23,31 +22,136 @@ const EditExpense = ({route}) => {
   const [expense, setExpense] = useState(data);
   const [loading, setLoading] = useState(false);
 
+  const [form, setForm] = useState({
+    errorName: '',
+    errorCount: '',
+    errorPrice: '',
+    errorNotes: '',
+    errorCategory: '',
+    hasErrorName: false,
+    hasErrorCount: false,
+    hasErrorPrice: false,
+    hasErrorNotes: false,
+    hasErrorCategory: false,
+  });
+
+  function resetFormError(params) {
+    setForm(prev => ({
+      ...prev,
+      errorName: '',
+      errorCount: '',
+      errorPrice: '',
+      errorNotes: '',
+      errorCategory: '',
+      hasErrorName: false,
+      hasErrorCount: false,
+      hasErrorPrice: false,
+      hasErrorNotes: false,
+      hasErrorCategory: false,
+    }));
+  }
+
+  const formatRupiah = angka => {
+    let number_string = angka.toString(),
+      split = number_string.split(','),
+      sisa = split[0].length % 3,
+      rupiah = split[0].substr(0, sisa),
+      ribuan = split[0].substr(sisa).match(/\d{3}/g);
+
+    if (ribuan) {
+      let separator = sisa ? '.' : '';
+      rupiah += separator + ribuan.join('.');
+    }
+
+    return rupiah;
+  };
+  function formatNumber(number) {
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  function formatMoney(text, field) {
+    const rawText = text.replace(/\D/g, '');
+    const formatedText = formatNumber(rawText);
+    setExpense({...expense, [field]: formatedText});
+  }
+
   async function handleUpdate(params) {
+    resetFormError();
     const payloadUpdate = {
       ...params,
-      total: params.price * params.count,
+      total: parseInt(params.price.replace(/\./g, ''), 10) * params.count,
       date: FormatDateToISO(FormatDateTime(params.date).realDate),
       branchId: params.branchid.toString(),
+      price: parseInt(params.price.replace(/\./g, ''), 10),
     };
     const {branchid, ...payload} = payloadUpdate;
     try {
       setLoading(true);
-      const action = await PostData({
+      const response = await PostAPI({
         operation: EXPENSE_ENDPOINT,
         endpoint: 'updateExpense',
         payload: payload,
       });
-      if (action) {
-        ToastAndroid.show(action.message, ToastAndroid.SHORT);
+      if (response.status === 200) {
+        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
         navigation.goBack();
       }
     } catch (error) {
-      ToastAndroid.show('Failed to Update Expense', ToastAndroid.SHORT);
+      const fullMessage = error.response?.data?.details;
+      fullMessage.forEach(item => {
+        if (item.includes('"name"')) {
+          const error = 'name is required';
+          setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
+        } else if (item.includes('"count"')) {
+          const error = 'count is required';
+          setForm(prev => ({...prev, errorCount: error, hasErrorCount: true}));
+        } else if (item.includes('"price"')) {
+          const error = 'price is required';
+          setForm(prev => ({...prev, errorPrice: error, hasErrorPrice: true}));
+        } else if (item.includes('"notes"')) {
+          const error = 'notes is required';
+          setForm(prev => ({...prev, errorNotes: error, hasErrorNotes: true}));
+        } else if (item.includes('"category"')) {
+          const error = 'category is required';
+          setForm(prev => ({
+            ...prev,
+            errorCategory: error,
+            hasErrorCategory: true,
+          }));
+        }
+      });
     } finally {
       setLoading(false);
     }
   }
+
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        try {
+          setLoading(true);
+          const response = await PostAPI({
+            operation: EXPENSE_ENDPOINT,
+            endpoint: 'showSingleExpense',
+            payload: {id: data.id},
+          });
+          if (response.status === 200) {
+            const expenseData = response.data.expense;
+            setExpense({
+              ...expenseData,
+              price: formatRupiah(expenseData.price),
+            });
+            setLoading(false);
+          }
+        } catch (error) {
+          console.log('error: ', error.response);
+        } finally {
+          setLoading(false);
+        }
+      }
+      fetchData();
+    }, [data.id]),
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -66,6 +170,8 @@ const EditExpense = ({route}) => {
               left="bank-transfer-out"
               value={expense.name}
               onChangeText={text => setExpense({...expense, name: text})}
+              hasError={form.hasErrorName}
+              error={form.errorName}
             />
             <FormInput
               label="Banyak pengeluaran"
@@ -76,16 +182,18 @@ const EditExpense = ({route}) => {
               onChangeText={text =>
                 setExpense({...expense, count: parseInt(text, 10 || 0)})
               }
+              hasError={form.hasErrorCount}
+              error={form.errorCount}
             />
             <FormInput
               label="Harga satuan"
               placeholder="Masukkan harga satuan ..."
               keyboardType="numeric"
               left="cash"
-              value={expense.price ? expense.price.toString() : ''}
-              onChangeText={text =>
-                setExpense({...expense, price: parseInt(text, 10 || 0)})
-              }
+              value={expense.price}
+              onChangeText={text => formatMoney(text, 'price')}
+              hasError={form.hasErrorPrice}
+              error={form.errorPrice}
             />
             <FormInput
               label="Catatan"
@@ -94,6 +202,8 @@ const EditExpense = ({route}) => {
               left="note-outline"
               value={expense.notes}
               onChangeText={text => setExpense({...expense, notes: text})}
+              hasError={form.hasErrorNotes}
+              error={form.errorNotes}
             />
             <FormInput
               label="Kategori"
@@ -102,6 +212,8 @@ const EditExpense = ({route}) => {
               left="shape-outline"
               value={expense.category}
               onChangeText={text => setExpense({...expense, category: text})}
+              hasError={form.hasErrorCategory}
+              error={form.errorCategory}
             />
           </View>
         </ScrollView>

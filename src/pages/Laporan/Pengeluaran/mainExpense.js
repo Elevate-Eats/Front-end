@@ -3,7 +3,6 @@ import {
   FlatList,
   Pressable,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   ToastAndroid,
   TouchableOpacity,
@@ -14,11 +13,9 @@ import React, {useCallback, useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {Dropdown} from 'react-native-element-dropdown';
-import {useSelector} from 'react-redux';
 import {Colors} from '../../../utils/colors';
 import Store from '../../../assets/icons/store-bulk.svg';
 import StoreFront from '../../../assets/icons/store.svg';
-import getDataQuery from '../../../utils/getDataQuery';
 import {EXPENSE_ENDPOINT} from '@env';
 import FormatDateTime from '../../../utils/formatDateTime';
 import Pencil from '../../../assets/icons/edit-bulk.svg';
@@ -28,19 +25,39 @@ import {BtnAdd, LoadingIndicator} from '../../../components';
 import FormatDateToISO from '../../../utils/formatDateToIso';
 import Expense from '../../../assets/icons/cash-out.svg';
 import FormatRP from '../../../utils/formatRP';
-import PostData from '../../../utils/postData';
+import {GetQueryAPI, PostAPI} from '../../../api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MainExpense = () => {
   const navigation = useNavigation();
-  const [isFocus, setIsFocus] = useState(false);
-  const [value, setValue] = useState(null);
-  const [expense, setExpense] = useState({});
-  const [showDate, setShowDate] = useState(false);
-  const [date, setDate] = useState(new Date());
-  const [loading, setLoading] = useState(false);
+  const [calendar, setCalendar] = useState({
+    date: new Date(),
+    showDate: false,
+  });
 
-  const allBranch = useSelector(state => state.branch.allBranch);
-  const listBranch = allBranch.map(item => ({
+  const [dropdown, setDropdown] = useState({
+    focus: false,
+    value: null,
+  });
+
+  const [data, setData] = useState({
+    expense: {},
+    loading: false,
+    branch: [],
+    error: '',
+  });
+
+  useEffect(() => {
+    async function fetchDataBranch(params) {
+      const response = await AsyncStorage.getItem('allBranch');
+      if (response) {
+        setData(prev => ({...prev, branch: JSON.parse(response)}));
+      }
+    }
+    fetchDataBranch();
+  }, []);
+
+  const listBranch = data.branch.map(item => ({
     value: item.id,
     label: item.name,
   }));
@@ -48,53 +65,56 @@ const MainExpense = () => {
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
+        setData(prev => ({...prev, loading: true}));
         try {
-          setLoading(true);
-          const formatedDate = FormatDateToISO(FormatDateTime(date).realDate);
-          const data = await getDataQuery({
+          const formatedDate = FormatDateToISO(
+            FormatDateTime(calendar.date).realDate,
+          );
+          const response = await GetQueryAPI({
             operation: EXPENSE_ENDPOINT,
             endpoint: 'showExpenses',
-            resultKey: 'expenses',
-            query: `branchId=${value}&date=${formatedDate}`,
+            query: `branchId=${dropdown.value}&date=${formatedDate}`,
           });
-          if (data) {
-            setExpense(data);
+          if (response.status === 200) {
+            setData(prev => ({...prev, expense: response.data.expenses}));
           }
         } catch (error) {
-          setExpense([]);
-          console.log('error: ', error);
+          const errorMessage = error.response?.data?.message;
+          setData(prev => ({...prev, error: errorMessage, expense: []}));
         } finally {
-          setLoading(false);
+          setData(prev => ({...prev, loading: false}));
         }
       }
       fetchData();
-    }, [value, date]),
+    }, [dropdown.value, calendar.date]),
   );
 
-  async function handleDeleteExpense(id) {
+  async function handleDeleteExpense(item) {
+    setData(prev => ({...prev, loading: true}));
     try {
-      setLoading(true);
-      const action = await PostData({
+      const response = await PostAPI({
         operation: EXPENSE_ENDPOINT,
         endpoint: 'deleteExpense',
-        payload: {id: id},
+        payload: {id: item.id},
       });
-      if (action) {
-        setExpense(expense.filter(item => item.id !== id));
-        ToastAndroid.show(action.message, ToastAndroid.SHORT);
+      if (response.status === 200) {
+        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+        setData(prev => ({
+          ...prev,
+          expense: prev.expense.filter(element => element.id !== item.id),
+        }));
       }
     } catch (error) {
-      ToastAndroid.show('Expense Failed to Deleted', ToastAndroid.SHORT);
+      ToastAndroid.show('Failed to delete expense', ToastAndroid.SHORT);
     } finally {
-      setLoading(false);
+      setData(prev => ({...prev, loading: false}));
     }
   }
   function handleDate(event, value) {
-    setDate(value);
-    setShowDate(false);
+    setCalendar(prev => ({...prev, date: value, showDate: false}));
   }
 
-  if (loading) {
+  if (data.loading) {
     return <LoadingIndicator />;
   }
 
@@ -120,27 +140,28 @@ const MainExpense = () => {
               fontWeight: '700',
               color: Colors.btnColor,
               fontSize: 18,
+              textTransform: 'uppercase',
             }}
-            style={[styles.dropdown, isFocus]}
+            style={[styles.dropdown, dropdown.focus]}
             placeholderStyle={{
               fontSize: 18,
               fontWeight: '700',
               color: Colors.btnColor,
+              textTransform: 'uppercase',
             }}
             inputSearchStyle={{height: 40, fontSize: 16}}
             placeholder="Pilih Cabang"
-            itemTextStyle={{fontWeight: '700'}}
+            itemTextStyle={{fontWeight: '700', textTransform: 'uppercase'}}
             search
             searchPlaceholder="Search ..."
             maxHeight={300}
             labelField={'label'}
             valueField={'value'}
-            value={value}
-            onFocus={() => setIsFocus(true)}
-            onBlur={() => setIsFocus(false)}
+            value={dropdown.value}
+            onFocus={() => setDropdown(prev => ({...prev, focus: true}))}
+            onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
             onChange={item => {
-              setValue(item.value);
-              setIsFocus(false);
+              setDropdown(prev => ({...prev, value: item.value, focus: false}));
             }}
             renderLeftIcon={() => {
               return (
@@ -151,16 +172,18 @@ const MainExpense = () => {
             }}
           />
         </View>
-        <Pressable style={[styles.calendar]} onPress={() => setShowDate(true)}>
+        <Pressable
+          style={[styles.calendar]}
+          onPress={() => setCalendar(prev => ({...prev, showDate: true}))}>
           <Calendar width={25} height={25} />
           <Text variant="titleMedium" style={{flex: 1, marginHorizontal: 10}}>
-            {FormatDateTime(date.toISOString()).realDate}
+            {FormatDateTime(calendar.date.toISOString()).realDate}
           </Text>
           <Pencil width={20} height={20} />
         </Pressable>
-        {showDate && (
+        {calendar.showDate && (
           <DateTimePicker
-            value={date}
+            value={calendar.date}
             mode="date"
             onChange={handleDate}
             negativeButton={{label: 'Batal', textColor: Colors.deleteColor}}
@@ -168,8 +191,8 @@ const MainExpense = () => {
           />
         )}
       </View>
-      {value !== null ? (
-        expense.length !== 0 ? (
+      {dropdown.value !== null ? (
+        data.expense.length !== 0 ? (
           <View
             style={{
               flex: 1,
@@ -180,7 +203,7 @@ const MainExpense = () => {
               Pengeluaran
             </Text>
             <FlatList
-              data={expense}
+              data={data.expense}
               keyExtractor={item => item.id.toString()}
               renderItem={({item}) => {
                 // console.log('item: ', item);
@@ -200,7 +223,7 @@ const MainExpense = () => {
                             {text: 'Batal', style: 'cancel'},
                             {
                               text: 'OK',
-                              onPress: () => handleDeleteExpense(item.id),
+                              onPress: () => handleDeleteExpense(item),
                             },
                           ],
                           {cancelable: true},
@@ -224,8 +247,8 @@ const MainExpense = () => {
               <BtnAdd
                 onPress={() =>
                   navigation.navigate('Tambah Pengeluaran', {
-                    date: date.toISOString(),
-                    branchId: value,
+                    date: calendar.date.toISOString(),
+                    branchId: dropdown.value,
                   })
                 }
               />
@@ -244,14 +267,14 @@ const MainExpense = () => {
                 fontStyle: 'italic',
                 color: Colors.btnColor,
               }}>
-              Data pengeluaran tidak tersedia
+              {data.error}
             </Text>
             <View style={{position: 'absolute', right: 0, bottom: 0}}>
               <BtnAdd
                 onPress={() =>
                   navigation.navigate('Tambah Pengeluaran', {
-                    date: date.toISOString(),
-                    branchId: value,
+                    date: calendar.date.toISOString(),
+                    branchId: dropdown.value,
                   })
                 }
               />
