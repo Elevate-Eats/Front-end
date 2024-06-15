@@ -32,7 +32,7 @@ const BarChartComponent = ({data, title, suffix, label, barSize}) => {
         height={250}
         fromZero={true}
         segments={5}
-        verticalLabelRotation={-90}
+        verticalLabelRotation={-45}
       />
     </View>
   );

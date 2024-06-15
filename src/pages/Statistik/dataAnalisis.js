@@ -8,7 +8,6 @@ import {
 import {Text} from 'react-native-paper';
 import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -25,16 +24,9 @@ import getDataQuery from '../../utils/getDataQuery';
 import {ANALYTICS_ENDPOINT} from '@env';
 import IncomeItem from '../../components/incomeItem';
 import BarChartComponent from '../../components/barChart';
-import LineChartComponent from '../../components/lineChart';
 
 const DataAnalisis = () => {
   const navigation = useNavigation();
-  const {allMenu} = useSelector(state => state.menu);
-  const {allBranch} = useSelector(state => state.branch);
-  const listBranch = allBranch.map(item => ({
-    label: item.name,
-    value: item.id,
-  }));
 
   const [dropdown, setDropdown] = useState({
     focus: false,
@@ -53,14 +45,23 @@ const DataAnalisis = () => {
     summary: [],
     hourly: [],
     items: [],
+    branch: [],
+    menu: [],
   });
 
   useEffect(() => {
-    async function fetchCompanyId(params) {
+    async function fetchDataLocal(params) {
       const id = await AsyncStorage.getItem('companyId');
-      setData(prev => ({...prev, id: id}));
+      const allBranch = await AsyncStorage.getItem('allBranch');
+      const allMenu = await AsyncStorage.getItem('allMenuCompany');
+      setData(prev => ({
+        ...prev,
+        id: id,
+        branch: JSON.parse(allBranch),
+        menu: JSON.parse(allMenu),
+      }));
     }
-    fetchCompanyId();
+    fetchDataLocal();
   }, []);
 
   useEffect(() => {
@@ -178,7 +179,9 @@ const DataAnalisis = () => {
 
     if (datas === 'item') {
       data.items.forEach(item => {
-        const menuItem = allMenu.find(menuItem => menuItem.id === item.menuid);
+        const menuItem = Object.values(data.menu).find(
+          menuItem => menuItem.id === item.menuid,
+        );
         if (menuItem) {
           labels.push(menuItem.name);
           dataset.push(parseInt(item.sumitemssold));
@@ -197,6 +200,25 @@ const DataAnalisis = () => {
     return {dataset, labels};
   }
 
+  function fiveMenuItems(dataItems) {
+    const combined = dataItems?.datasets[0]?.data
+      .map((value, index) => {
+        return {
+          value: value,
+          label: dataItems.labels[index],
+        };
+      })
+      .sort((a, b) => b.value - a.value);
+
+    const topFive = combined.slice(0, 5);
+    const sortedData = topFive.map(item => item.value);
+    const sortedLabels = topFive.map(item => item.label);
+    return {
+      datasets: [{data: sortedData}],
+      labels: sortedLabels,
+    };
+  }
+
   const dataHourly = {
     datasets: [{data: chartData('hour').dataset}],
     labels: chartData('hour').labels,
@@ -206,6 +228,10 @@ const DataAnalisis = () => {
     datasets: [{data: chartData('item').dataset.slice(0, 10)}],
     labels: chartData('item').labels.slice(0, 10),
   };
+  const listBranch = data.branch.map(item => ({
+    label: item.name,
+    value: item.id,
+  }));
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -229,9 +255,10 @@ const DataAnalisis = () => {
             valueField={'value'}
             value={dropdown.value}
             placeholder="Pilih cabang"
-            placeholderStyle={{fontWeight: '500', fontSize: 18}}
+            placeholderStyle={{fontWeight: '700', fontSize: 18}}
             style={styles.dropdown}
             selectedTextStyle={styles.selectedTextStyle}
+            itemTextStyle={{fontWeight: '700', textTransform: 'uppercase'}}
             onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
             onFocus={() => setDropdown(prev => ({...prev, focus: true}))}
             onChange={item => {
@@ -353,9 +380,8 @@ const DataAnalisis = () => {
               barSize={0.9}
               suffix={' pcs'}
               title={'Menu Item Sales Chart'}
-              data={dataItems}
+              data={fiveMenuItems(dataItems)}
             />
-            {/*  */}
           </View>
         </View>
       </ScrollView>

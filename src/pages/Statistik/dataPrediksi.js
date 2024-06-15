@@ -25,15 +25,11 @@ import FormatDateToISO from '../../utils/formatDateToIso';
 import LineChartComponent from '../../components/lineChart';
 import moment from 'moment';
 import IncomeItem from '../../components/incomeItem';
-import BarChartComponent from '../../components/barChart';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DataPrediksi = () => {
   const navigation = useNavigation();
   const {allBranch} = useSelector(state => state.branch);
-  const listBranch = allBranch.map(item => ({
-    label: item.name,
-    value: item.id,
-  }));
 
   const [dropdown, setDropdown] = useState({
     focus: false,
@@ -52,10 +48,20 @@ const DataPrediksi = () => {
     chart: [],
     shift1: {},
     shift2: {},
+    branch: [],
   });
 
   const [visible, setVisible] = useState(false);
   const toggleModal = () => setVisible(!visible);
+
+  useEffect(() => {
+    async function fetDataLocal(params) {
+      const allBranch = await AsyncStorage.getItem('allBranch');
+      setData(prev => ({...prev, branch: JSON.parse(allBranch)}));
+    }
+    fetDataLocal();
+  }, []);
+
   useEffect(() => {
     if (dropdown.value && calendar.start && calendar.end) {
       async function fetchPredictData() {
@@ -174,12 +180,6 @@ const DataPrediksi = () => {
     return {dataShift1, dataShift2};
   }
 
-  // console.log(
-  //   'income shift1: ',
-  //   incomeData(data.predict).dataShift1['jumlahTransaksi'],
-  // );
-  // console.log('income shift2: ', incomeData(data.predict).dataShift2);
-
   const chartConfig = {
     backgroundColor: '#ffffff',
     backgroundGradientFrom: '#ffffff',
@@ -240,6 +240,10 @@ const DataPrediksi = () => {
     datasets: [{data: chartData(data.predict).dataset2.slice(0, 14)}],
     labels: chartData(data.predict).labels.slice(0, 14),
   };
+  const listBranch = data.branch.map(item => ({
+    label: item.name,
+    value: item.id,
+  }));
 
   // console.log('SHIFT 1: ', dataTotalRevenueShift1.labels);
 
@@ -264,8 +268,9 @@ const DataPrediksi = () => {
             labelField="label"
             valueField="value"
             value={dropdown.value}
+            itemTextStyle={{fontWeight: '700', textTransform: 'uppercase'}}
             placeholder="Pilih cabang"
-            placeholderStyle={{fontWeight: '500', fontSize: 18}}
+            placeholderStyle={{fontWeight: '700', fontSize: 18}}
             style={styles.dropdown}
             selectedTextStyle={styles.selectedTextStyle}
             onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
@@ -424,6 +429,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 18,
     color: '#000',
+    textTransform: 'uppercase',
   },
   calendarContainer: {
     flexDirection: 'row',
