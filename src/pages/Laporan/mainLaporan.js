@@ -11,10 +11,9 @@ import {
   View,
 } from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Expanse from '../../assets/icons/cash-out.svg';
 import Print from '../../assets/icons/download_file.svg';
-import Right from '../../assets/icons/arrow-right.svg';
 import {useNavigation} from '@react-navigation/native';
 import {Colors} from '../../utils/colors';
 import {ConstButton, TopBar} from '../../components';
@@ -22,12 +21,10 @@ import Store from '../../assets/icons/store-bulk.svg';
 import Calendar from '../../assets/icons/calendar-bulk.svg';
 import ArrowDown from '../../assets/icons/arrow-down-bulk.svg';
 import RNFetchBlob from 'rn-fetch-blob';
-import Pdf from 'react-native-pdf';
 import {Buffer} from 'buffer';
 import ContentPage from '../../components/contentPage';
 import Close from '../../assets/icons/close-bold.svg';
 import {Dropdown} from 'react-native-element-dropdown';
-import {useSelector} from 'react-redux';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import FormatDateTime from '../../utils/formatDateTime';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,8 +34,8 @@ import FormatDateToISO from '../../utils/formatDateToIso';
 global.Buffer = Buffer;
 
 const MainLaporan = () => {
-  const {allBranch} = useSelector(state => state.branch);
   const navigation = useNavigation();
+  const [branch, setBranch] = useState([]);
   const [pdfFile, setPdfFile] = useState({
     path: '',
     loading: false,
@@ -60,9 +57,13 @@ const MainLaporan = () => {
     navigation.navigate(params);
   }
 
-  // console.log(
-  //   `${dropdown.value} - ${FormatDateToISO(FormatDateTime(calendar.dateNow).realDate)}`,
-  // );
+  useEffect(() => {
+    async function fetchDataLocal(params) {
+      const response = await AsyncStorage.getItem('allBranch');
+      setBranch(JSON.parse(response));
+    }
+    fetchDataLocal();
+  }, [modal.visible]);
 
   async function handleDownload(params) {
     setPdfFile(prev => ({...prev, loading: true}));
@@ -128,7 +129,7 @@ const MainLaporan = () => {
   }
 
   function downloadReport(params) {
-    const listBranch = Object.values(allBranch).map(item => ({
+    const listBranch = Object.values(branch).map(item => ({
       label: item.name,
       value: item.id,
     }));
@@ -158,6 +159,7 @@ const MainLaporan = () => {
                 value={dropdown.value}
                 placeholder="Pilih Cabang"
                 placeholderStyle={{fontWeight: '500'}}
+                itemTextStyle={{fontWeight: '700', textTransform: 'uppercase'}}
                 style={styles.dropdown}
                 selectedTextStyle={styles.selectedTextStyle}
                 onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
@@ -314,7 +316,6 @@ const styles = StyleSheet.create({
   },
   selectedTextStyle: {
     fontWeight: '500',
-    // fontSize: 18,
     color: '#000',
     textTransform: 'uppercase',
   },
