@@ -1,5 +1,4 @@
 import {
-  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -9,7 +8,6 @@ import {
 import {Text} from 'react-native-paper';
 import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
 import getDataQuery from '../../utils/getDataQuery';
 import {REPORT_ENDPOINT} from '@env';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -29,7 +27,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DataPrediksi = () => {
   const navigation = useNavigation();
-  const {allBranch} = useSelector(state => state.branch);
 
   const [dropdown, setDropdown] = useState({
     focus: false,
@@ -109,8 +106,6 @@ const DataPrediksi = () => {
       fetchPredictData();
     }
   }, [dropdown.value, calendar.start, calendar.end]);
-
-  // console.log('data: ', data.chart);
 
   function handleStartDate(event, selectedDate) {
     if (!selectedDate) {
@@ -229,8 +224,6 @@ const DataPrediksi = () => {
     labels: chartData(data.predict).labels.slice(0, 14),
   };
 
-  // console.log('chartData: ', chartData(data.predict));
-
   const dataDummy = {
     datasets: [{data: [0, 0, 0, 0, 0]}],
     labels: ['0', '0', '0', '0', '0'],
@@ -244,8 +237,6 @@ const DataPrediksi = () => {
     label: item.name,
     value: item.id,
   }));
-
-  // console.log('SHIFT 1: ', dataTotalRevenueShift1.labels);
 
   return (
     <SafeAreaView style={{flex: 1}}>
