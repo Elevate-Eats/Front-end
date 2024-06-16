@@ -20,6 +20,7 @@ import {
 } from '../../../components';
 import {Colors} from '../../../utils/colors';
 import {SelectList} from 'react-native-dropdown-select-list';
+import {PostAPI} from '../../../api';
 
 const EditProduk = ({route}) => {
   const navigation = useNavigation();
@@ -38,12 +39,25 @@ const EditProduk = ({route}) => {
       async function fetchData(params) {
         setLoading(true);
         try {
-          const dataMenu = await PostData({
+          // const dataMenu = await PostData({
+          //   operation: MENU_BRANCH_ENDPOINT,
+          //   endpoint: 'showSingleMenu',
+          //   payload: {menuId: item.menuid, branchId: item.branchid},
+          // });
+          // setMenu(dataMenu.menuData);
+          const response = await PostAPI({
             operation: MENU_BRANCH_ENDPOINT,
             endpoint: 'showSingleMenu',
             payload: {menuId: item.menuid, branchId: item.branchid},
           });
-          setMenu(dataMenu.menuData);
+          if (response.status === 200) {
+            const menuData = response.data.menuData;
+            setMenu({
+              ...menuData,
+              baseonlineprice: formatRupiah(menuData.baseonlineprice),
+              baseprice: formatRupiah(menuData.baseprice),
+            });
+          }
         } catch (error) {
           Alert.alert('Failed to Fetch Data !', error);
         } finally {
@@ -54,15 +68,39 @@ const EditProduk = ({route}) => {
     }, []),
   );
 
+  function formatNumber(number) {
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  function formatMoney(text, field) {
+    const rawText = text.replace(/\D/g, '');
+    const formatedText = formatNumber(rawText);
+    setMenu({...menu, [field]: formatedText});
+  }
+  const formatRupiah = angka => {
+    let number_string = angka.toString(),
+      split = number_string.split(','),
+      sisa = split[0].length % 3,
+      rupiah = split[0].substr(0, sisa),
+      ribuan = split[0].substr(sisa).match(/\d{3}/g);
+
+    if (ribuan) {
+      let separator = sisa ? '.' : '';
+      rupiah += separator + ribuan.join('.');
+    }
+
+    return rupiah;
+  };
+
   async function updateMenu(params) {
     const payloadUpdate = {
       menuId: item.menuid,
       branchId: item.branchid,
       name: menu.name,
       category: menu.category,
-      basePrice: menu.baseprice,
-      baseOnlinePrice: menu.baseonlineprice,
+      basePrice: parseInt(menu.baseprice.replace(/\./g, ''), 10),
+      baseOnlinePrice: parseInt(menu.baseonlineprice.replace(/\./g, ''), 10),
     };
+    // console.log('payload: ', payloadUpdate);
     try {
       setLoading(true);
       const action = await PostData({
@@ -112,13 +150,10 @@ const EditProduk = ({route}) => {
     return <LoadingIndicator />;
   }
 
-  console.log('items: ', item.name);
   return (
     <KeyboardAvoidingView style={styles.container}>
       <Appbar.Header>
-        <Appbar.BackAction
-          onPress={() => navigation.navigate('Pilih Produk')}
-        />
+        <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content
           title={`${item.name}, ${item.category}`}
           titleStyle={{fontSize: 18, fontWeight: '700'}}
@@ -147,22 +182,16 @@ const EditProduk = ({route}) => {
               placeholder="masukkan harga reguler ..."
               keyboardType="numeric"
               left="cash-multiple"
-              value={menu.baseprice ? menu.baseprice.toString() : ''}
-              onChangeText={text =>
-                setMenu({...menu, baseprice: parseInt(text, 10) || 0})
-              }
+              value={menu.baseprice}
+              onChangeText={text => formatMoney(text, 'baseprice')}
             />
             <FormInput
               label="Harga online"
               placeholder="masukkan harga online ..."
               keyboardType="numeric"
               left="cash-multiple"
-              value={
-                menu.baseonlineprice ? menu.baseonlineprice.toString() : ''
-              }
-              onChangeText={text =>
-                setMenu({...menu, baseonlineprice: parseInt(text, 10) || 0})
-              }
+              value={menu.baseonlineprice}
+              onChangeText={text => formatMoney(text, 'baseonlineprice')}
             />
             <View style={{marginTop: 30}}>
               <Text

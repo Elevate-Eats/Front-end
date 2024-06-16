@@ -1,5 +1,5 @@
 import {StyleSheet, View, KeyboardAvoidingView} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {
   BtnAdd,
@@ -13,45 +13,57 @@ import {useSelector, useDispatch} from 'react-redux';
 import {MENU_BRANCH_ENDPOINT, API_URL} from '@env';
 import getDataQuery from '../../../utils/getDataQuery';
 import Empty from '../../../assets/icons/empty-menu.svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {GetQueryAPI} from '../../../api';
 
 const PilihProduk = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const [menu, setMenu] = useState({});
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
 
-  // branch dari dashboard
+  const [data, setData] = useState({
+    menu: [],
+    error: null,
+    loading: false,
+    branch: {},
+  });
+
   const selectBranch = useSelector(state => state.branch.selectedBranch);
 
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
-        setLoading(true);
+        setData(prev => ({...prev, loading: true}));
         try {
-          const data = await getDataQuery({
+          console.log('select id: ', selectBranch.id);
+          const response = await GetQueryAPI({
             operation: MENU_BRANCH_ENDPOINT,
             endpoint: 'showMenus',
-            resultKey: 'menuData',
             query: `branchid=${selectBranch.id}`,
           });
-          if (data) {
-            setMenu(data);
+          if (response.status === 200) {
+            setData(prev => ({...prev, menu: response.data.menuData}));
+            // console.log('respon: ', response.status);
           }
         } catch (error) {
-          setMenu([]);
-          setError('Menu not Found');
-          console.log('error: ', error);
+          const fullMessage = error.response?.data?.message;
+          if (fullMessage) {
+            setData(prev => ({
+              ...prev,
+              error: 'No Data Found',
+              menu: [],
+            }));
+          }
+          console.log('error: ', error.response?.data?.message);
         } finally {
-          setLoading(false);
+          setData(prev => ({...prev, loading: false}));
         }
       }
       fetchData();
-    }, [dispatch, selectBranch?.id]),
+    }, [selectBranch?.id]),
   );
 
-  if (loading) {
+  console.log('length: ', data.menu.length);
+  if (data.loading) {
     return <LoadingIndicator />;
   }
   return (
@@ -67,14 +79,14 @@ const PilihProduk = () => {
           </View>
         </View>
         <View style={{flex: 1, marginVertical: 10}}>
-          {menu.length === 0 ? (
+          {data.menu.length === 0 ? (
             <View style={styles.dataError}>
               <Empty width={200} height={200} />
-              <DataError data={error} />
+              <DataError data={data.error} />
             </View>
           ) : (
             <ListMenu
-              data={menu}
+              data={data.menu}
               onPress={item => navigation.navigate('Edit Produk', {item})}
             />
           )}

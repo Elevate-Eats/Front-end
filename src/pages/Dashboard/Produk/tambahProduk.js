@@ -7,7 +7,7 @@ import {
   ToastAndroid,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import {Text} from 'react-native-paper';
+import {HelperText, Text} from 'react-native-paper';
 import {Colors} from '../../../utils/colors';
 import {MENU_COMPANY_ENDPOINT, MENU_BRANCH_ENDPOINT} from '@env';
 import {
@@ -21,20 +21,15 @@ import {SelectList} from 'react-native-dropdown-select-list';
 import {Dropdown} from 'react-native-element-dropdown';
 import PostData from '../../../utils/postData';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {PostAPI} from '../../../api';
 
 const TambahProduk = ({navigation}) => {
   const branch = useSelector(s => s.branch.selectedBranch);
-  const menuCompany = useSelector(s => s.menu.allMenu);
   const [menu, setMenu] = useState({});
   const [loading, setLoading] = useState(false);
 
   // console.log('sort Menu: ', sortMenu);
-
-  const listMenu = Object.values(menuCompany).map(item => ({
-    value: item.id,
-    label: item.name,
-  }));
-  const sortMenu = listMenu.sort((a, b) => a.label.localeCompare(b.label));
 
   const kategori = [
     {key: 'foods', value: 'Makanan'},
@@ -44,46 +39,118 @@ const TambahProduk = ({navigation}) => {
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
 
+  const [data, setData] = useState({
+    menuCompany: [],
+    menuBranch: {},
+  });
+
+  const [dropdown, setDropdown] = useState({
+    value: null,
+    focus: false,
+  });
+
+  const [form, setForm] = useState({
+    errorReguler: '',
+    errorOnline: '',
+    errorCategory: '',
+    hasErrorReguler: false,
+    hasErrorOnline: false,
+    hasErrorCategory: false,
+  });
+
+  function resetFormError(params) {
+    setForm(prev => ({
+      ...prev,
+      errorReguler: '',
+      errorOnline: '',
+      errorCategory: '',
+      hasErrorReguler: false,
+      hasErrorOnline: false,
+      hasErrorCategory: false,
+    }));
+  }
+
+  useEffect(() => {
+    async function fetchDataLocal(params) {
+      setLoading(true);
+      try {
+        const response = await AsyncStorage.getItem('allMenuCompany');
+        if (response.length > 0) {
+          setData(prev => ({...prev, menuCompany: JSON.parse(response)}));
+        }
+      } catch (error) {
+      } finally {
+        setLoading(true);
+      }
+    }
+    fetchDataLocal();
+  }, []);
+
   useEffect(() => {
     async function fetchData(params) {
       setLoading(true);
       try {
-        const data = await PostData({
+        const response = await PostAPI({
           operation: MENU_COMPANY_ENDPOINT,
           endpoint: 'showSingleMenu',
-          payload: {id: value},
+          payload: {id: dropdown.value},
         });
-        setMenu(data.menuData);
+        if (response.status === 200) {
+          setData(prev => ({...prev, menuBranch: response.data.menuData}));
+        }
       } catch (error) {
+        console.log('error: ', error.response?.data);
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [value]);
+  }, [dropdown.value]);
 
   async function addMenu(params) {
-    const payloadAdd = {
-      menuId: value,
+    resetFormError();
+    setLoading(true);
+    const payload = {
+      menuId: dropdown.value,
       branchId: branch.id,
-      name: menu.name,
-      category: menu.category,
-      basePrice: menu.baseprice,
-      baseOnlinePrice: menu.baseonlineprice,
+      name: data.menuBranch.name,
+      category: data.menuBranch.category,
+      basePrice: data.menuBranch.baseprice,
+      baseOnlinePrice: data.menuBranch.baseonlineprice,
     };
     try {
-      const data = await PostData({
+      const response = await PostAPI({
         operation: MENU_BRANCH_ENDPOINT,
         endpoint: 'addMenu',
-        payload: payloadAdd,
+        payload: payload,
       });
-      ToastAndroid.show(
-        `${menu.name} was successfully added`,
-        ToastAndroid.SHORT,
-      );
-      navigation.navigate('Tambah Produk');
+      if (response.status === 200) {
+        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+        navigation.goBack();
+      }
     } catch (error) {
-      Alert.alert('Failed to Add Menu', error);
+      const fullMessage = error.response?.data?.details;
+      if (fullMessage) {
+        fullMessage.forEach(item => {
+          if (item.includes('"basePrice"')) {
+            const error = 'reguler price is required';
+            setForm(prev => ({
+              ...prev,
+              errorReguler: error,
+              hasErrorReguler: true,
+            }));
+          } else if (item.includes('"baseOnlinePrice"')) {
+            const error = 'online price is required';
+            setForm(prev => ({
+              ...prev,
+              errorOnline: error,
+              hasErrorOnline: true,
+            }));
+          }
+        });
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -98,9 +165,15 @@ const TambahProduk = ({navigation}) => {
     return null;
   };
 
-  if (loading) {
-    return <LoadingIndicator />;
-  }
+  const listMenu = Object.values(data.menuCompany).map(item => ({
+    value: item.id,
+    label: item.name,
+  }));
+  const sortMenu = listMenu.sort((a, b) => a.label.localeCompare(b.label));
+
+  // if (loading) {
+  //   return <LoadingIndicator />;
+  // }
 
   return (
     <KeyboardAvoidingView enabled style={styles.container}>
@@ -115,27 +188,30 @@ const TambahProduk = ({navigation}) => {
             <View style={{marginTop: 30}}>
               {renderLabel()}
               <Dropdown
-                mode="modal"
+                mode="default"
                 style={[
                   styles.dropdown,
-                  isFocus && {borderColor: Colors.btnColor},
+                  dropdown.focus && {borderColor: Colors.btnColor},
                 ]}
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={styles.selectedTextStyle}
                 inputSearchStyle={styles.inputSearchStyle}
                 data={sortMenu}
                 search
-                maxHeight={300}
+                maxHeight={450}
                 labelField="label"
                 valueField="value"
-                placeholder={!isFocus ? 'Pilih Menu' : '...'}
+                placeholder={!dropdown.focus ? 'Pilih Menu' : '...'}
                 searchPlaceholder="Search..."
-                value={value}
-                onFocus={() => setIsFocus(true)}
-                onBlur={() => setIsFocus(false)}
+                value={dropdown.value}
+                onFocus={() => setDropdown(prev => ({...prev, focus: true}))}
+                onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
                 onChange={item => {
-                  setValue(item.value);
-                  setIsFocus(false);
+                  setDropdown(prev => ({
+                    ...prev,
+                    value: item.value,
+                    focus: false,
+                  }));
                 }}
                 renderLeftIcon={() => {
                   return (
@@ -146,7 +222,7 @@ const TambahProduk = ({navigation}) => {
                 }}
               />
 
-              {value !== null && menu ? (
+              {dropdown.value !== null && menu ? (
                 <View>
                   <FormInput
                     disabled={true}
@@ -154,17 +230,26 @@ const TambahProduk = ({navigation}) => {
                     placeholder="Masukkan nama menu ..."
                     keyboardType="default"
                     left="food"
-                    value={menu.name}
+                    value={data.menuBranch.name}
                   />
                   <FormInput
                     label="Harga reguler"
                     placeholder="Masukkan harga reguler ..."
                     keyboardType="numeric"
                     left="cash-multiple"
-                    value={menu.baseprice ? menu.baseprice.toString() : ''}
-                    onChangeText={text =>
-                      setMenu({...menu, baseprice: parseInt(text, 10 || 0)})
+                    value={
+                      data.menuBranch.baseprice
+                        ? data.menuBranch.baseprice.toString()
+                        : ''
                     }
+                    onChangeText={text =>
+                      setData(prev => ({
+                        ...prev,
+                        menuBranch: {...prev.menuBranch, baseprice: text},
+                      }))
+                    }
+                    error={form.errorReguler}
+                    hasError={form.hasErrorReguler}
                   />
                   <FormInput
                     label="Harga online"
@@ -172,16 +257,18 @@ const TambahProduk = ({navigation}) => {
                     keyboardType="numeric"
                     left="cash-multiple"
                     value={
-                      menu.baseonlineprice
-                        ? menu.baseonlineprice.toString()
+                      data.menuBranch.baseonlineprice
+                        ? data.menuBranch.baseonlineprice.toString()
                         : ''
                     }
                     onChangeText={text =>
-                      setMenu({
-                        ...menu,
-                        baseonlineprice: parseInt(text, 10 || 0),
-                      })
+                      setData(prev => ({
+                        ...prev,
+                        menuBranch: {...prev.menuBranch, baseonlineprice: text},
+                      }))
                     }
+                    error={form.errorOnline}
+                    hasError={form.hasErrorOnline}
                   />
                   <View style={{marginTop: 30}}>
                     <Text
@@ -192,7 +279,13 @@ const TambahProduk = ({navigation}) => {
                     <SelectList
                       data={kategori}
                       save="value"
-                      setSelected={text => setMenu({...menu, category: text})}
+                      // setSelected={text => setMenu({...menu, category: text})}
+                      setSelected={text =>
+                        setData(prev => ({
+                          ...prev,
+                          menuBranch: {...prev.menuBranch, category: text},
+                        }))
+                      }
                       boxStyles={styles.boxStyles}
                       dropdownStyles={styles.dropdownStyles}
                       searchPlaceholder="Cari kategori menu..."
@@ -200,10 +293,13 @@ const TambahProduk = ({navigation}) => {
                       inputStyles={{color: 'black'}}
                       dropdownTextStyles={styles.dropdownTextStyles}
                       defaultOption={{
-                        key: menu.category,
-                        value: menu.category,
+                        key: data.menuBranch.category,
+                        value: data.menuBranch.category,
                       }}
                     />
+                    <HelperText type="error" visible={form.hasErrorCategory}>
+                      {`Error: ${form.errorCategory}`}
+                    </HelperText>
                   </View>
                 </View>
               ) : null}

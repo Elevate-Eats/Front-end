@@ -15,6 +15,7 @@ import {selectBranch} from '../redux/branchSlice';
 import {BRANCH_ENDPOINT} from '@env';
 import GetData from '../utils/getData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useFocusEffect} from '@react-navigation/native';
 
 const ModalBranch = props => {
   const dispatch = useDispatch();
@@ -29,24 +30,26 @@ const ModalBranch = props => {
   function handleCheck(id) {
     setChecked(id);
   }
-  useEffect(() => {
-    async function fetchData(params) {
-      try {
-        setData(prev => ({...prev, loading: true}));
-        const response = await GetData({
-          operation: BRANCH_ENDPOINT,
-          endpoint: 'showBranches',
-          resultKey: 'branchData',
-        });
-        setData(prev => ({...prev, branch: response}));
-      } catch (error) {
-        console.log('error: ', error);
-      } finally {
-        setData(prev => ({...prev, loading: false}));
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData(params) {
+        try {
+          setData(prev => ({...prev, loading: true}));
+          const response = await GetData({
+            operation: BRANCH_ENDPOINT,
+            endpoint: 'showBranches',
+            resultKey: 'branchData',
+          });
+          setData(prev => ({...prev, branch: response}));
+        } catch (error) {
+          console.log('error: ', error);
+        } finally {
+          setData(prev => ({...prev, loading: false}));
+        }
       }
-    }
-    fetchData();
-  }, []);
+      fetchData();
+    }, []),
+  );
 
   return (
     <View>
@@ -91,7 +94,7 @@ const ModalBranch = props => {
           <TouchableOpacity
             onPress={async () => {
               const branch = data.branch.find(b => b.id === checked);
-              if (selectBranch) {
+              if (branch) {
                 dispatch(selectBranch(branch));
                 await AsyncStorage.setItem(
                   'selectBranch',

@@ -26,7 +26,6 @@ import {updateMenu as Up} from '../../../redux/menuSlice';
 const EditMenu = ({navigation, route}) => {
   const dispatch = useDispatch();
   const {item} = route.params;
-  console.log('items: ', item);
   const [menu, setMenu] = useState({});
   const kategori = [
     {key: 'foods', value: 'Makanan'},

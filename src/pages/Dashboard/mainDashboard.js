@@ -41,7 +41,9 @@ import FormatDateToISO from '../../utils/formatDateToIso';
 const MainDashboard = ({navigation, route}) => {
   const {colors} = useTheme();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
-  const employee = useSelector(state => state.employee.allEmployee);
+  // console.log('select brnch: ', selectBranch);
+  // const employee = useSelector(state => state.employee.allEmployee);
+  const [employee, setEmployee] = useState([]);
   const [modal, setModal] = useState({
     chart: false,
     branch: false,
@@ -59,6 +61,8 @@ const MainDashboard = ({navigation, route}) => {
   useEffect(() => {
     async function fetchLocalStorage(params) {
       const response = await AsyncStorage.getItem('credentials');
+      const employee = await AsyncStorage.getItem('allEmployee');
+      setEmployee(JSON.parse(employee));
       setTodayData(prev => ({...prev, localData: JSON.parse(response)}));
     }
     fetchLocalStorage();
@@ -70,7 +74,7 @@ const MainDashboard = ({navigation, route}) => {
       setModal(prev => ({...prev, selectBranch: JSON.parse(response)}));
     }
     getSelectBranch();
-  }, [modal.branch]);
+  }, [selectBranch?.id]);
 
   useEffect(() => {
     async function fetchData(params) {
@@ -117,11 +121,6 @@ const MainDashboard = ({navigation, route}) => {
           query: `branchId=${branchId}&startDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}&endDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}`,
           // query: `branchId=${branchId}&startDate=2024-06-15&endDate=2024-06-15`,
         });
-
-        // console.log('data sumary: ', dataDailySummary.data.data.length);
-        // console.log('data weekly: ', dataWeekly.data.data[0]);
-        // console.log('data predict: ', dataPredict.data.data);
-
         let revenueShift1 = 0;
         let revenueShift2 = 0;
         let transactionShift1 = 0;
@@ -139,7 +138,6 @@ const MainDashboard = ({navigation, route}) => {
               revenueShift2 += item['Total'];
             }
           });
-
           const totalPredictedSales = revenueShift1 + revenueShift2;
           const totalPredictedTransactions =
             transactionShift1 + transactionShift2;
@@ -206,7 +204,6 @@ const MainDashboard = ({navigation, route}) => {
             weekly: [weeklyData],
           }));
         } else {
-          // console.log('kurang 0');
           dataPredict.data.data.forEach(item => {
             if (item['Shift'] === 1) {
               transactionShift1 += item['Jumlah Transaksi'];
@@ -312,7 +309,7 @@ const MainDashboard = ({navigation, route}) => {
       }
     }
     fetchData();
-  }, [modal.selectBranch?.id]);
+  }, [selectBranch?.id]);
 
   const chartConfig = {
     backgroundGradientFrom: '#ffffff',
@@ -436,8 +433,6 @@ const MainDashboard = ({navigation, route}) => {
     }
   }
 
-  // console.log('local data: ', todayData.localData);
-
   return (
     <View style={styles.container}>
       <TopBar navigation={navigation} title={'Dashboard'} />
@@ -483,14 +478,14 @@ const MainDashboard = ({navigation, route}) => {
           <View
             style={{flexDirection: 'row', alignItems: 'center', columnGap: 5}}>
             <Ionicons name="people-outline" size={25} color="black" />
-            <Text variant="titleLarge">{employee.length}</Text>
+            <Text variant="titleLarge">{employee?.length}</Text>
           </View>
           <TouchableOpacity
             style={styles.pilihCabang}
             onPress={() => setModal(prev => ({...prev, branch: true}))}>
             <Text style={{color: 'white'}} variant="bodyMedium">
-              {/* {selectBranch ? selectBranch.name : 'Pilih Cabang'} */}
-              {modal.selectBranch ? modal.selectBranch.name : 'Pilih Cabang'}
+              {selectBranch ? selectBranch.name : 'Pilih Cabang'}
+              {/* {modal.selectBranch ? modal.selectBranch.name : 'Pilih Cabang'} */}
             </Text>
           </TouchableOpacity>
         </View>

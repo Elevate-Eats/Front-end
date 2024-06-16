@@ -20,7 +20,7 @@ import {LoadingIndicator, SearchBox} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
 import Receipt from '../../../assets/icons/receipt.svg';
 import {deleteTransaction} from '../../../redux/showTransaction';
-import {addItem, saveItem} from '../../../redux/cartSlice';
+import {PostAPI} from '../../../api';
 
 const PendingTransaction = ({navigation}) => {
   const dispatch = useDispatch();
@@ -38,7 +38,7 @@ const PendingTransaction = ({navigation}) => {
   async function fetchData(params) {
     setData(prev => ({...prev, loading: true}));
     try {
-      console.log('branchId: ', branch.id);
+      // console.log('branchId: ', branch.id);
       const response = await getDataQuery({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'showTransactions',
@@ -54,6 +54,7 @@ const PendingTransaction = ({navigation}) => {
         transaction: [],
         error: 'Transaction not found',
       }));
+      console.log('error pending: ', error);
     } finally {
       setData(prev => ({...prev, loading: false}));
     }
@@ -93,19 +94,36 @@ const PendingTransaction = ({navigation}) => {
     });
   }
 
-  async function handleDelete(params) {
+  async function handleDelete(item) {
     try {
       setData(prev => ({...prev, loading: true}));
-      const action = await PostData({
+      const response = await PostAPI({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'deleteTransaction',
-        payload: {id: params.id},
+        payload: {id: item.id},
       });
-      if (action) {
-        dispatch(deleteTransaction(params.id));
-        ToastAndroid.show(`${action.message}`, ToastAndroid.SHORT);
+      if (response.status === 200) {
+        dispatch(deleteTransaction(item.id));
+        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+        setData(prev => ({
+          ...prev,
+          transaction: prev.transaction.filter(
+            element => element.id !== item.id,
+          ),
+        }));
       }
+      // const action = await PostData({
+
+      //   operation: TRANSACTION_ENDPOINT,
+      //   endpoint: 'deleteTransaction',
+      //   payload: {id: params.id},
+      // });
+      // if (action) {
+      //   dispatch(deleteTransaction(params.id));
+      //   ToastAndroid.show(`${action.message}`, ToastAndroid.SHORT);
+      // }
     } catch (error) {
+      ToastAndroid.show(`Failed to delete transaction`, ToastAndroid.SHORT);
     } finally {
       setData(prev => ({...prev, loading: false}));
     }
@@ -158,9 +176,7 @@ const PendingTransaction = ({navigation}) => {
                               id: item.id,
                               table: item.tablenumber,
                             });
-                          }}
-                          // onPress={() => console.log('item: ', item)}
-                        >
+                          }}>
                           <Text variant="titleMedium" style={{fontSize: 18}}>
                             {`${item.customername}`}
                           </Text>

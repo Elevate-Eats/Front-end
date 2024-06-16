@@ -18,16 +18,15 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FormatRP from '../../../utils/formatRP';
 import {Colors} from '../../../utils/colors';
 import Share from '../../../assets/icons/share-outline.svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DetailHistory = ({route}) => {
   const navigation = useNavigation();
   const {data} = route.params;
-  console.log('data:', data);
-  console.log('date: ', FormatDateTime(data.transactiondate).realDate);
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(true);
-  const branch = useSelector(state => state.branch.allBranch);
+  const [branch, setBranch] = useState([]);
   const menuCompany = useSelector(state => state.menu.allMenu);
 
   useFocusEffect(
@@ -41,6 +40,10 @@ const DetailHistory = ({route}) => {
             resultKey: 'itemData',
             query: `transactionId=${data.id}`,
           });
+          const branch = await AsyncStorage.getItem('allBranch');
+          if (branch) {
+            setBranch(JSON.parse(branch));
+          }
           if (action) {
             setItems(action);
           }
@@ -104,7 +107,7 @@ const DetailHistory = ({route}) => {
           <View style={styles.rowTransaction}>
             <Text>Nama Cabang</Text>
             <Text variant="titleMedium" style={{fontWeight: '700'}}>
-              {branch.filter(item => item.id === data.branchid)[0].name}
+              {branch.filter(item => item.id === data.branchid)[0]?.name}
             </Text>
           </View>
           <View style={styles.rowTransaction}>

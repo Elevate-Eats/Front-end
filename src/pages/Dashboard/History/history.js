@@ -28,6 +28,7 @@ import {TRANSACTION_ENDPOINT} from '@env';
 import PostData from '../../../utils/postData';
 import FormatDateTime from '../../../utils/formatDateTime';
 import StoreFront from '../../../assets/icons/store.svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const History = ({route}) => {
   const navigation = useNavigation();
@@ -38,6 +39,7 @@ const History = ({route}) => {
     transaction: [],
     loading: false,
     page: 1,
+    branch: [],
   });
 
   const [dropdown, setDropdown] = useState({
@@ -45,9 +47,8 @@ const History = ({route}) => {
     value: null,
   });
 
-  const allBranch = useSelector(state => state.branch.allBranch);
   const listBranch = useMemo(() => {
-    const branches = allBranch.map(item => ({
+    const branches = data.branch.map(item => ({
       value: item.id,
       label: item.name.toUpperCase(),
     }));
@@ -56,7 +57,7 @@ const History = ({route}) => {
       label: 'Semua Cabang',
     });
     return branches;
-  }, [allBranch]);
+  }, [data.branch]);
 
   async function fetchData(params) {
     try {
@@ -79,6 +80,16 @@ const History = ({route}) => {
       }));
     }
   }
+
+  useEffect(() => {
+    async function fetchDataLocal(params) {
+      const response = await AsyncStorage.getItem('allBranch');
+      if (response) {
+        setData(prev => ({...prev, branch: JSON.parse(response)}));
+      }
+    }
+    fetchDataLocal();
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -160,8 +171,6 @@ const History = ({route}) => {
     return <LoadingIndicator />;
   }
 
-  console.log('length: ', data.transaction.length);
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -230,28 +239,6 @@ const History = ({route}) => {
             </Text>
           </View>
         )}
-        {/* {transaction.length > 0 ? (
-          <FlatList
-            data={transaction}
-            keyExtractor={item => item.id.toString()}
-            renderItem={renderItem}
-            ListFooterComponent={fetchingMore ? renderLoader : null}
-            onEndReached={() => {
-              if (!fetchingMore) setPage(prev => prev + 1);
-            }}
-            onEndReachedThreshold={0.5}
-            initialNumToRender={10}
-            maxToRenderPerBatch={10}
-            removeClippedSubviews
-          />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Receipt width={200} height={200} />
-            <Text variant="headlineMedium" style={styles.emptyText}>
-              Transaction not found
-            </Text>
-          </View>
-        )} */}
       </View>
     </SafeAreaView>
   );

@@ -54,9 +54,7 @@ const TambahMenu = () => {
     }));
   }
 
-  function formatNumber(number) {
-    return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  }
+  e;
 
   function formatMoney(text, field) {
     const rawText = text.replace(/\D/g, '');
