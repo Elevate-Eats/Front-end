@@ -11,7 +11,6 @@ import {Text} from 'react-native-paper';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
-import PostData from '../../../utils/postData';
 import {TRANSACTION_ENDPOINT, ITEM_ENDPOINT} from '@env';
 import getDataQuery from '../../../utils/getDataQuery';
 import {Colors} from '../../../utils/colors';
