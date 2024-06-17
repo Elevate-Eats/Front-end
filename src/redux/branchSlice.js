@@ -22,9 +22,12 @@ export const branchSlice = createSlice({
         branch => branch.id !== action.payload,
       );
     },
+    clearBranch: state => {
+      (state.selectedBranch = null), (state.allBranch = []);
+    },
   },
 });
 
-export const {selectBranch, allBranch, deleteBranch, addBranch} =
+export const {selectBranch, allBranch, deleteBranch, addBranch, clearBranch} =
   branchSlice.actions;
 export default branchSlice.reducer;

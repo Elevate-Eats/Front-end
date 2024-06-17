@@ -21,6 +21,7 @@ import FormatRP from '../../../utils/formatRP';
 import Receipt from '../../../assets/icons/receipt.svg';
 import {deleteTransaction} from '../../../redux/showTransaction';
 import {PostAPI} from '../../../api';
+import {saveItem} from '../../../redux/cartSlice';
 
 const PendingTransaction = ({navigation}) => {
   const dispatch = useDispatch();

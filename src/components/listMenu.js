@@ -3,17 +3,15 @@ import {Text} from 'react-native-paper';
 import React from 'react';
 
 const ListMenu = props => {
-  const menu = Object.values(props.data).sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
   return (
     <View>
       <FlatList
         showsVerticalScrollIndicator={false}
-        data={menu}
+        data={props.data}
         keyExtractor={item => (item.id || item.menuid).toString()}
         renderItem={({item}) => {
           const handlePress = () => props.onPress(item);
+          const handleLongPress = () => props.onLongPress(item);
           const initials = item.name
             .split(' ')
             .map(word => word[0])
@@ -26,7 +24,10 @@ const ListMenu = props => {
                     {initials.substring(0, 2)}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={handlePress} style={{flex: 1}}>
+                <TouchableOpacity
+                  onPress={handlePress}
+                  style={{flex: 1}}
+                  onLongPress={handleLongPress}>
                   <View style={{marginHorizontal: 15}}>
                     <Text variant="titleMedium">{item.name}</Text>
                     <Text

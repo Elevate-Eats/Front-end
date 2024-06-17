@@ -35,6 +35,9 @@ export const menuSlice = createSlice({
     addMenu: (state, action) => {
       state.allMenu.push(action.payload);
     },
+    clearMenu: state => {
+      state.allMenu = [];
+    },
   },
 });
 
@@ -45,5 +48,6 @@ export const {
   deleteMenu,
   addMenu,
   allMenuBranch,
+  clearMenu,
 } = menuSlice.actions;
 export default menuSlice.reducer;

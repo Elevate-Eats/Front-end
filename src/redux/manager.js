@@ -9,8 +9,11 @@ export const managerSlice = createSlice({
     allManager: (state, action) => {
       state.allManager = action.payload;
     },
+    clearManager: state => {
+      state.allManager = [];
+    },
   },
 });
 
-export const {allManager} = managerSlice.actions;
+export const {allManager, clearManager} = managerSlice.actions;
 export default managerSlice.reducer;

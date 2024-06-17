@@ -11,10 +11,10 @@ import {
   View,
 } from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import Expanse from '../../assets/icons/cash-out.svg';
 import Print from '../../assets/icons/download_file.svg';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {Colors} from '../../utils/colors';
 import {ConstButton, TopBar} from '../../components';
 import Store from '../../assets/icons/store-bulk.svg';
@@ -57,13 +57,17 @@ const MainLaporan = () => {
     navigation.navigate(params);
   }
 
-  useEffect(() => {
-    async function fetchDataLocal(params) {
-      const response = await AsyncStorage.getItem('allBranch');
-      setBranch(JSON.parse(response));
-    }
-    fetchDataLocal();
-  }, [modal.visible]);
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchDataLocal(params) {
+        const response = await AsyncStorage.getItem('allBranch');
+        if (response) {
+          setBranch(JSON.parse(response));
+        }
+      }
+      fetchDataLocal();
+    }, []),
+  );
 
   async function handleDownload(params) {
     setPdfFile(prev => ({...prev, loading: true}));

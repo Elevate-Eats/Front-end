@@ -27,7 +27,7 @@ import {
   ConstButton,
   ModalBranch,
 } from '../../components';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import SalesToday from '../../components/salesToday';
 import FormatRP from '../../utils/formatRP';
 import BarChartComponent from '../../components/barChart';
@@ -37,12 +37,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {GetAPI, GetQueryAPI} from '../../api';
 import FormatDateTime from '../../utils/formatDateTime';
 import FormatDateToISO from '../../utils/formatDateToIso';
+import {allBranch} from '../../redux/branchSlice';
+import {allMenu} from '../../redux/menuSlice';
+import {allManager} from '../../redux/manager';
+import {allEmployee} from '../../redux/employee';
 
 const MainDashboard = ({navigation, route}) => {
+  const dispatch = useDispatch();
   const {colors} = useTheme();
   const selectBranch = useSelector(state => state.branch.selectedBranch);
-  // console.log('select brnch: ', selectBranch);
-  // const employee = useSelector(state => state.employee.allEmployee);
+  const lengthEmployee = useSelector(
+    state => state.employee.allEmployee.length,
+  );
   const [employee, setEmployee] = useState([]);
   const [modal, setModal] = useState({
     chart: false,
@@ -58,6 +64,7 @@ const MainDashboard = ({navigation, route}) => {
     localData: {},
   });
 
+  // console.log('select branch(ID) : ', selectBranch);
   useEffect(() => {
     async function fetchLocalStorage(params) {
       const response = await AsyncStorage.getItem('credentials');
@@ -66,7 +73,7 @@ const MainDashboard = ({navigation, route}) => {
       setTodayData(prev => ({...prev, localData: JSON.parse(response)}));
     }
     fetchLocalStorage();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     async function getSelectBranch(params) {
@@ -74,52 +81,75 @@ const MainDashboard = ({navigation, route}) => {
       setModal(prev => ({...prev, selectBranch: JSON.parse(response)}));
     }
     getSelectBranch();
-  }, [selectBranch?.id]);
+  }, [dispatch]);
 
   useEffect(() => {
     async function fetchData(params) {
       setLoading(true);
       try {
+        const companyId = await AsyncStorage.getItem('companyId');
         const branch = await GetAPI({
           operation: BRANCH_ENDPOINT,
           endpoint: 'showBranches',
         });
+        if (branch.status === 200) {
+          const dataBranch = branch.data.branchData;
+          dispatch(allBranch(dataBranch));
+          await AsyncStorage.setItem('allBranch', JSON.stringify(dataBranch));
+        }
         const menuCompany = await GetAPI({
           operation: MENU_COMPANY_ENDPOINT,
           endpoint: 'showMenus',
         });
+        if (menuCompany.status === 200) {
+          const dataMenuCompany = menuCompany.data.menuData;
+          dispatch(allMenu(dataMenuCompany));
+          await AsyncStorage.setItem(
+            'allMenuCompany',
+            JSON.stringify(dataMenuCompany),
+          );
+        }
         const employee = await GetAPI({
           operation: EMPLOYEE_ENDPOINT,
           endpoint: 'showEmployees',
         });
+        if (employee.status === 200) {
+          const dataEmployee = employee.data.employeeData;
+          dispatch(allMenu(dataEmployee));
+          await AsyncStorage.setItem(
+            'allEmployee',
+            JSON.stringify(dataEmployee),
+          );
+        }
         const manager = await GetAPI({
           operation: MANAGER_ENDPOINT,
           endpoint: 'showManagers',
         });
-        const companyId = todayData.localData.companyid;
-        const branchId = modal.selectBranch.id;
+        if (manager.status === 200) {
+          const dataManager = manager.data.managerData;
+          dispatch(allManager(dataManager));
+          await AsyncStorage.setItem('allManager', JSON.stringify(dataManager));
+        }
+
         const startDate = new Date();
         const endDate = new Date(startDate);
         endDate.setDate(startDate.getDate() + 7);
         const dataDailySummary = await GetQueryAPI({
           operation: ANALYTICS_ENDPOINT,
           endpoint: 'showDailySummary',
-          query: `companyId=${companyId}&branchId=${modal.selectBranch ? branchId : null}&startDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}&endDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}`,
-          // query: `companyId=${companyId}&branchId=${branchId}&startDate=2024-06-15&endDate=2024-06-15`,
+          query: `companyId=${companyId}&branchId=${selectBranch?.id}&startDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}&endDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}`,
         });
         const dataWeekly = await GetQueryAPI({
           //predict 7 hari
           operation: REPORT_ENDPOINT,
           endpoint: 'predictTransaction',
-          query: `branchId=${branchId}&startDate=${FormatDateToISO(FormatDateTime(startDate).realDate)}&endDate=${FormatDateToISO(FormatDateTime(endDate).realDate)}`,
-          // query: `branchId=${branchId}&startDate=2024-06-15&endDate=2024-06-22`,
+          query: `branchId=${selectBranch?.id}&startDate=${FormatDateToISO(FormatDateTime(startDate).realDate)}&endDate=${FormatDateToISO(FormatDateTime(endDate).realDate)}`,
         });
         const dataPredict = await GetQueryAPI({
           // predict 1 hari
           operation: REPORT_ENDPOINT,
           endpoint: 'predictTransaction',
-          query: `branchId=${branchId}&startDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}&endDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}`,
-          // query: `branchId=${branchId}&startDate=2024-06-15&endDate=2024-06-15`,
+          query: `branchId=${selectBranch?.id}&startDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}&endDate=${FormatDateToISO(FormatDateTime(new Date()).realDate)}`,
         });
         let revenueShift1 = 0;
         let revenueShift2 = 0;
@@ -282,43 +312,45 @@ const MainDashboard = ({navigation, route}) => {
           }));
         }
         if (
-          branch.status === 200 ||
           menuCompany.status === 200 ||
           employee.status === 200 ||
           manager.status === 200
         ) {
-          const allMenuCompany = menuCompany.data.menuData;
-          const allBranch = branch.data.branchData;
-          const allEmployee = employee.data.employeeData;
-          const allManager = manager.data.managerData;
+          const dataMenuCompany = menuCompany.data.menuData;
+          const dataEmployee = employee.data.employeeData;
+          const dataManager = manager.data.managerData;
+          dispatch(allMenu(dataMenuCompany));
+          dispatch(allEmployee(dataEmployee));
+          dispatch(allManager(dataManager));
+
           await AsyncStorage.setItem(
             'allMenuCompany',
-            JSON.stringify(allMenuCompany),
+            JSON.stringify(dataMenuCompany),
           );
-          await AsyncStorage.setItem('allBranch', JSON.stringify(allBranch));
-          await AsyncStorage.setItem('allManager', JSON.stringify(allManager));
+          await AsyncStorage.setItem('allManager', JSON.stringify(dataManager));
           await AsyncStorage.setItem(
             'allEmployee',
-            JSON.stringify(allEmployee),
+            JSON.stringify(dataEmployee),
           );
         }
       } catch (error) {
-        console.log('error: ', error);
+        const fullMessage = error.response?.data?.message;
+        if (fullMessage.includes('Branch')) {
+          ToastAndroid.show('Please add branches first', ToastAndroid.SHORT);
+          navigation.navigate('Pilih Cabang');
+        } else if (fullMessage.includes('Menu')) {
+          ToastAndroid.show('Please add menus first', ToastAndroid.SHORT);
+          navigation.navigate('Pilih Menu');
+        } else if (fullMessage.includes('Employee')) {
+          ToastAndroid.show('Please add employess first', ToastAndroid.SHORT);
+          navigation.navigate('Pilih Pegawai');
+        }
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [selectBranch?.id]);
-
-  const chartConfig = {
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    strokeWidth: 2,
-    barPercentage: 0.5,
-    decimalPlaces: 0,
-  };
+  }, [dispatch, selectBranch, navigation]);
 
   const nullData = [0, 0, 0, 0, 0, 0, 0];
   const transactionData = {
@@ -478,7 +510,9 @@ const MainDashboard = ({navigation, route}) => {
           <View
             style={{flexDirection: 'row', alignItems: 'center', columnGap: 5}}>
             <Ionicons name="people-outline" size={25} color="black" />
-            <Text variant="titleLarge">{employee?.length}</Text>
+            <Text variant="titleLarge">
+              {employee?.length || lengthEmployee}
+            </Text>
           </View>
           <TouchableOpacity
             style={styles.pilihCabang}

@@ -9,8 +9,11 @@ export const employeeSlice = createSlice({
     allEmployee: (state, action) => {
       state.allEmployee = action.payload;
     },
+    clearEmployee: state => {
+      state.allEmployee = [];
+    },
   },
 });
 
-export const {allEmployee} = employeeSlice.actions;
+export const {allEmployee, clearEmployee} = employeeSlice.actions;
 export default employeeSlice.reducer;

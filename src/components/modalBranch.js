@@ -72,7 +72,7 @@ const ModalBranch = props => {
           {/* {LIST CABANG} */}
           <View style={{marginVertical: 30}}>
             <FlatList
-              data={data.branch}
+              data={data.branch || branch}
               keyExtractor={item => (item.id || item.menuid).toString()}
               renderItem={({item}) => {
                 return (

@@ -35,6 +35,7 @@ import TambahProduk from './Dashboard/Produk/tambahProduk';
 import PilihProduk from './Dashboard/Produk/pilihProduk';
 
 //Transaksi
+// import MainTransaksi from './Dashboard/Transaksi/MainTransaksi.1';
 import MainTransaksi from './Dashboard/Transaksi/mainTransaksi';
 import Transaksi from './Dashboard/Transaksi/transaksi';
 import DetailTransaksi from './Dashboard/Transaksi/detailTransaksi';
