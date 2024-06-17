@@ -2,28 +2,22 @@ import {
   StyleSheet,
   View,
   TouchableOpacity,
-  Pressable,
   Animated,
-  Image,
   FlatList,
-  ScrollView,
   ToastAndroid,
-  Alert,
-  TouchableOpacityComponent,
 } from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Text, useTheme} from 'react-native-paper';
+import {useNavigation} from '@react-navigation/native';
+import React, {useEffect, useRef, useState} from 'react';
+import {Text} from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Sale from '../assets/icons/sale.svg';
-import NoData from '../assets/icons/noData.svg';
 import Edit from '../assets/icons/square-edit-outline.svg';
 import {useSelector} from 'react-redux';
 import FormatRP from '../utils/formatRP';
 import ConstButton from './btn';
 import {Colors} from '../utils/colors';
 import PostData from '../utils/postData';
-import {ITEM_ENDPOINT, API_URL, TRANSACTION_ENDPOINT} from '@env';
+import {ITEM_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
 import {useDispatch} from 'react-redux';
 import getDataQuery from '../utils/getDataQuery';
 import {clearReduxItems} from '../redux/cartSlice';
@@ -31,7 +25,6 @@ import {clearReduxItems} from '../redux/cartSlice';
 const BottomSheet = props => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const menuCompany = useSelector(s => s.menu.allMenu);
   const transactionId = useSelector(state => state.transaction.transactionId); // Directly from state
   const selectedBranch = useSelector(state => state.branch.selectedBranch);
   const customer = useSelector(state => state.customer.customerInfo);
@@ -40,7 +33,6 @@ const BottomSheet = props => {
   const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState([]);
 
-  // console.log('all Trans: ', allTransaction);
   function mergeCart(backEnd, redux) {
     const combinedData = [
       ...(backEnd[transactionId.toString()] || []),
@@ -63,13 +55,10 @@ const BottomSheet = props => {
     return {[transactionId]: mergeResult};
   }
   const hasilmerge = mergeCart(backendItems, reduxItems);
-  console.log('hasil :', hasilmerge);
-  console.log('CUSTOMER: ', customer);
 
   const slide = useRef(new Animated.Value(700)).current;
 
   async function handlePay(params) {
-    // console.log('selected: ', selectedTransaction.transactions);
     await handleSave();
     navigation.navigate('Pembayaran', {
       data: selectedTransaction,
@@ -101,7 +90,6 @@ const BottomSheet = props => {
       });
       if (action) {
         setLoading(false);
-        // ToastAndroid.show(action.message, ToastAndroid.SHORT);
       }
     } catch (error) {
       console.log('Error Updating Items: ', error);
@@ -144,14 +132,12 @@ const BottomSheet = props => {
     const filtered = selectedTransaction.filter(
       item => item.id === transactionId,
     );
-    // console.log('filtered: ', selectedTransaction);
     const payloadUpdate = {
       ...filtered[0],
       tableNumber: filtered[0].tablenumber,
       totalprice: calculateSubtotal(params),
     };
     const {tablenumber, companyid, ...payload} = payloadUpdate;
-    // console.log('payload: ', payload);
     try {
       setLoading(true);
       const action = await PostData({
