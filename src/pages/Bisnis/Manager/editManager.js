@@ -19,6 +19,7 @@ import {
 } from '../../../components';
 import {Colors} from '../../../utils/colors';
 import {SelectList} from 'react-native-dropdown-select-list';
+import {PostAPI} from '../../../api';
 
 const EditManager = ({route}) => {
   const navigation = useNavigation();
@@ -111,13 +112,18 @@ const EditManager = ({route}) => {
           loading: true,
         }));
         try {
-          const response = await PostData({
+          // const response = await PostData({
+          //   operation: MANAGER_ENDPOINT,
+          //   endpoint: 'showSingleManager',
+          //   payload: {id: item.id},
+          // });
+          const response = await PostAPI({
             operation: MANAGER_ENDPOINT,
             endpoint: 'showSingleManager',
             payload: {id: item.id},
           });
-          if (response) {
-            setData(prev => ({...prev, manager: response.managerData}));
+          if (response.status === 200) {
+            setData(prev => ({...prev, manager: response.data.managerData}));
           }
         } catch (error) {
           setData(prev => ({...prev, error: 'Manager not found', manager: []}));
