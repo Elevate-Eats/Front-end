@@ -382,9 +382,7 @@ const EditCabang = () => {
                           ],
                           {cancelable: true},
                         )
-                      }
-                      // onPress={() => Alert.alert(emp,emp,[],)}
-                    >
+                      }>
                       <Icon name="trash" color={Colors.deleteColor} size={24} />
                     </TouchableOpacity>
                   </View>

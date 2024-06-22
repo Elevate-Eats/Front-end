@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import {HelperText, Text, useTheme} from 'react-native-paper';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   AddPhoto,
   ConstButton,
@@ -18,11 +18,13 @@ import {Colors} from '../../../utils/colors';
 import EyeOpen from '../../../assets/icons/eye-gray-outline.svg';
 import EyeClose from '../../../assets/icons/eye-slash-grey-outline.svg';
 import {SelectList} from 'react-native-dropdown-select-list';
-import PostData from '../../../utils/postData';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {API_URL, MANAGER_ENDPOINT} from '@env';
+import {API_URL, MANAGER_ENDPOINT, BRANCH_ENDPOINT} from '@env';
+import {GetAPI, PostAPI} from '../../../api';
+import {Dropdown} from 'react-native-element-dropdown';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const TambahManager = () => {
   const {colors} = useTheme();
@@ -32,6 +34,13 @@ const TambahManager = () => {
     loading: false,
     error: null,
     visible: true,
+    branch: [],
+    selectBranch: [],
+  });
+
+  const [dropdown, setDropdown] = useState({
+    focus: false,
+    value: null,
   });
 
   const [form, setForm] = useState({
@@ -77,36 +86,51 @@ const TambahManager = () => {
     {key: 'store_manager', value: 'store_manager'},
   ];
 
+  useEffect(() => {
+    async function fetchData(params) {
+      const response = await GetAPI({
+        operation: BRANCH_ENDPOINT,
+        endpoint: 'showBranches',
+      }).catch(error => console.log('error: ', error.response.data));
+      if (response.status === 200) {
+        setData(prev => ({...prev, branch: response.data.branchData}));
+      }
+    }
+    fetchData();
+  }, []);
+
   async function addManager(managerRole) {
+    // const branch = data.selectBranch.map(item => item.id);
+    // console.log('branch: ', JSON.stringify(branch));
     resetFormError();
     let branchAccess;
     if (managerRole === 'general_manager') {
-      branchAccess = '{all}';
+      const branch = data.branch.map(item => item.id);
+      branchAccess = JSON.stringify(branch);
     } else if (managerRole === 'area_manager') {
-      branchAccess = '{1}';
+      const branch = data.selectBranch.map(item => item.id);
+      branchAccess = JSON.stringify(branch);
     } else if (managerRole === 'store_manager') {
-      branchAccess = '{2}';
+      const branch = data.selectBranch.map(item => item.id);
+      branchAccess = JSON.stringify(branch);
     }
 
-    const token = await AsyncStorage.getItem('userToken');
     const payload = {
       ...data.manager,
       branchAccess: branchAccess,
     };
+    // console.log('payload: ', payload);
     try {
       setData(prev => ({...prev, loading: true}));
-      const response = await axios.post(
-        `${API_URL}/${MANAGER_ENDPOINT}/addManager`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-      ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
-      navigation.goBack();
+      const response = await PostAPI({
+        operation: MANAGER_ENDPOINT,
+        endpoint: 'addManager',
+        payload: payload,
+      });
+      if (response.status === 200) {
+        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+        navigation.goBack();
+      }
     } catch (error) {
       const fullMessage = error.response?.data?.details;
       console.log('full message: ', fullMessage);
@@ -203,6 +227,12 @@ const TambahManager = () => {
     }
   }
 
+  function removeSelectedBranch(id) {
+    setData(prev => ({
+      ...prev,
+      selectBranch: prev.selectBranch.filter(branch => branch.id !== id),
+    }));
+  }
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.whiteLayer}>
@@ -338,7 +368,7 @@ const TambahManager = () => {
                 </View>
               )}
             </TouchableOpacity>
-            <View style={{marginVertical: 30}}>
+            <View style={{marginTop: 30}}>
               <Text
                 variant="titleLarge"
                 style={{fontWeight: '700', marginBottom: 10}}>
@@ -370,7 +400,127 @@ const TambahManager = () => {
                 {`Error: ${form.errorRole}`}
               </HelperText>
             </View>
+            {data.manager.role === 'area_manager' ||
+            data.manager.role === 'store_manager' ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 20,
+                  marginBottom: 30,
+                }}>
+                <Text
+                  variant="titleLarge"
+                  style={{fontWeight: '700', marginBottom: 10}}>
+                  Akses Cabang
+                </Text>
+                <Dropdown
+                  mode="modal"
+                  containerStyle={{width: 350}}
+                  data={data.branch
+                    .filter(
+                      branch =>
+                        !data.selectBranch.some(
+                          selected => selected.id === branch.id,
+                        ),
+                    )
+                    .sort((a, b) => a.name.localeCompare(b.name))}
+                  style={[
+                    styles.dropdown,
+                    {backgroundColor: colors.btnColorContainer},
+                  ]}
+                  placeholder="Pilih Cabang"
+                  placeholderStyle={{
+                    textAlign: 'center',
+                    fontSize: 14,
+                    color: colors.onBtnColorContainer,
+                    fontWeight: '600',
+                  }}
+                  search
+                  labelField={'name'}
+                  valueField={'id'}
+                  searchPlaceholder="Search"
+                  value={dropdown.value}
+                  onFocus={() => setDropdown(prev => ({...prev, focus: true}))}
+                  onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
+                  onChange={item => {
+                    setDropdown(prev => ({
+                      ...prev,
+                      value: item.value,
+                      focus: false,
+                    }));
+                    setData(prev => {
+                      if (!prev.selectBranch.includes(item.id)) {
+                        return {
+                          ...prev,
+                          selectBranch: [
+                            ...prev.selectBranch,
+                            {id: item.id, name: item.name},
+                          ],
+                        };
+                      }
+                      return prev;
+                    });
+                  }}
+                  renderRightIcon={() => null}
+                />
+              </View>
+            ) : null}
           </View>
+
+          <Text style={[styles.listBranch]}>List branch</Text>
+          {data.manager.role === 'general_manager' ? (
+            Object.values(data.branch)
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((branch, index) => {
+                return (
+                  <View key={branch.id}>
+                    <View style={styles.itemBranch}>
+                      <Text variant="titleMedium">{`${index + 1}. `}</Text>
+                      <Text
+                        variant="titleMedium"
+                        style={{flex: 1, fontSize: 16}}>
+                        {branch.name}
+                      </Text>
+                      <TouchableOpacity disabled>
+                        <Icon name="trash" size={24} color={'grey'} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })
+          ) : data.selectBranch.length !== 0 ? (
+            data.selectBranch
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((branch, index) => {
+                return (
+                  <View key={branch.id}>
+                    <View style={styles.itemBranch}>
+                      <Text variant="titleMedium">{`${index + 1}. `}</Text>
+                      <Text
+                        variant="titleMedium"
+                        style={{flex: 1, fontSize: 16}}>
+                        {branch.name}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => removeSelectedBranch(branch.id)}>
+                        <Icon
+                          name="trash"
+                          size={24}
+                          color={Colors.deleteColor}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })
+          ) : (
+            <View style={{marginBottom: 20}}>
+              <Text style={{fontStyle: 'italic', alignSelf: 'center'}}>
+                Manager ini belum memiliki akses cabang
+              </Text>
+            </View>
+          )}
         </ScrollView>
         <ConstButton
           title="Tambah Manager"
@@ -415,5 +565,24 @@ const styles = StyleSheet.create({
   },
   dropdownTextStyles: {
     color: 'black',
+  },
+  dropdown: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    elevation: 3,
+    shadowColor: 'black',
+    flex: 1,
+  },
+  itemBranch: {
+    paddingVertical: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  listBranch: {
+    marginBottom: 10,
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'green',
   },
 });
