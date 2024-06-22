@@ -6605,6 +6605,11 @@ react-native-blob-util@^0.19.9:
     base-64 "0.1.0"
     glob "^10.3.10"
 
+react-native-bluetooth-escpos-printer@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/react-native-bluetooth-escpos-printer/-/react-native-bluetooth-escpos-printer-0.0.5.tgz#45a31d37c213f95f2cc590cebcb48e0574ce1b45"
+  integrity sha512-a+GTlz8dctb48wkoJ8woE7gV24NCOoA13J95A+RFEKhjONEWf3/dP5pIqrrlO5fsf/2QYDeMfU3P8bIVQoEqig==
+
 react-native-calendar-picker@^8.0.4:
   version "8.0.4"
   resolved "https://registry.npmjs.org/react-native-calendar-picker/-/react-native-calendar-picker-8.0.4.tgz"

@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const DetailHistory = ({route}) => {
   const navigation = useNavigation();
   const {data} = route.params;
+  // console.log('data: ', data);
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -55,6 +56,8 @@ const DetailHistory = ({route}) => {
       fetchData();
     }, []),
   );
+
+  // console.log('item: ', items);
 
   const menuMap = new Map(menuCompany.map(item => [item.id, item.name]));
   const updatedItems = Object.values(items).map(item => ({
@@ -124,7 +127,10 @@ const DetailHistory = ({route}) => {
           </View>
         </View>
         <View style={{marginHorizontal: 20, marginBottom: 10, gap: 10}}>
-          <ConstButton title="Cetak Struk" />
+          <ConstButton
+            title="Cetak Struk"
+            onPress={() => console.log('Cetak')}
+          />
           <TouchableOpacity style={styles.shareButton}>
             <Share />
             <Text variant="titleMedium">Bagikan</Text>
@@ -151,7 +157,7 @@ const DetailHistory = ({route}) => {
               nestedScrollEnabled
               data={updatedItems}
               keyExtractor={item => item.id.toString()}
-              renderItem={({item}) => {
+              renderItem={({item, index}) => {
                 if (loading) {
                   return <LoadingIndicator />;
                 }
@@ -161,7 +167,7 @@ const DetailHistory = ({route}) => {
                       paddingHorizontal: 20,
                       paddingVertical: 10,
                       backgroundColor:
-                        item.id % 2 !== 0 ? 'transparent' : 'rgba(0,0,0,0.05)',
+                        index % 2 !== 0 ? 'transparent' : 'rgba(0,0,0,0.05)',
                     }}>
                     <Text
                       variant="titleMedium"

@@ -136,6 +136,7 @@ const History = ({route}) => {
               )
             }
             onPress={() => navigation.navigate('Detail History', {data: item})}
+            // onPress={() => console.log('item: ', item)}
             style={styles.itemContainer}>
             <View style={styles.itemRow}>
               <Text variant="titleMedium" style={styles.paymentMethod}>

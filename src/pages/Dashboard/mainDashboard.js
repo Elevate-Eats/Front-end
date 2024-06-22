@@ -115,7 +115,7 @@ const MainDashboard = ({navigation, route}) => {
         });
         if (employee.status === 200) {
           const dataEmployee = employee.data.employeeData;
-          dispatch(allMenu(dataEmployee));
+          dispatch(allEmployee(dataEmployee));
           await AsyncStorage.setItem(
             'allEmployee',
             JSON.stringify(dataEmployee),
