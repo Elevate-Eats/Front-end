@@ -100,7 +100,6 @@ const EditCabang = () => {
 
   const updateBranch = async () => {
     const payloadEmployee = makePayload(oldEmployee, data.selectedEmp, item.id);
-    console.log('payload: ', payloadEmployee);
     resetFormError();
     setData(prev => ({...prev, loading: true}));
     const payload = {

@@ -99,132 +99,133 @@ const TambahManager = () => {
     fetchData();
   }, []);
 
+  function createBranchAccess(data) {
+    const ids = data.map(item => item.id);
+    const branchaccess = `{${ids.join(',')}}`;
+    return branchaccess;
+  }
+
   async function addManager(managerRole) {
-    // const branch = data.selectBranch.map(item => item.id);
-    // console.log('branch: ', JSON.stringify(branch));
     resetFormError();
     let branchAccess;
     if (managerRole === 'general_manager') {
-      const branch = data.branch.map(item => item.id);
-      branchAccess = JSON.stringify(branch);
+      branchAccess = createBranchAccess(data.branch);
     } else if (managerRole === 'area_manager') {
-      const branch = data.selectBranch.map(item => item.id);
-      branchAccess = JSON.stringify(branch);
+      branchAccess = createBranchAccess(data.selectBranch);
     } else if (managerRole === 'store_manager') {
-      const branch = data.selectBranch.map(item => item.id);
-      branchAccess = JSON.stringify(branch);
+      branchAccess = createBranchAccess(data.selectBranch);
     }
+    // console.log('branch access: ', branchAccess);
 
     const payload = {
       ...data.manager,
       branchAccess: branchAccess,
     };
-    // console.log('payload: ', payload);
-    try {
-      setData(prev => ({...prev, loading: true}));
-      const response = await PostAPI({
-        operation: MANAGER_ENDPOINT,
-        endpoint: 'addManager',
-        payload: payload,
-      });
-      if (response.status === 200) {
-        ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
-        navigation.goBack();
-      }
-    } catch (error) {
-      const fullMessage = error.response?.data?.details;
-      console.log('full message: ', fullMessage);
-      fullMessage.some(item => {
-        if (item.includes('"name"')) {
-          const error = 'name is required';
-          setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
-        } else if (item.includes('"nickname"')) {
-          const error = 'nickname is required';
-          setForm(prev => ({
-            ...prev,
-            errorNickname: error,
-            hasErrorNickaname: true,
-          }));
-        } else if (item.includes('"role"')) {
-          const error = 'role is required';
-          setForm(prev => ({...prev, errorRole: error, hasErrorRole: true}));
-        } else if (item.includes('"email"')) {
-          const error = 'email is required';
-          setForm(prev => ({...prev, errorEmail: error, hasErrorEmail: true}));
-          if (item.includes('valid')) {
-            const error = 'must be a valid email';
-            setForm(prev => ({
-              ...prev,
-              errorEmail: error,
-              hasErrorEmail: true,
-            }));
-          }
-        } else if (item.includes('"password"')) {
-          const error = 'password is required';
-          setForm(prev => ({
-            ...prev,
-            errorPassword: error,
-            hasErrorPassword: true,
-          }));
-          if (payload.password?.length < 8) {
-            const error = 'password length must be at least 8 characters long';
-            setForm(prev => ({
-              ...prev,
-              errorPassword: error,
-              hasErrorPassword: true,
-            }));
-          }
-        } else if (item.includes('"phone"')) {
-          const error = 'phone number is required';
-          setForm(prev => ({
-            ...prev,
-            errorPhone: error,
-            hasErrorPhone: true,
-          }));
-          if (item.includes('empty')) {
-            const error = 'phone number is required';
-            setForm(prev => ({
-              ...prev,
-              errorPhone: error,
-              hasErrorPhone: true,
-            }));
-          } else if (item.includes('fails')) {
-            if (payload.phone.length < 9) {
-              const error = 'phone number must be longer than 9 number';
-              setForm(prev => ({
-                ...prev,
-                errorPhone: error,
-                hasErrorPhone: true,
-              }));
-            } else {
-              const error = `invalid phone number it's should +62`;
-              setForm(prev => ({
-                ...prev,
-                errorPhone: error,
-                hasErrorPhone: true,
-              }));
-            }
-          }
-        } else if (payload.passwordConfirm !== payload.password) {
-          const error = `password doesn't match`;
-          setForm(prev => ({
-            ...prev,
-            errorConfirmPassword: error,
-            hasErrorConfirmPassword: true,
-          }));
-        } else if (!payload.passwordConfirm) {
-          const error = 'confirm password is required';
-          setForm(prev => ({
-            ...prev,
-            errorConfirmPassword: error,
-            hasErrorConfirmPassword: true,
-          }));
-        }
-      });
-      console.log('payload: ', payload);
-    } finally {
-      setData(prev => ({...prev, loading: false}));
-    }
+    console.log('payload: ', payload);
+    // try {
+    //   setData(prev => ({...prev, loading: true}));
+    //   const response = await PostAPI({
+    //     operation: MANAGER_ENDPOINT,
+    //     endpoint: 'addManager',
+    //     payload: payload,
+    //   });
+    //   if (response.status === 200) {
+    //     ToastAndroid.show(response.data.message, ToastAndroid.SHORT);
+    //     navigation.goBack();
+    //   }
+    // } catch (error) {
+    //   const fullMessage = error.response?.data?.details;
+    //   console.log('full message: ', fullMessage);
+    //   fullMessage.some(item => {
+    //     if (item.includes('"name"')) {
+    //       const error = 'name is required';
+    //       setForm(prev => ({...prev, errorName: error, hasErrorName: true}));
+    //     } else if (item.includes('"nickname"')) {
+    //       const error = 'nickname is required';
+    //       setForm(prev => ({
+    //         ...prev,
+    //         errorNickname: error,
+    //         hasErrorNickaname: true,
+    //       }));
+    //     } else if (item.includes('"role"')) {
+    //       const error = 'role is required';
+    //       setForm(prev => ({...prev, errorRole: error, hasErrorRole: true}));
+    //     } else if (item.includes('"email"')) {
+    //       const error = 'email is required';
+    //       setForm(prev => ({...prev, errorEmail: error, hasErrorEmail: true}));
+    //       if (item.includes('valid')) {
+    //         const error = 'must be a valid email';
+    //         setForm(prev => ({
+    //           ...prev,
+    //           errorEmail: error,
+    //           hasErrorEmail: true,
+    //         }));
+    //       }
+    //     } else if (item.includes('"password"')) {
+    //       const error = 'password is required';
+    //       setForm(prev => ({
+    //         ...prev,
+    //         errorPassword: error,
+    //         hasErrorPassword: true,
+    //       }));
+    //       if (payload.password?.length < 8) {
+    //         const error = 'password length must be at least 8 characters long';
+    //         setForm(prev => ({
+    //           ...prev,
+    //           errorPassword: error,
+    //           hasErrorPassword: true,
+    //         }));
+    //       }
+    //     } else if (item.includes('"phone"')) {
+    //       const error = 'phone number is required';
+    //       setForm(prev => ({
+    //         ...prev,
+    //         errorPhone: error,
+    //         hasErrorPhone: true,
+    //       }));
+    //       if (item.includes('empty')) {
+    //         const error = 'phone number is required';
+    //         setForm(prev => ({
+    //           ...prev,
+    //           errorPhone: error,
+    //           hasErrorPhone: true,
+    //         }));
+    //       } else if (item.includes('fails')) {
+    //         if (payload.phone.length < 9) {
+    //           const error = 'phone number must be longer than 9 number';
+    //           setForm(prev => ({
+    //             ...prev,
+    //             errorPhone: error,
+    //             hasErrorPhone: true,
+    //           }));
+    //         } else {
+    //           const error = `invalid phone number it's should +62`;
+    //           setForm(prev => ({
+    //             ...prev,
+    //             errorPhone: error,
+    //             hasErrorPhone: true,
+    //           }));
+    //         }
+    //       }
+    //     } else if (payload.passwordConfirm !== payload.password) {
+    //       const error = `password doesn't match`;
+    //       setForm(prev => ({
+    //         ...prev,
+    //         errorConfirmPassword: error,
+    //         hasErrorConfirmPassword: true,
+    //       }));
+    //     } else if (!payload.passwordConfirm) {
+    //       const error = 'confirm password is required';
+    //       setForm(prev => ({
+    //         ...prev,
+    //         errorConfirmPassword: error,
+    //         hasErrorConfirmPassword: true,
+    //       }));
+    //     }
+    //   });
+    // } finally {
+    //   setData(prev => ({...prev, loading: false}));
+    // }
   }
 
   function removeSelectedBranch(id) {
