@@ -126,7 +126,6 @@ const EditManager = ({route}) => {
       email: data.manager.email,
       branchAccess: branchAccess,
     };
-    console.log('payload: ', payload);
     resetFormError();
     try {
       setData(prev => ({...prev, loading: true}));
@@ -239,6 +238,8 @@ const EditManager = ({route}) => {
       }));
     }
   }, [data.manager?.branchaccess, data.branch]);
+
+  console.log('old branch: ', data.oldBranch);
 
   function createBranchAccess(newBranch, oldBranch) {
     const newBranchIds = newBranch.map(branch => branch.id);

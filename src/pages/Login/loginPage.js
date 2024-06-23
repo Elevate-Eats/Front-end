@@ -5,8 +5,6 @@ import {
   TouchableOpacity,
   ToastAndroid,
   Appearance,
-  Image,
-  ScrollView,
 } from 'react-native';
 import React, {createRef, useState} from 'react';
 import {Colors} from '../../utils/colors';
@@ -17,7 +15,7 @@ import axios from 'axios';
 import {API_KEY, API_URL, LOGIN_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
 import LogoLight from '../../assets/icons/logo-light.svg';
 import LogoDark from '../../assets/icons/logo-dark.svg';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 const LoginPage = () => {
   const navigation = useNavigation();
@@ -52,7 +50,6 @@ const LoginPage = () => {
         },
       });
       if (response.status === 200) {
-        console.log('token: ', response.data.token);
         await AsyncStorage.setItem('userToken', response.data.token);
         await AsyncStorage.setItem(
           'companyId',
