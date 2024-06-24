@@ -1,14 +1,39 @@
 import {FlatList, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native-paper';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import {useSelector} from 'react-redux';
 
 const ListRow = props => {
+  // console.log('id: ', props.id);
+  const manager = useSelector(state => state.manager.allManager);
+  const branch = useSelector(state => state.branch.allBranch);
+  const [data, setData] = useState({
+    manager: [],
+  });
+
+  useEffect(() => {
+    const filteredManager = manager.filter(item => item.id === props.id);
+    setData(prev => ({...prev, manager: filteredManager}));
+  }, [manager, props.id]);
+
+  function listBranch() {
+    if (data.manager[0]?.role !== 'general_manager') {
+      const branchAccess = data.manager[0]?.branchaccess;
+      const accessIds = branchAccess?.match(/\d+/g).map(Number);
+      const filteredBranches = branch.filter(branch =>
+        accessIds?.includes(branch.id),
+      );
+      return filteredBranches;
+    }
+    return branch;
+  }
+
   return (
     <View>
       <FlatList
         contentContainerStyle={{flexGrow: 1}}
         nestedScrollEnabled
-        data={props.data}
+        data={listBranch().sort((a, b) => a.name.localeCompare(b.name))}
         keyExtractor={item => item.id.toString()}
         renderItem={({item}) => {
           const handlePress = () => props.onPress(item);

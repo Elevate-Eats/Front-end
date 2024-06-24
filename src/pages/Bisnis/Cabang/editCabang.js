@@ -7,7 +7,7 @@ import {
   ToastAndroid,
   TouchableOpacity,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {
   AddPhoto,
@@ -27,6 +27,7 @@ import {Dropdown} from 'react-native-element-dropdown';
 import {BRANCH_ENDPOINT, EMPLOYEE_ENDPOINT} from '@env';
 import {GetAPI, GetQueryAPI, PostAPI} from '../../../api';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EditCabang = () => {
   const {colors} = useTheme();
@@ -40,6 +41,7 @@ const EditCabang = () => {
     loading: false,
     employee: [],
     selectedEmp: [],
+    local: {},
   });
 
   const oldEmployee = data.employee.filter(emp => emp.branchid === item.id);
@@ -69,6 +71,20 @@ const EditCabang = () => {
       hasErrorPhone: false,
     }));
   }
+
+  useEffect(() => {
+    async function fetchLocalStorage(params) {
+      try {
+        const response = await AsyncStorage.getItem('credentials');
+        const parsed = JSON.parse(response);
+        setData(prev => ({...prev, local: parsed}));
+      } catch (error) {
+        console.log('error: ', error);
+      }
+    }
+    fetchLocalStorage();
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
@@ -428,7 +444,17 @@ const EditCabang = () => {
           )}
         </ScrollView>
         <View style={{flexDirection: 'row', columnGap: 10}}>
-          <DeleteButton onPress={() => deleteBranch()} />
+          <DeleteButton
+            role={data.local.role}
+            onPress={() =>
+              data.local.role === 'general_manager'
+                ? () => deleteBranch()
+                : ToastAndroid.show(
+                    `You don't have permission to delete`,
+                    ToastAndroid.SHORT,
+                  )
+            }
+          />
           <View style={{flex: 1}}>
             <ConstButton
               title="Simpan"

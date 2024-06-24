@@ -5,7 +5,7 @@ import {
   ToastAndroid,
   Alert,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Colors} from '../../../utils/colors';
 import {
   BtnAdd,
@@ -18,6 +18,8 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {BRANCH_ENDPOINT} from '@env';
 import Store from '../../../assets/icons/store.svg';
 import {GetAPI, PostAPI} from '../../../api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSelector} from 'react-redux';
 
 const PilihCabang = () => {
   const navigation = useNavigation();
@@ -25,7 +27,10 @@ const PilihCabang = () => {
     branch: [],
     error: null,
     loading: false,
+    local: {},
   });
+
+  const manager = useSelector(state => state.manager.allManager);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,29 +57,58 @@ const PilihCabang = () => {
     }, []),
   );
 
-  async function handleDelete(item) {
-    setData(prev => ({...prev, loading: true}));
-    try {
-      const response = await PostAPI({
-        operation: BRANCH_ENDPOINT,
-        endpoint: 'deleteBranch',
-        payload: {id: item.id},
-      });
-      if (response.status === 200) {
-        ToastAndroid.show(
-          `${item.name} successfully deleted`,
-          ToastAndroid.SHORT,
-        );
-        setData(prev => ({
-          ...prev,
-          branch: prev.branch.filter(element => element.id !== item.id),
-        }));
+  useEffect(() => {
+    async function fetchLocalStorage(params) {
+      try {
+        const response = await AsyncStorage.getItem('credentials');
+        const parsed = JSON.parse(response);
+        setData(prev => ({...prev, local: parsed}));
+      } catch (error) {
+        console.log('error: ', error);
       }
-    } catch (error) {
-      ToastAndroid.show(`Failed to delete ${item.name}`, ToastAndroid.SHORT);
-    } finally {
-      setData(prev => ({...prev, loading: false}));
     }
+    fetchLocalStorage();
+  }, []);
+
+  async function handleDelete(item) {
+    if (data.local?.role === 'general_manager') {
+      setData(prev => ({...prev, loading: true}));
+      try {
+        const response = await PostAPI({
+          operation: BRANCH_ENDPOINT,
+          endpoint: 'deleteBranch',
+          payload: {id: item.id},
+        });
+        if (response.status === 200) {
+          ToastAndroid.show(
+            `${item.name} successfully deleted`,
+            ToastAndroid.SHORT,
+          );
+          setData(prev => ({
+            ...prev,
+            branch: prev.branch.filter(element => element.id !== item.id),
+          }));
+        }
+      } catch (error) {
+        ToastAndroid.show(`Failed to delete ${item.name}`, ToastAndroid.SHORT);
+      } finally {
+        setData(prev => ({...prev, loading: false}));
+      }
+    } else {
+      ToastAndroid.show(
+        `You don't have permission to delete`,
+        ToastAndroid.SHORT,
+      );
+    }
+  }
+
+  function alertDelete(branch) {
+    Alert.alert(
+      'Delete Branch',
+      `Delete ${branch.name} ?`,
+      [{text: 'Cancel'}, {text: 'OK', onPress: () => handleDelete(branch)}],
+      {cancelable: true},
+    );
   }
   if (data.loading) {
     return <LoadingIndicator />;
@@ -92,24 +126,17 @@ const PilihCabang = () => {
             </View>
           ) : (
             <ListRow
-              data={data.branch.sort((a, b) => a.name.localeCompare(b.name))}
+              id={data.local.id}
+              data={data.branch}
               onPress={item => navigation.navigate('Edit Cabang', {item})}
-              onLongPress={item => {
-                Alert.alert(
-                  'Delete Branch',
-                  `Delete ${item.name} ?`,
-                  [
-                    {text: 'Cancel'},
-                    {text: 'OK', onPress: () => handleDelete(item)},
-                  ],
-                  {cancelable: true},
-                );
-              }}
+              onLongPress={item => alertDelete(item)}
             />
           )}
         </View>
       </View>
-      <BtnAdd onPress={() => navigation.navigate('Tambah Cabang')} />
+      {data.local.role === 'general_manager' ? (
+        <BtnAdd onPress={() => navigation.navigate('Tambah Cabang')} />
+      ) : null}
     </KeyboardAvoidingView>
   );
 };

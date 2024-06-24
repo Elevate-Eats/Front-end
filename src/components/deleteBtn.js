@@ -5,8 +5,16 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const DeleteButton = props => {
   return (
-    <Pressable style={styles.delete} onPress={props.onPress}>
-      <Ionicons name="trash-bin-outline" size={25} color="white" />
+    <Pressable
+      style={[
+        styles.delete,
+        {
+          backgroundColor:
+            props.role === 'general_manager' ? Colors.deleteColor : '#DCDCDC',
+        },
+      ]}
+      onPress={props.onPress}>
+      <Ionicons name="trash-bin-outline" size={25} color={'white'} />
     </Pressable>
   );
 };
@@ -15,7 +23,6 @@ export default DeleteButton;
 
 const styles = StyleSheet.create({
   delete: {
-    backgroundColor: Colors.deleteColor,
     justifyContent: 'center',
     paddingHorizontal: 15,
     borderRadius: 5,

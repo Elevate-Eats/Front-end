@@ -20,12 +20,43 @@ import {useFocusEffect} from '@react-navigation/native';
 const ModalBranch = props => {
   const dispatch = useDispatch();
   const branch = useSelector(state => state.branch.allBranch);
+  const manager = useSelector(state => state.manager.allManager);
 
   const [checked, setChecked] = useState(null);
   const [data, setData] = useState({
     branch: [],
     loading: false,
+    manager: [],
   });
+
+  useEffect(() => {
+    const filteredManager = manager.filter(item => item.id === props.id);
+    setData(prev => ({...prev, manager: filteredManager}));
+  }, [manager, props.id]);
+  // console.log('branch access: ', data.manager[0].branchaccess);
+
+  function listBranch(params) {
+    if (
+      data.manager[0]?.role === 'area_manager' ||
+      data.manager[0]?.role === 'store_manager'
+    ) {
+      const branchAccess = data.manager[0]?.branchaccess;
+      const accessIds = branchAccess?.match(/\d+/g).map(Number);
+
+      const filteredBranches = data.branch
+        .filter(branch => accessIds.includes(branch.id))
+        .map(branch => ({
+          id: branch.id,
+          name: branch.name,
+        }));
+      return filteredBranches;
+    }
+    const fullBranches = data.branch.map(branch => ({
+      id: branch.id,
+      name: branch.name,
+    }));
+    return fullBranches;
+  }
 
   function handleCheck(id) {
     setChecked(id);
@@ -72,7 +103,7 @@ const ModalBranch = props => {
           {/* {LIST CABANG} */}
           <View style={{marginVertical: 30}}>
             <FlatList
-              data={data.branch || branch}
+              data={listBranch()}
               keyExtractor={item => (item.id || item.menuid).toString()}
               renderItem={({item}) => {
                 return (

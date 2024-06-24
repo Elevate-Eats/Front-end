@@ -239,8 +239,6 @@ const EditManager = ({route}) => {
     }
   }, [data.manager?.branchaccess, data.branch]);
 
-  console.log('old branch: ', data.oldBranch);
-
   function createBranchAccess(newBranch, oldBranch) {
     const newBranchIds = newBranch.map(branch => branch.id);
     const oldBranchIds = oldBranch.map(branch => branch.id);
@@ -261,6 +259,7 @@ const EditManager = ({route}) => {
     return data.branch.filter(branch => !excludeBranch.has(branch.id));
   }
 
+  // console.log('old: ', data.oldBranch);
   function removeOldBranch(branch) {
     const filteredBranches = data.oldBranch.filter(
       item => item.id !== branch.id,

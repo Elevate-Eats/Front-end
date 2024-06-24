@@ -41,6 +41,7 @@ import {allBranch} from '../../redux/branchSlice';
 import {allMenu} from '../../redux/menuSlice';
 import {allManager} from '../../redux/manager';
 import {allEmployee} from '../../redux/employee';
+import {Dropdown} from 'react-native-element-dropdown';
 
 const MainDashboard = ({navigation, route}) => {
   const dispatch = useDispatch();
@@ -62,10 +63,14 @@ const MainDashboard = ({navigation, route}) => {
     weekly: [],
     shiftData: [],
     localData: {},
+    branch: [],
+    manager: [],
   });
 
   // console.log('select branch(ID) : ', selectBranch);
+  // console.log('local data: ', todayData.localData);
   useEffect(() => {
+    //!set Local Data
     async function fetchLocalStorage(params) {
       const response = await AsyncStorage.getItem('credentials');
       const employee = await AsyncStorage.getItem('allEmployee');
@@ -76,6 +81,7 @@ const MainDashboard = ({navigation, route}) => {
   }, [dispatch]);
 
   useEffect(() => {
+    //!set selectBranch
     async function getSelectBranch(params) {
       const response = await AsyncStorage.getItem('selectBranch');
       setModal(prev => ({...prev, selectBranch: JSON.parse(response)}));
@@ -96,6 +102,7 @@ const MainDashboard = ({navigation, route}) => {
           const dataBranch = branch.data.branchData;
           dispatch(allBranch(dataBranch));
           await AsyncStorage.setItem('allBranch', JSON.stringify(dataBranch));
+          setTodayData(prev => ({...prev, branch: dataBranch}));
         }
         const menuCompany = await GetAPI({
           operation: MENU_COMPANY_ENDPOINT,
@@ -129,6 +136,7 @@ const MainDashboard = ({navigation, route}) => {
           const dataManager = manager.data.managerData;
           dispatch(allManager(dataManager));
           await AsyncStorage.setItem('allManager', JSON.stringify(dataManager));
+          setTodayData(prev => ({...prev, manager: dataManager}));
         }
 
         const startDate = new Date();
@@ -474,6 +482,7 @@ const MainDashboard = ({navigation, route}) => {
           <ModalBranch
             open={modal.branch}
             close={() => setModal(prev => ({...prev, branch: false}))}
+            id={todayData.localData.id}
           />
           {/* <Ionicons name="person-circle-outline" size={80} color={'white'} /> */}
           <Pressable onPress={() => navigation.navigate('Account')}>
@@ -519,9 +528,9 @@ const MainDashboard = ({navigation, route}) => {
             onPress={() => setModal(prev => ({...prev, branch: true}))}>
             <Text style={{color: 'white'}} variant="bodyMedium">
               {selectBranch ? selectBranch.name : 'Pilih Cabang'}
-              {/* {modal.selectBranch ? modal.selectBranch.name : 'Pilih Cabang'} */}
             </Text>
           </TouchableOpacity>
+          {/* <Dropdown /> */}
         </View>
       </View>
 
