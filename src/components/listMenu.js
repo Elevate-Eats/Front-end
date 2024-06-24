@@ -24,19 +24,32 @@ const ListMenu = props => {
                     {initials.substring(0, 2)}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  onPress={handlePress}
-                  style={{flex: 1}}
-                  onLongPress={handleLongPress}>
-                  <View style={{marginHorizontal: 15}}>
-                    <Text variant="titleMedium">{item.name}</Text>
-                    <Text
-                      variant="labelLarge"
-                      style={{color: 'rgba(0,0,0,0.4)'}}>
-                      {item.category}
-                    </Text>
+                {props.role === 'general_manager' ? (
+                  <TouchableOpacity
+                    onPress={handlePress}
+                    style={{flex: 1}}
+                    onLongPress={handleLongPress}>
+                    <View style={{marginHorizontal: 15}}>
+                      <Text variant="titleMedium">{item.name}</Text>
+                      <Text
+                        variant="labelLarge"
+                        style={{color: 'rgba(0,0,0,0.4)'}}>
+                        {item.category}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={{flex: 1}}>
+                    <View style={{marginHorizontal: 15}}>
+                      <Text variant="titleMedium">{item.name}</Text>
+                      <Text
+                        variant="labelLarge"
+                        style={{color: 'rgba(0,0,0,0.4)'}}>
+                        {item.category}
+                      </Text>
+                    </View>
                   </View>
-                </TouchableOpacity>
+                )}
               </View>
             </View>
           );

@@ -5,37 +5,44 @@ import {
   ToastAndroid,
   View,
 } from 'react-native';
-import {Text} from 'react-native-paper';
 import React, {useCallback, useEffect, useState} from 'react';
-import {useSelector, useDispatch} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import {
   BtnAdd,
   DataError,
   ListMenu,
-  ListRow,
   LoadingIndicator,
   SearchBox,
 } from '../../../components';
 import MenuCompany from '../../../assets/icons/menuCompany.svg';
 import {Colors} from '../../../utils/colors';
 import {useFocusEffect} from '@react-navigation/native';
-import GetData from '../../../utils/getData';
 import {MENU_COMPANY_ENDPOINT} from '@env';
 import {GetAPI, PostAPI} from '../../../api';
+import {locale} from 'moment';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PilihMenu = ({navigation}) => {
-  const dispatch = useDispatch();
-  // const menuCompany = useSelector(state => state.menu.allMenu);
-  const [menuCompany, setMenuCompany] = useState([]);
   const [query, setQuery] = useState('');
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-
   const [data, setData] = useState({
     menuCompany: [],
     loading: false,
     error: null,
+    local: {},
   });
+
+  useEffect(() => {
+    async function fetchLocalStorage(params) {
+      try {
+        const response = await AsyncStorage.getItem('credentials');
+        const parsed = JSON.parse(response);
+        setData(prev => ({...prev, local: parsed}));
+      } catch (error) {
+        console.log('error: ', error);
+      }
+    }
+    fetchLocalStorage();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -112,6 +119,7 @@ const PilihMenu = ({navigation}) => {
             </View>
           ) : (
             <ListMenu
+              role={data.local.role}
               data={data.menuCompany.sort((a, b) =>
                 a.name.localeCompare(b.name),
               )}
@@ -131,7 +139,9 @@ const PilihMenu = ({navigation}) => {
           )}
         </View>
       </View>
-      <BtnAdd onPress={() => navigation.navigate('Tambah Menu')} />
+      {data.local.role === 'general_manager' ? (
+        <BtnAdd onPress={() => navigation.navigate('Tambah Menu')} />
+      ) : null}
     </SafeAreaView>
   );
 };
