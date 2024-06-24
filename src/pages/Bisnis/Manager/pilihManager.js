@@ -5,7 +5,7 @@ import {
   ToastAndroid,
   View,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {MANAGER_ENDPOINT} from '@env';
 import {
@@ -18,6 +18,7 @@ import {
 import {Colors} from '../../../utils/colors';
 import Store from '../../../assets/icons/store.svg';
 import {GetAPI, PostAPI} from '../../../api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PilihManager = () => {
   const navigation = useNavigation();
@@ -25,6 +26,7 @@ const PilihManager = () => {
     manager: [],
     loading: false,
     error: null,
+    local: {},
   });
 
   useFocusEffect(
@@ -51,6 +53,19 @@ const PilihManager = () => {
       fetchData();
     }, []),
   );
+
+  useEffect(() => {
+    async function fetchLocalStorage(params) {
+      try {
+        const response = await AsyncStorage.getItem('credentials');
+        const parsed = JSON.parse(response);
+        setData(prev => ({...prev, local: parsed}));
+      } catch (error) {
+        console.log('error: ', error);
+      }
+    }
+    fetchLocalStorage();
+  }, []);
 
   async function handleDelete(item) {
     setData(prev => ({...prev, loading: true}));
@@ -93,6 +108,7 @@ const PilihManager = () => {
             </View>
           ) : (
             <ListColumn
+              role={data.local.role}
               data={data.manager.sort((a, b) => a.name.localeCompare(b.name))}
               onPress={item => navigation.navigate('Edit Manager', {item})}
               onLongPress={item => {
@@ -110,7 +126,9 @@ const PilihManager = () => {
           )}
         </View>
       </View>
-      <BtnAdd onPress={() => navigation.navigate('Tambah Manager')} />
+      {data.local.role === 'general_manager' ? (
+        <BtnAdd onPress={() => navigation.navigate('Tambah Manager')} />
+      ) : null}
     </KeyboardAvoidingView>
   );
 };

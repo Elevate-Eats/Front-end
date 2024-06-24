@@ -32,15 +32,24 @@ const ListColumn = props => {
 
           return (
             <View style={{alignItems: 'center'}}>
-              <TouchableOpacity
-                style={styles.employee}
-                onPress={handlePress}
-                onLongPress={handleLongPress}>
-                <Ionicons name="person-circle-outline" size={70} />
-                <Text style={{textAlign: 'center'}}>
-                  {sliceName(item.name, 8)}
-                </Text>
-              </TouchableOpacity>
+              {props.role === 'general_manager' ? (
+                <TouchableOpacity
+                  style={styles.employee}
+                  onPress={handlePress}
+                  onLongPress={handleLongPress}>
+                  <Ionicons name="person-circle-outline" size={70} />
+                  <Text style={{textAlign: 'center'}}>
+                    {sliceName(item.name, 8)}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.employee}>
+                  <Ionicons name="person-circle-outline" size={70} />
+                  <Text style={{textAlign: 'center'}}>
+                    {sliceName(item.name, 8)}
+                  </Text>
+                </View>
+              )}
             </View>
           );
         }}
