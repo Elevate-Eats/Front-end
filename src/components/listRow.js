@@ -2,6 +2,8 @@ import {FlatList, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native-paper';
 import React, {useEffect, useState} from 'react';
 import {useSelector} from 'react-redux';
+import {GetAPI} from '../api';
+import {BRANCH_ENDPOINT} from '@env';
 
 const ListRow = props => {
   // console.log('id: ', props.id);
@@ -9,11 +11,30 @@ const ListRow = props => {
   const branch = useSelector(state => state.branch.allBranch);
   const [data, setData] = useState({
     manager: [],
+    branch: [],
   });
 
   useEffect(() => {
     const filteredManager = manager.filter(item => item.id === props.id);
     setData(prev => ({...prev, manager: filteredManager}));
+    try {
+      async function fetchData(params) {
+        const response = await GetAPI({
+          operation: BRANCH_ENDPOINT,
+          endpoint: 'showBranches',
+        });
+        if (response.status === 200) {
+          console.log(
+            'espon: ',
+            response.data.branchData.sort((a, b) =>
+              a.name.localeCompare(b.name),
+            ),
+          );
+          setData(prev => ({...prev, branch: response.data.branchData}));
+        }
+      }
+      fetchData();
+    } catch (error) {}
   }, [manager, props.id]);
 
   function listBranch() {
@@ -25,7 +46,6 @@ const ListRow = props => {
       );
       return filteredBranches;
     }
-    return branch;
   }
 
   return (
@@ -33,7 +53,11 @@ const ListRow = props => {
       <FlatList
         contentContainerStyle={{flexGrow: 1}}
         nestedScrollEnabled
-        data={listBranch().sort((a, b) => a.name.localeCompare(b.name))}
+        data={
+          data.manager[0]?.role === 'general_manager'
+            ? data.branch
+            : listBranch()
+        }
         keyExtractor={item => item.id.toString()}
         renderItem={({item}) => {
           const handlePress = () => props.onPress(item);
