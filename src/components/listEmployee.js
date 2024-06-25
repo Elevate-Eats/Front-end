@@ -23,8 +23,6 @@ const ListEmployee = props => {
     }
   }
 
-  console.log('branch acces: ', branchAccess);
-
   useEffect(() => {
     setBranchAccess(getBranchAccess(props));
   }, [props.manager, props.id]);
