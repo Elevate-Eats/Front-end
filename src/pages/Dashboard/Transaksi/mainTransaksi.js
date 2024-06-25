@@ -7,29 +7,24 @@ import {
   View,
 } from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   BottomSheet,
   ConstButton,
   DataError,
   FormInput,
   ListTransaction,
-  LoadingIndicator,
   SearchBox,
 } from '../../../components';
 import {Colors} from '../../../utils/colors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useFocusEffect} from '@react-navigation/native';
-import {MENU_BRANCH_ENDPOINT, TRANSACTION_ENDPOINT, ITEM_ENDPOINT} from '@env';
+import {MENU_BRANCH_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
 
 import {useSelector, useDispatch} from 'react-redux';
 import {setCustomerInfo} from '../../../redux/customerSlice';
 import getDataQuery from '../../../utils/getDataQuery';
 import PostData from '../../../utils/postData';
-import {
-  setTransactionId,
-  setTransactionList,
-} from '../../../redux/transactionSlice';
+import {setTransactionId} from '../../../redux/transactionSlice';
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
   console.log('prevData: ', prevData);
@@ -97,7 +92,10 @@ const MainTransaksi = ({navigation, route}) => {
       customername: customer.name,
       tableNumber: customer.table,
     };
-    if (customer.name === null && customer.table === null) {
+    if (
+      (customer.name === null || customer.name === undefined) &&
+      (customer.table === null || customer.table === undefined)
+    ) {
       ToastAndroid.show('isi nama customer dan nomor meja', ToastAndroid.SHORT);
     } else {
       try {
@@ -108,10 +106,8 @@ const MainTransaksi = ({navigation, route}) => {
           payload: payload,
         });
         if (response) {
-          console.log('response Add Transaction: ', response);
           ToastAndroid.show(response.message, ToastAndroid.SHORT);
           dispatch(setTransactionId(parseInt(response.id, 10)));
-          console.log('customer: ', customer);
           dispatch(setCustomerInfo(customer));
           setData(prev => ({...prev, visible: false}));
         }
@@ -120,14 +116,8 @@ const MainTransaksi = ({navigation, route}) => {
       } finally {
         setData(prev => ({...prev, loading: true}));
       }
-
-      console.log('payload: ', payload);
     }
   }
-
-  // if (loading) {
-  //   return <LoadingIndicator />;
-  // }
 
   function openPrompt(params) {
     return (
