@@ -24,12 +24,6 @@ const ListRow = props => {
           endpoint: 'showBranches',
         });
         if (response.status === 200) {
-          console.log(
-            'espon: ',
-            response.data.branchData.sort((a, b) =>
-              a.name.localeCompare(b.name),
-            ),
-          );
           setData(prev => ({...prev, branch: response.data.branchData}));
         }
       }
