@@ -253,6 +253,8 @@ const BottomSheet = props => {
     fetchData();
   }, []);
 
+  console.log('hasil: ', mergeCart(backendItems, reduxItems)[transactionId]);
+
   return (
     <Animated.View
       style={[styles.bottomSheet, {transform: [{translateY: slide}]}]}>
@@ -300,9 +302,7 @@ const BottomSheet = props => {
                     {FormatRP(item.price)} x {item.count}
                   </Text>
                   <Text style={{fontWeight: '700', fontSize: 18}}>
-                    {item.disc > 0
-                      ? FormatRP(item.totalprice - item.disc)
-                      : FormatRP(item.totalprice)}
+                    {FormatRP(item.totalprice)}
                   </Text>
                 </View>
                 {item.disc > 0 ? (
