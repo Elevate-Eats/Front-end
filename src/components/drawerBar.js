@@ -99,7 +99,7 @@ const DrawerBar = ({route}) => {
               style={[
                 styles.logoutButton,
                 {
-                  alignItems: 'flex-end',
+                  alignItems: 'center',
                   backgroundColor: colors.errorContainer,
                 },
               ]}>
