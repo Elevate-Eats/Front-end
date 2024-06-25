@@ -5,10 +5,9 @@ import {
   ToastAndroid,
   View,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
-import GetData from '../../../utils/getData';
-import {EMPLOYEE_ENDPOINT} from '@env';
+import {EMPLOYEE_ENDPOINT, MANAGER_ENDPOINT} from '@env';
 import {Colors} from '../../../utils/colors';
 import {
   BtnAdd,
@@ -19,23 +18,36 @@ import {
 } from '../../../components';
 import Employee from '../../../assets/icons/employee.svg';
 import {GetAPI, PostAPI} from '../../../api';
+import ListEmployee from '../../../components/listEmployee';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Text} from 'react-native-paper';
 const PilihPegawai = ({navigation}) => {
   const [data, setData] = useState({
     employee: [],
     loading: false,
     error: null,
+    manager: [],
+    local: {},
   });
+
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
         setData(prev => ({...prev, loading: true}));
         try {
-          const response = await GetAPI({
+          const employee = await GetAPI({
             operation: EMPLOYEE_ENDPOINT,
             endpoint: 'showEmployees',
           });
-          if (response.status === 200) {
-            setData(prev => ({...prev, employee: response.data.employeeData}));
+          if (employee.status === 200) {
+            setData(prev => ({...prev, employee: employee.data.employeeData}));
+          }
+          const manager = await GetAPI({
+            operation: MANAGER_ENDPOINT,
+            endpoint: 'showManagers',
+          });
+          if (manager.status === 200) {
+            setData(prev => ({...prev, manager: manager.data.managerData}));
           }
         } catch (error) {
           const fullMessage = error.response?.data?.message;
@@ -49,6 +61,21 @@ const PilihPegawai = ({navigation}) => {
       fetchData();
     }, []),
   );
+
+  // console.log('manager: ', data.manager);
+
+  useEffect(() => {
+    async function fetchLocalStorage(params) {
+      try {
+        const response = await AsyncStorage.getItem('credentials');
+        const parsed = JSON.parse(response);
+        setData(prev => ({...prev, local: parsed}));
+      } catch (error) {
+        console.log('error: ', error);
+      }
+    }
+    fetchLocalStorage();
+  }, []);
 
   async function handleDelete(item) {
     setData(prev => ({...prev, loading: true}));
@@ -88,7 +115,9 @@ const PilihPegawai = ({navigation}) => {
               <DataError data={data.error} />
             </View>
           ) : (
-            <ListColumn
+            <ListEmployee
+              manager={data.manager}
+              id={data.local.id}
               data={data.employee.sort((a, b) => a.name.localeCompare(b.name))}
               onPress={item => navigation.navigate('Edit Pegawai', {item})}
               onLongPress={item => {

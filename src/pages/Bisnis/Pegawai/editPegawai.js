@@ -23,6 +23,7 @@ import {
 } from '@react-navigation/native';
 import {EMPLOYEE_ENDPOINT} from '@env';
 import {PostAPI} from '../../../api';
+import Checklist from '../../../assets/icons/checklist-bold.svg';
 
 const EditPegawai = () => {
   const route = useRoute();
@@ -195,6 +196,8 @@ const EditPegawai = () => {
     );
   }
 
+  // console.log('item: ', item);
+
   if (data.loading) {
     return <LoadingIndicator />;
   }
@@ -202,6 +205,29 @@ const EditPegawai = () => {
   return (
     <KeyboardAvoidingView enabled style={styles.container}>
       <View style={styles.whiteLayer}>
+        <View>
+          {item.branchid === null ? (
+            <View
+              style={[styles.assign, {backgroundColor: 'rgba(0,0,0,0.15)'}]}>
+              <Text style={{color: 'white', fontWeight: '900'}}>
+                Unassigned
+              </Text>
+            </View>
+          ) : (
+            <View
+              style={[
+                styles.assign,
+                {backgroundColor: 'rgba(0, 170, 19,0.1)'},
+              ]}>
+              <Text style={{color: 'rgba(0, 170, 19, 1)', fontWeight: '900'}}>
+                Assigned
+              </Text>
+              <View style={{paddingLeft: 5}}>
+                <Checklist width={25} height={25} />
+              </View>
+            </View>
+          )}
+        </View>
         <ScrollView>
           <AddPhoto icon="person" />
           <View style={{marginTop: 30}}>
@@ -248,6 +274,15 @@ const EditPegawai = () => {
               error={form.errorBonus}
             />
           </View>
+          <View>
+            {item.branchid !== null ? (
+              <View>
+                <Text>Status: This employee has been assigned</Text>
+              </View>
+            ) : (
+              <Text>This employee has not yet been assigned</Text>
+            )}
+          </View>
         </ScrollView>
         <View style={{flexDirection: 'row', columnGap: 10}}>
           <DeleteButton onPress={() => deleteEmployee()} />
@@ -278,5 +313,18 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     elevation: 1,
     padding: 10,
+  },
+  assign: {
+    position: 'absolute',
+    paddingVertical: 10,
+    // paddingHorizontal: 15,
+    paddingLeft: 15,
+    paddingRight: 12,
+    borderRadius: 5,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
   },
 });
