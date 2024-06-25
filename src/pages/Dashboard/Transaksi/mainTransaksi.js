@@ -27,7 +27,6 @@ import PostData from '../../../utils/postData';
 import {setTransactionId} from '../../../redux/transactionSlice';
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
-  console.log('prevData: ', prevData);
   const dispatch = useDispatch();
   const selectBranch = useSelector(s => s.branch.selectedBranch);
   const transactionId = useSelector(s => s.transaction.transactionId);
@@ -180,7 +179,7 @@ const MainTransaksi = ({navigation, route}) => {
               />
             </View>
             <TouchableOpacity style={styles.receipt}>
-              <Ionicons name="options" size={28} />
+              <Ionicons name="cart-outline" size={28} />
             </TouchableOpacity>
           </View>
           <View style={{flex: 1, marginVertical: 10}}>

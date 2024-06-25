@@ -6,32 +6,48 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {Appbar, RadioButton, Text, TextInput} from 'react-native-paper';
+import React, {useEffect, useState} from 'react';
+import {
+  Appbar,
+  HelperText,
+  RadioButton,
+  Text,
+  TextInput,
+  useTheme,
+} from 'react-native-paper';
 import {Colors} from '../../../utils/colors';
 
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {ITEM_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
 import {ConstButton} from '../../../components';
 import FormatRP from '../../../utils/formatRP';
 import {useDispatch} from 'react-redux';
 import {addItem} from '../../../redux/cartSlice';
-import {addTransaction} from '../../../redux/showTransaction';
 import {useSelector} from 'react-redux';
 
 const DetailTransaksi = ({route, navigation}) => {
+  const {colors} = useTheme();
   const {item} = route.params;
-  // console.log('item: ', item);
   const transactionId = useSelector(s => s.transaction.transactionId);
-  // console.log('id: ', transactionId);
   const dispatch = useDispatch();
   const [checked, setChecked] = useState({
     price: null,
     disc: null,
   });
 
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    errorDiscount: '',
+    hasErrorDiscount: false,
+  });
+
+  function resetFormError(params) {
+    setForm(prev => ({
+      ...prev,
+      errorDiscount: '',
+      hasErrorDiscount: false,
+    }));
+  }
+
   const [count, setCount] = useState(0);
   const [product, setProduct] = useState({
     // *req payload addItems
@@ -54,16 +70,23 @@ const DetailTransaksi = ({route, navigation}) => {
   }, [product.price, product.count, product.disc]);
 
   function handleCart(params) {
-    console.log('====HANDLE CART====');
-    console.log('PRODUK: ', product);
+    resetFormError();
     if (product.count <= 0 || product.price === null) {
       let message = product.count ? 'Pilih harga' : 'Masukkan jumlah pesanan';
       ToastAndroid.show(message, ToastAndroid.SHORT);
     } else {
-      dispatch(addItem(product));
-      console.log('add To Redux cartSlice');
-      ToastAndroid.show(`${product.name} added to Cart`, ToastAndroid.SHORT);
-      navigation.goBack();
+      if (product.disc > product.totalprice) {
+        console.log('produk: ', product);
+        setForm(prev => ({
+          ...prev,
+          errorDiscount: 'too much discount',
+          hasErrorDiscount: true,
+        }));
+      } else {
+        dispatch(addItem(product));
+        ToastAndroid.show(`${product.name} added to Cart`, ToastAndroid.SHORT);
+        navigation.goBack();
+      }
     }
   }
   function countAdd() {
@@ -174,6 +197,7 @@ const DetailTransaksi = ({route, navigation}) => {
                 status={checked.disc === 'No' ? 'checked' : 'unchecked'}
                 onPress={() => {
                   setChecked({...checked, disc: 'No'});
+                  setProduct(prev => ({...prev, disc: 0}));
                 }}
               />
               <Text variant="titleMedium">Tanpa Diskon</Text>
@@ -192,13 +216,20 @@ const DetailTransaksi = ({route, navigation}) => {
 
             <View style={{marginLeft: 10}}>
               {checked.disc === 'Yes' ? (
-                <View style={{flexDirection: 'row'}}>
+                <View style={{flexDirection: 'column'}}>
                   <TextInput
                     mode="outlined"
                     style={{height: 50, width: 100}}
                     keyboardType="numeric"
                     label={'Diskon'}
-                    activeOutlineColor={Colors.btnColor}
+                    activeOutlineColor={
+                      form.hasErrorDiscount
+                        ? colors.error
+                        : colors.onBtnColorContainer
+                    }
+                    outlineColor={
+                      form.hasErrorDiscount ? colors.error : colors.outline
+                    }
                     outlineStyle={{borderWidth: 1}}
                     value={product.disc ? product.disc.toString() : ''}
                     onChangeText={text => {
@@ -208,6 +239,16 @@ const DetailTransaksi = ({route, navigation}) => {
                       });
                     }}
                   />
+                  {form.hasErrorDiscount ? (
+                    <HelperText
+                      type="error"
+                      visible={form.hasErrorDiscount || false}>
+                      <Text
+                        style={{
+                          color: form.hasErrorDiscount ? colors.error : null,
+                        }}>{`Error: ${form.errorDiscount}`}</Text>
+                    </HelperText>
+                  ) : null}
                 </View>
               ) : null}
             </View>
