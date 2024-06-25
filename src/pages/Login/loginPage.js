@@ -55,9 +55,19 @@ const LoginPage = () => {
           'companyId',
           response.data.credentials.companyid.toString(),
         );
+        console.log('response: ', response.data);
         await AsyncStorage.setItem(
           'credentials',
           JSON.stringify(response.data.credentials),
+        );
+
+        await AsyncStorage.setItem(
+          'companyPic',
+          JSON.stringify(response.data.companyPicUrl),
+        );
+        await AsyncStorage.setItem(
+          'profilePic',
+          JSON.stringify(response.data.profilePictureUrl),
         );
         setForm(prev => ({
           ...prev,
