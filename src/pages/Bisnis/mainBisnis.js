@@ -24,7 +24,6 @@ const MainBisnis = () => {
     }
     fetchLocalStorage();
   }, []);
-  console.log('data: ', data.local);
   function handlePress(screen) {
     navigation.navigate(screen);
   }
@@ -32,44 +31,46 @@ const MainBisnis = () => {
     <SafeAreaView style={styles.container}>
       <TopBar navigation={navigation} title={'Bisnis'} />
       <ScrollView style={styles.whiteLayer}>
-        <Text style={styles.textOpsi}>Pilih Opsi</Text>
-        {data.local.role === 'general_manager' ? (
-          <View>
-            <ContentPage
-              title={'List Cabang'}
-              Icon={Building}
-              onPress={() => handlePress('Pilih Cabang')}
-            />
-            <ContentPage
-              title={'List Manager'}
-              Icon={Manager}
-              onPress={() => handlePress('Pilih Manager')}
-            />
-            <ContentPage
-              title={'List Pegawai'}
-              Icon={Employee}
-              onPress={() => handlePress('Pilih Pegawai')}
-            />
-            <ContentPage
-              title={'List Menu Company'}
-              Icon={MenuCompany}
-              onPress={() => handlePress('Pilih Menu')}
-            />
-          </View>
-        ) : (
-          <View>
-            <ContentPage
-              title={'List Cabang'}
-              Icon={Building}
-              onPress={() => handlePress('Pilih Cabang')}
-            />
-            <ContentPage
-              title={'List Pegawai'}
-              Icon={Employee}
-              onPress={() => handlePress('Pilih Pegawai')}
-            />
-          </View>
-        )}
+        <View style={{marginVertical: 15}}>
+          <Text style={styles.textOpsi}>Pilih Opsi</Text>
+          {data.local.role === 'general_manager' ? (
+            <View>
+              <ContentPage
+                title={'List Cabang'}
+                Icon={Building}
+                onPress={() => handlePress('Pilih Cabang')}
+              />
+              <ContentPage
+                title={'List Manager'}
+                Icon={Manager}
+                onPress={() => handlePress('Pilih Manager')}
+              />
+              <ContentPage
+                title={'List Pegawai'}
+                Icon={Employee}
+                onPress={() => handlePress('Pilih Pegawai')}
+              />
+              <ContentPage
+                title={'List Menu Company'}
+                Icon={MenuCompany}
+                onPress={() => handlePress('Pilih Menu')}
+              />
+            </View>
+          ) : (
+            <View>
+              <ContentPage
+                title={'List Cabang'}
+                Icon={Building}
+                onPress={() => handlePress('Pilih Cabang')}
+              />
+              <ContentPage
+                title={'List Pegawai'}
+                Icon={Employee}
+                onPress={() => handlePress('Pilih Pegawai')}
+              />
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
