@@ -23,35 +23,34 @@ const ListEmployee = props => {
     }
   }
 
+  console.log('branch acces: ', branchAccess);
+
   useEffect(() => {
     setBranchAccess(getBranchAccess(props));
   }, [props.manager, props.id]);
 
-  console.log(
-    'data emp: ',
-    props.data
-      .filter(
-        item => item.branchid === null || branchAccess?.includes(item.branchid),
-      )
-      .sort((a, b) => {
-        if (a.branchid === null && b.branchid !== null) return 1;
-        if (a.branchid !== null && b.branchid === null) return 0;
-      }),
-  );
-
   return (
     <View>
       <FlatList
-        data={props.data
-          .filter(
-            item =>
-              item.branchid === null || branchAccess?.includes(item.branchid),
-          )
-          .sort((a, b) => {
-            if (a.branchid === null && b.branchid !== null) return 1;
-            if (a.branchid !== null && b.branchid === null) return -1;
-            return 0;
-          })}
+        data={
+          props.role === 'general_maanger'
+            ? props.data.sort((a, b) => {
+                if (a.branchid === null && b.branchid !== null) return 1;
+                if (a.branchid !== null && b.branchid === null) return -1;
+                return 0;
+              })
+            : props.data
+                .filter(
+                  item =>
+                    item.branchid === null ||
+                    branchAccess?.includes(item.branchid),
+                )
+                .sort((a, b) => {
+                  if (a.branchid === null && b.branchid !== null) return 1;
+                  if (a.branchid !== null && b.branchid === null) return -1;
+                  return 0;
+                })
+        }
         keyExtractor={item => item.id.toString()}
         numColumns={3}
         renderItem={({item}) => {

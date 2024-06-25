@@ -116,6 +116,7 @@ const PilihPegawai = ({navigation}) => {
             </View>
           ) : (
             <ListEmployee
+              role={data.local.role}
               manager={data.manager}
               id={data.local.id}
               data={data.employee.sort((a, b) => a.name.localeCompare(b.name))}
