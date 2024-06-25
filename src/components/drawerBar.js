@@ -4,9 +4,10 @@ import {
   TouchableOpacity,
   View,
   Appearance,
+  Image,
 } from 'react-native';
 import {Text, useTheme} from 'react-native-paper';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {createDrawerNavigator, DrawerItemList} from '@react-navigation/drawer';
 import {
   History,
@@ -42,13 +43,11 @@ import {
   PilihManager,
   EditManager,
   TambahManager,
-  MainLaporan,
 } from '../pages';
 import {BottomBar} from '.';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {Colors} from '../utils/colors';
 import Icon from 'react-native-vector-icons/Ionicons';
-import ImgIcons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {CommonActions} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -59,6 +58,28 @@ const Drawer = createDrawerNavigator();
 const DrawerBar = ({route}) => {
   const {colors} = useTheme();
   const selectedBranch = useSelector(state => state.branch.selectedBranch);
+  const [data, setData] = useState({
+    local: {},
+    picture: '',
+  });
+  useEffect(() => {
+    try {
+      async function fetchLocalStorage(params) {
+        const response = await AsyncStorage.getItem('credentials');
+        const picture = await AsyncStorage.getItem('companyPic');
+        const parsed = JSON.parse(response);
+        setData(prev => ({
+          ...prev,
+          local: parsed,
+          picture: JSON.parse(picture),
+        }));
+      }
+      fetchLocalStorage();
+    } catch (error) {
+      console.log('error: ', error);
+    }
+  }, []);
+
   return (
     <Drawer.Navigator
       drawerContent={props => {
@@ -82,15 +103,25 @@ const DrawerBar = ({route}) => {
         return (
           <ScrollView contentContainerStyle={{flexGrow: 1}}>
             <View style={styles.drawer}>
-              <ImgIcons
-                name="person-circle-outline"
-                color={'white'}
-                size={90}
-              />
+              {data?.picture ? (
+                <Image
+                  source={{
+                    uri: data?.picture,
+                  }}
+                  style={{width: 100, height: 100, resizeMode: 'contain'}}
+                />
+              ) : (
+                <ImgIcons
+                  name="person-circle-outline"
+                  color={'white'}
+                  size={90}
+                />
+              )}
+
               <Text
                 variant="titleLarge"
                 style={{color: 'white', fontWeight: '700'}}>
-                CV. Balibul Solo
+                {data.local.companyName}
               </Text>
             </View>
             <DrawerItemList {...props} />
@@ -379,7 +410,6 @@ function HomeStackNavigator(params) {
           statusBarStyle: 'inverted',
           statusBarColor: Colors.btnColor,
         }}>
-        {/* <Stack.Screen name="Pilih Produk" component={PilihProduk} /> */}
         <Stack.Screen
           name="Edit Produk"
           component={EditProduk}
