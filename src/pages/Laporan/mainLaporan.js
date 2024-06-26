@@ -35,7 +35,11 @@ global.Buffer = Buffer;
 
 const MainLaporan = () => {
   const navigation = useNavigation();
-  const [branch, setBranch] = useState([]);
+  const [data, setData] = useState({
+    local: {},
+    branch: [],
+    manager: [],
+  });
   const [pdfFile, setPdfFile] = useState({
     path: '',
     loading: false,
@@ -57,17 +61,24 @@ const MainLaporan = () => {
     navigation.navigate(params);
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      async function fetchDataLocal(params) {
-        const response = await AsyncStorage.getItem('allBranch');
-        if (response) {
-          setBranch(JSON.parse(response));
-        }
-      }
-      fetchDataLocal();
-    }, []),
-  );
+  useEffect(() => {
+    async function fetchLocalStorage(params) {
+      const response = await AsyncStorage.getItem('credentials');
+      const branch = await AsyncStorage.getItem('allBranch');
+      const manager = await AsyncStorage.getItem('allManager');
+      const filteredManager = JSON.parse(manager).filter(
+        item => item.id === JSON.parse(response).id,
+      );
+      const parsed = JSON.parse(response);
+      setData({
+        ...data,
+        local: parsed,
+        branch: JSON.parse(branch),
+        manager: filteredManager,
+      });
+    }
+    fetchLocalStorage();
+  }, []);
 
   async function handleDownload(params) {
     setPdfFile(prev => ({...prev, loading: true}));
@@ -132,11 +143,22 @@ const MainLaporan = () => {
     }));
   }
 
+  const listBranch = () => {
+    if (data.manager[0]?.role !== 'general_manager') {
+      const branchAccess = data.manager[0]?.branchaccess;
+      const accessIds = branchAccess?.match(/\d+/g).map(Number);
+      const filteredBranches = data.branch.filter(branch =>
+        accessIds?.includes(branch.id),
+      );
+      return filteredBranches;
+    } else {
+      return data.branch.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  };
+
+  // console.log('list branch: ', listBranch());
+
   function downloadReport(params) {
-    const listBranch = Object.values(branch).map(item => ({
-      label: item.name,
-      value: item.id,
-    }));
     return (
       <Modal
         animationType="fade"
@@ -154,12 +176,12 @@ const MainLaporan = () => {
             </View>
             <View style={styles.content}>
               <Dropdown
-                data={listBranch}
+                data={listBranch()}
                 mode="modal"
                 search
                 maxHeight={200}
-                labelField={'label'}
-                valueField={'value'}
+                labelField={'name'}
+                valueField={'id'}
                 value={dropdown.value}
                 placeholder="Pilih Cabang"
                 placeholderStyle={{fontWeight: '500'}}

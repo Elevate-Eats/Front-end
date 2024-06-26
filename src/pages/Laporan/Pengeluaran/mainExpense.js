@@ -45,23 +45,9 @@ const MainExpense = () => {
     loading: false,
     branch: [],
     error: '',
+    local: {},
+    manager: [],
   });
-
-  useEffect(() => {
-    async function fetchDataBranch(params) {
-      const response = await AsyncStorage.getItem('allBranch');
-      if (response) {
-        setData(prev => ({...prev, branch: JSON.parse(response)}));
-      }
-    }
-    fetchDataBranch();
-  }, []);
-
-  const listBranch = data.branch.map(item => ({
-    value: item.id,
-    label: item.name,
-  }));
-
   useFocusEffect(
     useCallback(() => {
       async function fetchData(params) {
@@ -88,6 +74,37 @@ const MainExpense = () => {
       fetchData();
     }, [dropdown.value, calendar.date]),
   );
+
+  useEffect(() => {
+    async function fetchLocalStorage(params) {
+      const response = await AsyncStorage.getItem('credentials');
+      const branch = await AsyncStorage.getItem('allBranch');
+      const manager = await AsyncStorage.getItem('allManager');
+      const filteredManager = JSON.parse(manager).filter(
+        item => item.id === JSON.parse(response).id,
+      );
+      const parsed = JSON.parse(response);
+      setData({
+        ...data,
+        local: parsed,
+        branch: JSON.parse(branch),
+        manager: filteredManager,
+      });
+    }
+    fetchLocalStorage();
+  }, []);
+
+  const listBranch = () => {
+    if (data.manager[0]?.role !== 'general_manager') {
+      const branchAccess = data.manager[0]?.branchaccess;
+      const accessIds = branchAccess?.match(/\d+/g).map(Number);
+      const filteredBranches = data.branch.filter(branch =>
+        accessIds?.includes(branch.id),
+      );
+      return filteredBranches;
+    }
+    return data.branch.sort((a, b) => a.name.localeCompare(b.name));
+  };
 
   async function handleDeleteExpense(item) {
     setData(prev => ({...prev, loading: true}));
@@ -133,9 +150,7 @@ const MainExpense = () => {
         <View style={{marginTop: 20, marginBottom: 10}}>
           <Dropdown
             mode="modal"
-            data={Object.values(listBranch).sort((a, b) =>
-              a.label.localeCompare(b.label),
-            )}
+            data={listBranch()}
             selectedTextStyle={{
               fontWeight: '700',
               color: Colors.btnColor,
@@ -155,13 +170,13 @@ const MainExpense = () => {
             search
             searchPlaceholder="Search ..."
             maxHeight={300}
-            labelField={'label'}
-            valueField={'value'}
+            labelField={'name'}
+            valueField={'id'}
             value={dropdown.value}
             onFocus={() => setDropdown(prev => ({...prev, focus: true}))}
             onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
             onChange={item => {
-              setDropdown(prev => ({...prev, value: item.value, focus: false}));
+              setDropdown(prev => ({...prev, value: item.id, focus: false}));
             }}
             renderLeftIcon={() => {
               return (

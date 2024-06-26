@@ -65,6 +65,8 @@ const MainDashboard = ({navigation, route}) => {
     localData: {},
     branch: [],
     manager: [],
+    sales: [],
+    transactions: [],
   });
 
   // console.log('select branch(ID) : ', selectBranch);
@@ -141,7 +143,7 @@ const MainDashboard = ({navigation, route}) => {
 
         const startDate = new Date();
         const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 7);
+        endDate.setDate(startDate.getDate() + 6);
         const dataDailySummary = await GetQueryAPI({
           operation: ANALYTICS_ENDPOINT,
           endpoint: 'showDailySummary',
@@ -152,6 +154,7 @@ const MainDashboard = ({navigation, route}) => {
           operation: REPORT_ENDPOINT,
           endpoint: 'predictTransaction',
           query: `branchId=${selectBranch?.id}&startDate=${FormatDateToISO(FormatDateTime(startDate).realDate)}&endDate=${FormatDateToISO(FormatDateTime(endDate).realDate)}`,
+          // query: `branchId=${selectBranch?.id}&startDate=2023-12-20&endDate=2023-12-27`,
         });
         const dataPredict = await GetQueryAPI({
           // predict 1 hari
@@ -311,12 +314,31 @@ const MainDashboard = ({navigation, route}) => {
             sales: weeklySales,
           };
 
+          const transactionDataFormatted = getNextSevenDays().map(
+            (label, index) => ({
+              label: label,
+              value: weeklyData.transactions[index],
+              topLabelComponent: () => (
+                <Text style={{fontSize: 10}}>
+                  {weeklyData.transactions[index]}
+                </Text>
+              ),
+            }),
+          );
+
+          const salesDataFormatted = getNextSevenDays().map((label, index) => ({
+            label: label,
+            value: weeklyData.sales[index],
+          }));
+
           setTodayData(prev => ({
             ...prev,
             dailySummary: [dataDaily],
             predict: [dataPrediction],
             shiftData: shiftData,
             weekly: [weeklyData],
+            transactions: transactionDataFormatted,
+            sales: salesDataFormatted,
           }));
         }
         if (
@@ -360,27 +382,23 @@ const MainDashboard = ({navigation, route}) => {
     fetchData();
   }, [dispatch, selectBranch, navigation]);
 
-  const nullData = [0, 0, 0, 0, 0, 0, 0];
-  const transactionData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    datasets: [
-      {
-        data: todayData.weekly[0] ? todayData.weekly[0].transactions : nullData,
-        color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`,
-        strokeWidth: 2,
-      },
-    ],
-  };
+  console.log(`BRANCH : ${selectBranch?.id}`);
+  console.log('trans: ', todayData.transactions);
 
-  const salesData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    datasets: [
-      {
-        data: todayData.weekly[0] ? todayData.weekly[0].sales : nullData,
-        color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
-        strokeWidth: 2,
-      },
-    ],
+  const week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  const getNextSevenDays = () => {
+    const today = new Date().getDay(); // This will give us the day number from 0 (Sunday) to 6 (Saturday)
+    const days = [];
+
+    for (let i = 0; i < 7; i++) {
+      // Calculate the day index accounting for the array length
+      const dayIndex = (today + i) % 7;
+      // Use the corrected index to push the correct day from 'week' array
+      days.push(week[dayIndex === 0 ? 6 : dayIndex - 1]); // Adjust because your week array starts from Monday
+    }
+
+    return days;
   };
 
   function modalChart(params) {
@@ -484,7 +502,6 @@ const MainDashboard = ({navigation, route}) => {
             close={() => setModal(prev => ({...prev, branch: false}))}
             id={todayData.localData.id}
           />
-          {/* <Ionicons name="person-circle-outline" size={80} color={'white'} /> */}
           <Pressable onPress={() => navigation.navigate('Account')}>
             <Image
               source={User}
@@ -530,7 +547,6 @@ const MainDashboard = ({navigation, route}) => {
               {selectBranch ? selectBranch.name : 'Pilih Cabang'}
             </Text>
           </TouchableOpacity>
-          {/* <Dropdown /> */}
         </View>
       </View>
 
@@ -608,14 +624,11 @@ const MainDashboard = ({navigation, route}) => {
             </View>
 
             <BarChartComponent
-              suffix={' trs'}
-              data={transactionData}
+              data={todayData?.transactions}
               title={'Weekly Transaction Predictions'}
             />
             <BarChartComponent
-              suffix={' jt'}
-              label={'Rp. '}
-              data={salesData}
+              data={todayData?.sales}
               title={'Weekly Income Predictions'}
             />
           </View>

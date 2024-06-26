@@ -197,6 +197,7 @@ const MainTransaksi = ({navigation, route}) => {
             )}
           </View>
         </View>
+
         <ConstButton
           onPress={() => {
             setStatus(true);
@@ -209,10 +210,10 @@ const MainTransaksi = ({navigation, route}) => {
               : true
           }
         />
-        {status && (
-          <BottomSheet condition={setStatus} transactionId={transactionId} />
-        )}
       </View>
+      {status && (
+        <BottomSheet condition={setStatus} transactionId={transactionId} />
+      )}
     </View>
   );
 };

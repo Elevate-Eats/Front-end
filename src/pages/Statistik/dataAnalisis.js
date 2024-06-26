@@ -47,6 +47,8 @@ const DataAnalisis = () => {
     items: [],
     branch: [],
     menu: [],
+    local: {},
+    manager: [],
   });
 
   useEffect(() => {
@@ -54,16 +56,22 @@ const DataAnalisis = () => {
       const id = await AsyncStorage.getItem('companyId');
       const allBranch = await AsyncStorage.getItem('allBranch');
       const allMenu = await AsyncStorage.getItem('allMenuCompany');
+      const allManager = await AsyncStorage.getItem('allManager');
+      const credentials = await AsyncStorage.getItem('credentials');
+      const filteredManager = JSON.parse(allManager).filter(
+        item => item.id === JSON.parse(credentials).id,
+      );
       setData(prev => ({
         ...prev,
         id: id,
         branch: JSON.parse(allBranch),
         menu: JSON.parse(allMenu),
+        manager: filteredManager,
+        local: JSON.parse(credentials),
       }));
     }
     fetchDataLocal();
   }, []);
-
   useEffect(() => {
     if ((dropdown.value, calendar.start, calendar.end)) {
       async function fetchAnalyticsData(params) {
@@ -228,10 +236,18 @@ const DataAnalisis = () => {
     datasets: [{data: chartData('item').dataset.slice(0, 10)}],
     labels: chartData('item').labels.slice(0, 10),
   };
-  const listBranch = data.branch.map(item => ({
-    label: item.name,
-    value: item.id,
-  }));
+
+  const listBranch = () => {
+    if (data.manager[0]?.role !== 'general_manager') {
+      const branchAccess = data.manager[0]?.branchaccess;
+      const accessIds = branchAccess?.match(/\d+/g).map(Number);
+      const filteredBranches = data.branch.filter(branch =>
+        accessIds?.includes(branch.id),
+      );
+      return filteredBranches;
+    }
+    return data.branch.sort((a, b) => a.name.localeCompare(b.name));
+  };
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -247,12 +263,12 @@ const DataAnalisis = () => {
         </View>
         <View style={{marginTop: 20, gap: 10}}>
           <Dropdown
-            data={listBranch.sort((a, b) => a.label.localeCompare(b.label))}
+            data={listBranch()}
             mode="modal"
             search
             maxHeight={250}
-            labelField={'label'}
-            valueField={'value'}
+            labelField={'name'}
+            valueField={'id'}
             value={dropdown.value}
             placeholder="Pilih cabang"
             placeholderStyle={{fontWeight: '700', fontSize: 18}}
@@ -262,7 +278,7 @@ const DataAnalisis = () => {
             onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
             onFocus={() => setDropdown(prev => ({...prev, focus: true}))}
             onChange={item => {
-              setDropdown(prev => ({...prev, value: item.value, focus: false}));
+              setDropdown(prev => ({...prev, value: item.id, focus: false}));
             }}
             renderLeftIcon={() => (
               <View style={{marginRight: 10}}>
@@ -369,7 +385,7 @@ const DataAnalisis = () => {
             }
           />
         </View>
-        <View style={{marginVertical: 10}}>
+        {/* <View style={{marginVertical: 10}}>
           <BarChartComponent
             title="Hourly Performance Chart"
             data={dataHourly}
@@ -383,7 +399,7 @@ const DataAnalisis = () => {
               data={fiveMenuItems(dataItems)}
             />
           </View>
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );

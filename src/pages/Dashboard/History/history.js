@@ -32,7 +32,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const History = ({route}) => {
   const navigation = useNavigation();
-  const selectedBranch = useSelector(state => state.branch.selectedBranch);
   // console.log('branchId: ', selectedBranch.id);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
@@ -142,16 +141,16 @@ const History = ({route}) => {
               <Text variant="titleMedium" style={styles.paymentMethod}>
                 {item.paymentmethod === '0' ? 'Cash' : 'Transfer'}
               </Text>
-              <Text variant="titleMedium" style={styles.totalPrice}>
-                {FormatRP(item.totalprice)}
+              <Text variant="titleMedium" style={styles.itemTime}>
+                {FormatDateTime(item.transactiondate).realDate}
               </Text>
             </View>
             <View style={styles.itemRow}>
-              <Text variant="titleMedium" style={styles.itemDate}>
-                {FormatDateTime(item.transactiondate).realDate}
+              <Text variant="titleMedium" style={styles.totalPrice}>
+                {FormatRP(item.totalprice)}
               </Text>
-              <Text variant="titleMedium" style={styles.itemTime}>
-                {FormatDateTime(item.transactiondate).realTime}
+              <Text variant="titleMedium" style={styles.itemDate}>
+                {FormatDateTime(item.transactiondate).realTime.slice(0, 5)}
               </Text>
             </View>
           </TouchableOpacity>
@@ -322,7 +321,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   itemDate: {
-    fontWeight: '700',
+    // fontWeight: '',
   },
   itemTime: {
     color: 'grey',

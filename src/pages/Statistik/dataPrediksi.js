@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {useEffect, useState} from 'react';
+import React, {lazy, useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import getDataQuery from '../../utils/getDataQuery';
 import {REPORT_ENDPOINT} from '@env';
@@ -46,6 +46,8 @@ const DataPrediksi = () => {
     shift1: {},
     shift2: {},
     branch: [],
+    manager: [],
+    local: {},
   });
 
   const [visible, setVisible] = useState(false);
@@ -54,7 +56,17 @@ const DataPrediksi = () => {
   useEffect(() => {
     async function fetDataLocal(params) {
       const allBranch = await AsyncStorage.getItem('allBranch');
-      setData(prev => ({...prev, branch: JSON.parse(allBranch)}));
+      const allManager = await AsyncStorage.getItem('allManager');
+      const credentials = await AsyncStorage.getItem('credentials');
+      const filteredManager = JSON.parse(allManager).filter(
+        item => item.id === JSON.parse(credentials).id,
+      );
+      setData(prev => ({
+        ...prev,
+        branch: JSON.parse(allBranch),
+        local: JSON.parse(credentials),
+        manager: filteredManager,
+      }));
     }
     fetDataLocal();
   }, []);
@@ -175,6 +187,18 @@ const DataPrediksi = () => {
     return {dataShift1, dataShift2};
   }
 
+  const listBranch = () => {
+    if (data.manager[0]?.role !== 'general_manager') {
+      const branchAccess = data.manager[0]?.branchaccess;
+      const accessIds = branchAccess?.match(/\d+/g).map(Number);
+      const filteredBranches = data.branch.filter(branch =>
+        accessIds?.includes(branch.id),
+      );
+      return filteredBranches;
+    }
+    return data.branch.sort((a, b) => a.name.localeCompare(b.name));
+  };
+
   const chartConfig = {
     backgroundColor: '#ffffff',
     backgroundGradientFrom: '#ffffff',
@@ -220,8 +244,8 @@ const DataPrediksi = () => {
   }
 
   const dataTotalRevenueShift1 = {
-    datasets: [{data: chartData(data.predict).dataset1.slice(0, 14)}],
-    labels: chartData(data.predict).labels.slice(0, 14),
+    datasets: [{data: chartData(data.predict).dataset1}],
+    labels: chartData(data.predict).labels,
   };
 
   const dataDummy = {
@@ -230,14 +254,27 @@ const DataPrediksi = () => {
   };
 
   const dataTotalRevenueShift2 = {
-    datasets: [{data: chartData(data.predict).dataset2.slice(0, 14)}],
-    labels: chartData(data.predict).labels.slice(0, 14),
+    datasets: [{data: chartData(data.predict).dataset2}],
+    labels: chartData(data.predict).labels,
   };
-  const listBranch = data.branch.map(item => ({
-    label: item.name,
-    value: item.id,
-  }));
 
+  const convertData = data => {
+    return data.datasets[0]?.data.map((value, index) => {
+      const part = data.labels[index].split(' ');
+      const label = part.slice(0, 2).join(' ');
+      return {
+        value: parseFloat(value), // Convert the string to a float
+        dataPointText: value.toString(), // Keep it as a string
+        label: label, // Use the shortened date format
+      };
+      // return data.labels[index];
+    });
+  };
+
+  const shift1 = convertData(dataTotalRevenueShift1);
+  const shift2 = convertData(dataTotalRevenueShift2);
+  console.log('shi1: ', shift1);
+  // console.log('data shift1: ', dataTotalRevenueShift1);
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.header}>
@@ -252,12 +289,12 @@ const DataPrediksi = () => {
         </View>
         <View style={{marginTop: 20, gap: 10}}>
           <Dropdown
-            data={listBranch.sort((a, b) => a.label.localeCompare(b.label))}
+            data={listBranch()}
             mode="modal"
             search
             maxHeight={250}
-            labelField="label"
-            valueField="value"
+            labelField="name"
+            valueField="id"
             value={dropdown.value}
             itemTextStyle={{fontWeight: '700', textTransform: 'uppercase'}}
             placeholder="Pilih cabang"
@@ -267,7 +304,7 @@ const DataPrediksi = () => {
             onBlur={() => setDropdown(prev => ({...prev, focus: false}))}
             onFocus={() => setDropdown(prev => ({...prev, focus: true}))}
             onChange={item =>
-              setDropdown(prev => ({...prev, value: item.value, focus: false}))
+              setDropdown(prev => ({...prev, value: item.id, focus: false}))
             }
             renderLeftIcon={() => (
               <View style={{marginRight: 10}}>
@@ -366,34 +403,11 @@ const DataPrediksi = () => {
             right={incomeData(data.predict).dataShift2.jumlahTransaksi}
           />
         </View>
-        <View style={{marginVertical: 5}}>
-          <LineChartComponent
-            onPress={toggleModal}
-            label={'Rp.'}
-            suffix={' jt'}
-            title={'Total Revenue Chart Shift 1'}
-            data={
-              dataTotalRevenueShift1.datasets[0].data.length > 0
-                ? dataTotalRevenueShift1
-                : dataDummy
-            }
-            chartConfig={chartConfig}
-          />
-        </View>
-        <View style={{marginVertical: 5}}>
-          <LineChartComponent
-            onPress={toggleModal}
-            label={'Rp.'}
-            suffix={' jt'}
-            title={'Total Revenue Chart Shift 2'}
-            data={
-              dataTotalRevenueShift2.datasets[0].data.length > 0
-                ? dataTotalRevenueShift2
-                : dataDummy
-            }
-            chartConfig={chartConfig}
-          />
-        </View>
+        <LineChartComponent
+          data1={convertData(dataTotalRevenueShift1)}
+          data2={convertData(dataTotalRevenueShift2)}
+          title="Total Revenue Chart"
+        />
       </ScrollView>
     </SafeAreaView>
   );

@@ -52,6 +52,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {CommonActions} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {Chart, MoneySend, StatusUp} from '../assets/icons';
+import ImgIcons from 'react-native-vector-icons/Ionicons';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -62,6 +63,7 @@ const DrawerBar = ({route}) => {
     local: {},
     picture: '',
   });
+
   useEffect(() => {
     try {
       async function fetchLocalStorage(params) {
@@ -124,36 +126,40 @@ const DrawerBar = ({route}) => {
                 {data.local.companyName}
               </Text>
             </View>
-            <DrawerItemList {...props} />
-            <TouchableOpacity
-              onPress={() => handleLogOut()}
-              style={[
-                styles.logoutButton,
-                {
-                  alignItems: 'center',
-                  backgroundColor: colors.errorContainer,
-                },
-              ]}>
-              <Icon
-                name="log-out-outline"
-                size={25}
-                color={
-                  Appearance.getColorScheme() === 'light'
-                    ? colors.error
-                    : colors.onErrorContainer
-                }
-              />
-              <Text
-                style={{
-                  color:
+            <View style={{flex: 1, justifyContent: 'space-between'}}>
+              <View>
+                <DrawerItemList {...props} />
+              </View>
+              <TouchableOpacity
+                onPress={() => handleLogOut()}
+                style={[
+                  styles.logoutButton,
+                  {
+                    alignItems: 'center',
+                    backgroundColor: colors.errorContainer,
+                  },
+                ]}>
+                <Icon
+                  name="log-out-outline"
+                  size={25}
+                  color={
                     Appearance.getColorScheme() === 'light'
                       ? colors.error
-                      : colors.onErrorContainer,
-                  fontWeight: '900',
-                }}>
-                Log Out
-              </Text>
-            </TouchableOpacity>
+                      : colors.onErrorContainer
+                  }
+                />
+                <Text
+                  style={{
+                    color:
+                      Appearance.getColorScheme() === 'light'
+                        ? colors.error
+                        : colors.onErrorContainer,
+                    fontWeight: '900',
+                  }}>
+                  Log Out
+                </Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         );
       }}
@@ -294,19 +300,37 @@ const DrawerBar = ({route}) => {
             },
           }}
         />
-        <Drawer.Screen
-          name="Pilih Manager"
-          component={PilihManager}
-          options={{
-            drawerLabel: 'List Manager',
-            title: 'Pilih Manager',
-            drawerIcon: ({focused}) => {
-              const iconName = focused ? 'person' : 'person-outline';
-              const color = focused ? 'white' : 'gray';
-              return <Icon name={iconName} size={25} color={color} />;
-            },
-          }}
-        />
+        {data.local?.role === 'general_manager' ? (
+          <Drawer.Group>
+            <Drawer.Screen
+              name="Pilih Manager"
+              component={PilihManager}
+              options={{
+                drawerLabel: 'List Manager',
+                title: 'Pilih Manager',
+                drawerIcon: ({focused}) => {
+                  const iconName = focused ? 'person' : 'person-outline';
+                  const color = focused ? 'white' : 'gray';
+                  return <Icon name={iconName} size={25} color={color} />;
+                },
+              }}
+            />
+            <Drawer.Screen
+              name="Pilih Menu"
+              component={PilihMenu}
+              options={{
+                drawerLabel: 'List Menu Company',
+                title: 'Pilih Menu',
+                drawerIcon: ({focused}) => {
+                  const iconName = focused ? 'cube' : 'cube-outline';
+                  const color = focused ? 'white' : 'gray';
+                  return <Icon name={iconName} color={color} size={25} />;
+                },
+              }}
+            />
+          </Drawer.Group>
+        ) : null}
+
         <Drawer.Screen
           name="Pilih Pegawai"
           component={PilihPegawai}
@@ -315,19 +339,6 @@ const DrawerBar = ({route}) => {
             title: 'Pilih Pegawai',
             drawerIcon: ({focused}) => {
               const iconName = focused ? 'people' : 'people-outline';
-              const color = focused ? 'white' : 'gray';
-              return <Icon name={iconName} color={color} size={25} />;
-            },
-          }}
-        />
-        <Drawer.Screen
-          name="Pilih Menu"
-          component={PilihMenu}
-          options={{
-            drawerLabel: 'List Menu Company',
-            title: 'Pilih Menu',
-            drawerIcon: ({focused}) => {
-              const iconName = focused ? 'cube' : 'cube-outline';
               const color = focused ? 'white' : 'gray';
               return <Icon name={iconName} color={color} size={25} />;
             },

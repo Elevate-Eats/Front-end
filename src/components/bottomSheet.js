@@ -5,6 +5,7 @@ import {
   Animated,
   FlatList,
   ToastAndroid,
+  Pressable,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import React, {useEffect, useRef, useState} from 'react';
@@ -54,8 +55,6 @@ const BottomSheet = props => {
     }, []);
     return {[transactionId]: mergeResult};
   }
-  const hasilmerge = mergeCart(backendItems, reduxItems);
-
   const slide = useRef(new Animated.Value(700)).current;
 
   async function handlePay(params) {
@@ -79,7 +78,6 @@ const BottomSheet = props => {
         ({category, disc, menuid, name, transactionId, totalprice, ...rest}) =>
           rest,
       );
-    console.log('payload: ', payload);
 
     try {
       setLoading(true);
@@ -256,113 +254,121 @@ const BottomSheet = props => {
   console.log('hasil: ', mergeCart(backendItems, reduxItems)[transactionId]);
 
   return (
-    <Animated.View
-      style={[styles.bottomSheet, {transform: [{translateY: slide}]}]}>
-      <View
-        style={{
-          flexDirection: 'row',
-          paddingHorizontal: 10,
-        }}>
-        <Text variant="titleMedium" style={{flex: 1, fontSize: 18}}>
-          {mergeCart(backendItems, reduxItems)[transactionId.toString()]
-            ? mergeCart(backendItems, reduxItems)[transactionId.toString()]
-                .length
-            : 0}{' '}
-          produk
-        </Text>
-        <View style={{flexDirection: 'row', columnGap: 20}}>
-          <TouchableOpacity>
-            <Sale width={25} height={25} fill={'grey'} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => {}}>
-            <Edit width={25} height={25} fill={'grey'} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={closeModal}>
-            <Ionicons name="close" size={25} />
-          </TouchableOpacity>
-        </View>
-      </View>
+    <Pressable onPress={closeModal} style={styles.backdrop}>
+      <Pressable style={{width: '100%', height: '99.5%'}}>
+        <Animated.View
+          style={[styles.bottomSheet, {transform: [{translateY: slide}]}]}>
+          <View
+            style={{
+              flexDirection: 'row',
+              paddingHorizontal: 10,
+            }}>
+            <Text variant="titleMedium" style={{flex: 1, fontSize: 18}}>
+              {mergeCart(backendItems, reduxItems)[transactionId.toString()]
+                ? mergeCart(backendItems, reduxItems)[transactionId.toString()]
+                    .length
+                : 0}{' '}
+              produk
+            </Text>
+            <View style={{flexDirection: 'row', columnGap: 20}}>
+              <TouchableOpacity>
+                <Sale width={25} height={25} fill={'grey'} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => {}}>
+                <Edit width={25} height={25} fill={'grey'} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={closeModal}>
+                <Ionicons name="close" size={25} />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-      <FlatList
-        data={mergeCart(backendItems, reduxItems)[transactionId.toString()]}
-        keyExtractor={item => (item.id ? item.id : item.menuid).toString()}
-        renderItem={({item}) => {
-          return (
-            // <ScrollView>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Detail Items Cart', {item})}>
-              <View style={styles.cartItem}>
-                <Text style={{fontWeight: '700'}}>{item.name}</Text>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                  }}>
-                  <Text>
-                    {FormatRP(item.price)} x {item.count}
-                  </Text>
-                  <Text style={{fontWeight: '700', fontSize: 18}}>
-                    {FormatRP(item.totalprice)}
-                  </Text>
-                </View>
-                {item.disc > 0 ? (
-                  <Text>{`Diskon - (${FormatRP(item.disc)})`}</Text>
-                ) : null}
-              </View>
-            </TouchableOpacity>
-          );
-        }}
-      />
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginVertical: 10,
-        }}>
-        <Text variant="titleMedium" style={{fontWeight: '700'}}>
-          {`Subtotal (${mergeCart(backendItems, reduxItems)[transactionId].length})`}
-        </Text>
-        <Text variant="titleMedium" style={{fontWeight: '700'}}>
-          {FormatRP(
-            calculateSubtotal(
-              mergeCart(backendItems, reduxItems)[transactionId.toString()],
-            ),
-          )}
-        </Text>
-      </View>
-
-      <View style={{flexDirection: 'row', columnGap: 10}}>
-        <TouchableOpacity
-          onPress={() => handleSave(mergeCart(backendItems, reduxItems))}
-          style={
-            mergeCart(backendItems, reduxItems)
-              ? [styles.simpan, {borderColor: Colors.btnColor}]
-              : [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
-          }
-          disabled={mergeCart(backendItems, reduxItems) ? false : true}>
-          <Text
-            style={
-              mergeCart(backendItems, reduxItems)
-                ? [styles.texSimpan, {color: Colors.btnColor}]
-                : [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
-            }>
-            Simpan
-          </Text>
-        </TouchableOpacity>
-        <View style={{flex: 1}}>
-          <ConstButton
-            loading={loading}
-            disabled={mergeCart(backendItems, reduxItems) ? false : true}
-            onPress={handlePay}
-            title={`Bayar = ${FormatRP(
-              calculateSubtotal(
-                mergeCart(backendItems, reduxItems)[transactionId.toString()],
-              ),
-            )}`}
+          <FlatList
+            data={mergeCart(backendItems, reduxItems)[transactionId.toString()]}
+            keyExtractor={item => (item.id ? item.id : item.menuid).toString()}
+            renderItem={({item}) => {
+              return (
+                // <ScrollView>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('Detail Items Cart', {item})
+                  }>
+                  <View style={styles.cartItem}>
+                    <Text style={{fontWeight: '700'}}>{item.name}</Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                      }}>
+                      <Text>
+                        {FormatRP(item.price)} x {item.count}
+                      </Text>
+                      <Text style={{fontWeight: '700', fontSize: 18}}>
+                        {FormatRP(item.totalprice)}
+                      </Text>
+                    </View>
+                    {item.disc > 0 ? (
+                      <Text>{`Diskon - (${FormatRP(item.disc)})`}</Text>
+                    ) : null}
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
           />
-        </View>
-      </View>
-    </Animated.View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginVertical: 10,
+            }}>
+            <Text variant="titleMedium" style={{fontWeight: '700'}}>
+              {`Subtotal (${mergeCart(backendItems, reduxItems)[transactionId].length})`}
+            </Text>
+            <Text variant="titleMedium" style={{fontWeight: '700'}}>
+              {FormatRP(
+                calculateSubtotal(
+                  mergeCart(backendItems, reduxItems)[transactionId.toString()],
+                ),
+              )}
+            </Text>
+          </View>
+
+          <View style={{flexDirection: 'row', columnGap: 10}}>
+            <TouchableOpacity
+              onPress={() => handleSave(mergeCart(backendItems, reduxItems))}
+              style={
+                mergeCart(backendItems, reduxItems)
+                  ? [styles.simpan, {borderColor: Colors.btnColor}]
+                  : [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
+              }
+              disabled={mergeCart(backendItems, reduxItems) ? false : true}>
+              <Text
+                style={
+                  mergeCart(backendItems, reduxItems)
+                    ? [styles.texSimpan, {color: Colors.btnColor}]
+                    : [styles.simpan, {borderColor: 'rgba(0,0,0,0.4)'}]
+                }>
+                Simpan
+              </Text>
+            </TouchableOpacity>
+            <View style={{flex: 1}}>
+              <ConstButton
+                loading={loading}
+                disabled={mergeCart(backendItems, reduxItems) ? false : true}
+                onPress={handlePay}
+                title={`Bayar = ${FormatRP(
+                  calculateSubtotal(
+                    mergeCart(backendItems, reduxItems)[
+                      transactionId.toString()
+                    ],
+                  ),
+                )}`}
+              />
+            </View>
+          </View>
+        </Animated.View>
+      </Pressable>
+    </Pressable>
   );
 };
 
@@ -386,8 +392,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: 10,
-    flex: 1,
+    paddingVertical: 20,
+    // flex: 1,
   },
   noData: {
     flex: 1,

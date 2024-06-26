@@ -6,7 +6,7 @@ import {
   ToastAndroid,
   Appearance,
 } from 'react-native';
-import React, {createRef, useState} from 'react';
+import React, {createRef, useEffect, useState} from 'react';
 import {Colors} from '../../utils/colors';
 import {Text, useTheme} from 'react-native-paper';
 import {BtnLogReg, ConstButton, FormLogReg} from '../../components';
@@ -55,7 +55,6 @@ const LoginPage = () => {
           'companyId',
           response.data.credentials.companyid.toString(),
         );
-        console.log('response: ', response.data);
         await AsyncStorage.setItem(
           'credentials',
           JSON.stringify(response.data.credentials),

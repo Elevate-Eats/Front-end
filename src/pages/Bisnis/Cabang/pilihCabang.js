@@ -19,7 +19,6 @@ import {BRANCH_ENDPOINT} from '@env';
 import Store from '../../../assets/icons/store.svg';
 import {GetAPI, PostAPI} from '../../../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useSelector} from 'react-redux';
 
 const PilihCabang = () => {
   const navigation = useNavigation();
@@ -29,8 +28,6 @@ const PilihCabang = () => {
     loading: false,
     local: {},
   });
-
-  const manager = useSelector(state => state.manager.allManager);
 
   useFocusEffect(
     useCallback(() => {
