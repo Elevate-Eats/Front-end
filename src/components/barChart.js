@@ -1,38 +1,42 @@
 import {Dimensions, StyleSheet, View} from 'react-native';
 import {Text} from 'react-native-paper';
-import React from 'react';
-import {BarChart} from 'react-native-chart-kit';
+import React, {useEffect} from 'react';
+// import {BarChart} from 'react-native-chart-kit';
 import {Colors} from '../utils/colors';
+import {BarChart, yAxisSides} from 'react-native-gifted-charts';
 
 const BarChartComponent = ({data, title, suffix, label, barSize}) => {
-  const chartConfig = {
-    backgroundColor: '#FFFFFF',
-    backgroundGradientFrom: '#f7f7f7',
-    // backgroundGradientFrom: Colors.deleteColor,
-    backgroundGradientTo: 'white',
-    color: (opacity = 0.2) => `rgba(0, 0, 0, 0.7)`,
-    barPercentage: barSize ? barSize : 0.6,
-    useShadowColorFromDataset: false,
-    propsForLabels: {
-      fontSize: '10',
-      fontWeight: '900',
-    },
-    decimalPlaces: 0,
-  };
   return (
-    <View style={styles.container}>
+    <View style={{marginVertical: 20, gap: 15, alignItems: 'center'}}>
       <Text style={styles.titleText}>{title}</Text>
       <BarChart
-        yAxisLabel={label}
-        yAxisSuffix={suffix}
+        rulesType="solid"
+        isAnimate={true}
+        noOfSections={5}
+        barBorderRadius={3}
+        frontColor={'skyblue'}
+        adjustToWidth
         data={data}
-        style={{alignItems: 'center', paddingVertical: 15}}
-        width={Dimensions.get('window').width * 0.92}
-        chartConfig={chartConfig}
-        height={250}
-        fromZero={true}
-        segments={5}
-        verticalLabelRotation={-45}
+        scrollAnimation={true}
+        d
+        yAxisThickness={0}
+        xAxisThickness={0}
+        animationDuration={1000}
+        // showGradient
+        gradientColor={'#00AA17'}
+        // renderTooltip={(item, index) => {
+        //   return (
+        //     <View
+        //       style={{
+        //         marginLeft: 1,
+        //         padding: 6,
+        //         flex: 1,
+        //         justifyContent: 'center',
+        //       }}>
+        //       <Text>{item.value.toFixed(2)}</Text>
+        //     </View>
+        //   );
+        // }}
       />
     </View>
   );

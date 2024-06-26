@@ -7,71 +7,76 @@ import {
 } from 'react-native';
 import {Text} from 'react-native-paper';
 import React from 'react';
-import {LineChart} from 'react-native-chart-kit';
+import {LineChart} from 'react-native-gifted-charts';
 
-const LineChartComponent = ({
-  title,
-  chartConfig,
-  data,
-  width,
-  label,
-  suffix,
-  onPress,
-}) => {
-  const screenWidth = Dimensions.get('window').width;
-  const adjustedChartConfig = {
-    ...chartConfig,
-    paddingLeft: '0px',
-    paddingRight: '16px', // Adjust right padding if needed
-    backgroundGradientFrom: chartConfig.backgroundGradientFrom || '#fff',
-    backgroundGradientTo: chartConfig.backgroundGradientTo || '#fff',
-    decimalPlaces: chartConfig.decimalPlaces || 2,
-    color: chartConfig.color || ((opacity = 1) => `rgba(0, 0, 0, ${opacity})`),
-    labelColor:
-      chartConfig.labelColor || ((opacity = 1) => `rgba(0, 0, 0, ${opacity})`),
-    style: {
-      borderRadius: chartConfig.style?.borderRadius || 16,
-    },
-    propsForDots: {
-      r: '1',
-      strokeWidth: '2',
-      stroke: '#ffa726',
-    },
-    showDataPoints: chartConfig.showDataPoints || false,
-  };
+const LineChartComponent = ({data1, data2, title}) => {
+  const lineData = [
+    {value: 0, dataPointText: '0', label: '17 Apr'},
+    {value: 10, dataPointText: '10', label: '18 Apr'},
+    {value: 8, dataPointText: '8'},
+    {value: 58, dataPointText: '58'},
+    {value: 56, dataPointText: '56'},
+    {value: 78, dataPointText: '78'},
+    {value: 74, dataPointText: '74'},
+    {value: 98, dataPointText: '98'},
+  ];
+
+  const lineData2 = [
+    {value: 0, dataPointText: '0', label: '18 Apr'},
+    {value: 20, dataPointText: '20'},
+    {value: 18, dataPointText: '18'},
+    {value: 40, dataPointText: '40'},
+    {value: 36, dataPointText: '36'},
+    {value: 60, dataPointText: '60'},
+    {value: 54, dataPointText: '54'},
+    {value: 85, dataPointText: '85'},
+  ];
 
   return (
-    <Pressable style={styles.lineChart} onPress={onPress}>
-      <View style={{flexDirection: 'row', paddingVertical: 10}}>
-        <Text style={[styles.titleText, {alignSelf: 'flex-start', flex: 1}]}>
-          {title}
-        </Text>
-        <TouchableOpacity onPress={onPress}>
-          <Text
-            style={[
-              styles.titleText,
-              {
-                alignSelf: 'flex-end',
-                textDecorationLine: 'underline',
-                fontSize: 12,
-              },
-            ]}>
-            Details
-          </Text>
-        </TouchableOpacity>
+    <View style={{paddingVertical: 20, alignItems: 'center', gap: 15}}>
+      <Text variant="titleMedium" style={styles.titleText}>
+        {title}
+      </Text>
+      <View style={{flexDirection: 'row', gap: 20}}>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+          <View
+            style={{width: 15, height: 15, backgroundColor: 'skyblue'}}></View>
+          <Text>Shift 1</Text>
+        </View>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+          <View
+            style={{width: 15, height: 15, backgroundColor: 'orange'}}></View>
+          <Text>Shift 2</Text>
+        </View>
       </View>
       <LineChart
-        yAxisSuffix={suffix}
-        data={data}
-        width={width || screenWidth - 20}
-        height={220}
-        yAxisLabel={label}
-        chartConfig={adjustedChartConfig}
-        bezier
-        style={{marginVertical: 8, borderRadius: 8}}
-        verticalLabelRotation={-90}
+        areaChart
+        isAnimated={true}
+        delayBeforeUnFocus={500}
+        animationDuration={1000}
+        curved
+        data={data1}
+        data2={data2}
+        height={300}
+        showVerticalLines
+        spacing={60}
+        color1="skyblue"
+        color2="orange"
+        textColor1="black"
+        dataPointsColor1="green"
+        dataPointsColor2="red"
+        startFillColor1="skyblue"
+        startFillColor2="orange"
+        startOpacity={0.8}
+        endOpacity={0.3}
+        textFontSize={14}
+        maxValue={10}
+        yAxisLabelSuffix=" Jt"
+        animateTogether={true}
+        animateOnDataChange={true}
+        xAxisLabelTextStyle={{fontWeight: '700', fontSize: 13}}
       />
-    </Pressable>
+    </View>
   );
 };
 
