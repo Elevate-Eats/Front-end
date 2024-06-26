@@ -13,15 +13,15 @@ const BarChartComponent = ({data, title, suffix, label, barSize}) => {
         rulesType="solid"
         isAnimate={true}
         noOfSections={5}
-        barBorderRadius={3}
+        barBorderRadius={5}
         frontColor={'skyblue'}
         adjustToWidth
         data={data}
         scrollAnimation={true}
-        d
         yAxisThickness={0}
         xAxisThickness={0}
         animationDuration={1000}
+        xAxisLabelTextStyle={{fontWeight: '700', fontSize: 10}}
         // showGradient
         gradientColor={'#00AA17'}
         // renderTooltip={(item, index) => {
