@@ -9,7 +9,16 @@ import {Text} from 'react-native-paper';
 import React from 'react';
 import {LineChart} from 'react-native-gifted-charts';
 
-const LineChartComponent = ({data1, data2, title}) => {
+const LineChartComponent = ({
+  data1,
+  data2,
+  title,
+  maxValue,
+  legend1,
+  legend2,
+  suffix,
+  area,
+}) => {
   const lineData = [
     {value: 0, dataPointText: '0', label: '17 Apr'},
     {value: 10, dataPointText: '10', label: '18 Apr'},
@@ -38,19 +47,27 @@ const LineChartComponent = ({data1, data2, title}) => {
         {title}
       </Text>
       <View style={{flexDirection: 'row', gap: 20}}>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-          <View
-            style={{width: 15, height: 15, backgroundColor: 'skyblue'}}></View>
-          <Text>Shift 1</Text>
-        </View>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-          <View
-            style={{width: 15, height: 15, backgroundColor: 'orange'}}></View>
-          <Text>Shift 2</Text>
-        </View>
+        {legend1 ? (
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+            <View
+              style={{
+                width: 15,
+                height: 15,
+                backgroundColor: 'skyblue',
+              }}></View>
+            <Text>{legend1}</Text>
+          </View>
+        ) : null}
+        {legend2 ? (
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+            <View
+              style={{width: 15, height: 15, backgroundColor: 'orange'}}></View>
+            <Text>{legend2}</Text>
+          </View>
+        ) : null}
       </View>
       <LineChart
-        areaChart
+        areaChart={area === false ? false : true}
         isAnimated={true}
         delayBeforeUnFocus={500}
         animationDuration={1000}
@@ -59,7 +76,7 @@ const LineChartComponent = ({data1, data2, title}) => {
         data2={data2}
         height={300}
         showVerticalLines
-        spacing={60}
+        spacing={50}
         color1="skyblue"
         color2="orange"
         textColor1="black"
@@ -70,8 +87,8 @@ const LineChartComponent = ({data1, data2, title}) => {
         startOpacity={0.8}
         endOpacity={0.3}
         textFontSize={14}
-        maxValue={10}
-        yAxisLabelSuffix=" Jt"
+        maxValue={maxValue}
+        yAxisLabelSuffix={suffix}
         animateTogether={true}
         animateOnDataChange={true}
         xAxisLabelTextStyle={{fontWeight: '700', fontSize: 13}}
