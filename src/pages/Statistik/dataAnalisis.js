@@ -24,6 +24,7 @@ import getDataQuery from '../../utils/getDataQuery';
 import {ANALYTICS_ENDPOINT} from '@env';
 import IncomeItem from '../../components/incomeItem';
 import BarChartComponent from '../../components/barChart';
+import LineChartComponent from '../../components/lineChart';
 
 const DataAnalisis = () => {
   const navigation = useNavigation();
@@ -125,6 +126,7 @@ const DataAnalisis = () => {
             ...prev,
             hourly: dataHourly,
           }));
+
           //!----
 
           const dataItems = await getDataQuery({
@@ -181,61 +183,36 @@ const DataAnalisis = () => {
     }));
   }
 
-  function chartData(datas) {
-    let labels = [];
-    let dataset = [];
+  function chartData(types) {
+    let label = [];
+    let value = [];
 
-    if (datas === 'item') {
+    if (types === 'item') {
       data.items.forEach(item => {
         const menuItem = Object.values(data.menu).find(
           menuItem => menuItem.id === item.menuid,
         );
         if (menuItem) {
-          labels.push(menuItem.name);
-          dataset.push(parseInt(item.sumitemssold));
+          label.push(menuItem.name);
+          value.push(parseInt(item.sumitemssold));
         }
       });
-    } else {
+    } else if (types === 'hour') {
       data.hourly.forEach(item => {
         const hour = parseInt(item.hour);
         const formatedHour =
-          hour === 12 ? `${hour}p` : hour > 12 ? `${hour - 12}p` : `${hour}a`;
-        labels.push(formatedHour);
-        dataset.push(parseInt(item.sumtransactions));
+          hour === 12
+            ? `${hour} PM`
+            : hour > 12
+              ? `${hour - 12}PM`
+              : `${hour} AM`;
+        label.push(formatedHour);
+        value.push(parseInt(item.sumtransactions));
       });
     }
 
-    return {dataset, labels};
+    return {value, label};
   }
-
-  function fiveMenuItems(dataItems) {
-    const combined = dataItems?.datasets[0]?.data
-      .map((value, index) => {
-        return {
-          value: value,
-          label: dataItems.labels[index],
-        };
-      })
-      .sort((a, b) => b.value - a.value);
-
-    const topFive = combined.slice(0, 5);
-    const sortedData = topFive.map(item => item.value);
-    const sortedLabels = topFive.map(item => item.label);
-    return {
-      datasets: [{data: sortedData}],
-      labels: sortedLabels,
-    };
-  }
-
-  const dataHourly = {
-    datasets: [{data: chartData('hour').dataset}],
-    labels: chartData('hour').labels,
-  };
-
-  const dataItems = {
-    datasets: [{data: chartData('item').dataset.slice(0, 10)}],
-    labels: chartData('item').labels.slice(0, 10),
-  };
 
   const listBranch = () => {
     if (data.manager[0]?.role !== 'general_manager') {
@@ -247,6 +224,28 @@ const DataAnalisis = () => {
       return filteredBranches;
     }
     return data.branch.sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const convertDataLineChart = data => {
+    return data?.label.map((label, index) => {
+      return {
+        label: label,
+        value: data.value[index],
+        dataPointText: data.value[index].toString(),
+      };
+    });
+  };
+
+  const convertDataBarChart = data => {
+    return data?.label.map((label, index) => {
+      return {
+        label: label,
+        value: data.value[index],
+        topLabelComponent: () => (
+          <Text style={{fontSize: 10}}>{data.value[index].toString()}</Text>
+        ),
+      };
+    });
   };
 
   return (
@@ -385,21 +384,19 @@ const DataAnalisis = () => {
             }
           />
         </View>
-        {/* <View style={{marginVertical: 10}}>
-          <BarChartComponent
-            title="Hourly Performance Chart"
-            data={dataHourly}
-            suffix={' trs'}
+        <View>
+          <LineChartComponent
+            data1={convertDataLineChart(chartData('hour'))}
+            legend1={'Transaction'}
+            title={'Hourly'}
           />
-          <View style={{marginVertical: 10}}>
-            <BarChartComponent
-              barSize={0.9}
-              suffix={' pcs'}
-              title={'Menu Item Sales Chart'}
-              data={fiveMenuItems(dataItems)}
-            />
-          </View>
-        </View> */}
+          <BarChartComponent
+            title={'Top Five Items'}
+            data={convertDataBarChart(chartData('item'))
+              .sort((a, b) => b.value - a.value)
+              .slice(0, 5)}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
