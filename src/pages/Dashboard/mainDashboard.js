@@ -329,6 +329,11 @@ const MainDashboard = ({navigation, route}) => {
           const salesDataFormatted = getNextSevenDays().map((label, index) => ({
             label: label,
             value: weeklyData.sales[index],
+            topLabelComponent: () => (
+              <Text style={{fontSize: 7}}>
+                {`${weeklyData.sales[index].toFixed(2)} Jt`}
+              </Text>
+            ),
           }));
 
           setTodayData(prev => ({
@@ -381,9 +386,6 @@ const MainDashboard = ({navigation, route}) => {
     }
     fetchData();
   }, [dispatch, selectBranch, navigation]);
-
-  console.log(`BRANCH : ${selectBranch?.id}`);
-  console.log('trans: ', todayData.transactions);
 
   const week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
