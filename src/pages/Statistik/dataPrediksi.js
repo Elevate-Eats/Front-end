@@ -87,20 +87,6 @@ const DataPrediksi = () => {
             setData(prev => ({
               ...prev,
               predict: dataPredict,
-              chart: {
-                labels: readableLabels(
-                  processData(dataPredict).map(item => item.date),
-                ),
-                datasets: [
-                  {
-                    data: processData(dataPredict).map(
-                      item => item.transactions,
-                    ),
-                    color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`,
-                    strokeWidth: 2,
-                  },
-                ],
-              },
             }));
           }
         } catch (error) {
@@ -150,24 +136,6 @@ const DataPrediksi = () => {
     }));
   }
 
-  function processData(rawData) {
-    const groupedData = rawData.reduce((acc, item) => {
-      const date = item.Tanggal;
-      acc[date] = acc[date] || {date, transactions: 0};
-      acc[date].transaction += item['Jumlah Transaksi'];
-      return acc;
-    });
-    return Object.values(groupedData);
-  }
-
-  function readableLabels(dates) {
-    const maxLabels = 5;
-    const stepSize = Math.ceil(dates.length / maxLabels);
-    return dates.map((date, idx) =>
-      idx % stepSize === 0 ? moment(date).format('DD MMM') : '',
-    );
-  }
-
   function incomeData(data) {
     let dataShift1 = {total: 0, jumlahTransaksi: 0};
     let dataShift2 = {total: 0, jumlahTransaksi: 0};
@@ -195,56 +163,61 @@ const DataPrediksi = () => {
     }
     return data.branch.sort((a, b) => a.name.localeCompare(b.name));
   };
-
-  function chartData(datas) {
-    let labels = [];
-    let dataset1 = [];
-    let dataset2 = [];
-    if (datas) {
-      datas.forEach(item => {
-        const stringValue = item.Total.toString();
-        const formatedValue = `${stringValue.slice(0, 1)}.${stringValue.slice(1, 2)}`;
-        const formatDate = FormatDateTime(item['Tanggal']).realDate;
-        if (!labels.includes(formatDate)) {
-          labels.push(formatDate);
-        }
-        if (item['Shift'] === 1) {
-          dataset1.push(formatedValue);
-        } else {
-          dataset2.push(formatedValue);
-        }
-      });
-    }
-    return {labels, dataset1, dataset2};
+  function processData(rawData) {
+    const shift1 = rawData
+      .filter(data => data.Shift === 1)
+      .map(item => ({
+        tanggal: item.Tanggal,
+        total: item.Total,
+        transactions: item['Jumlah Transaksi'],
+      }));
+    const shift2 = rawData
+      .filter(data => data.Shift === 2)
+      .map(item => ({
+        tanggal: item.Tanggal,
+        total: item.Total,
+        transactions: item['Jumlah Transaksi'],
+      }));
+    return {shift1, shift2};
   }
 
-  const dataTotalRevenueShift1 = {
-    datasets: [{data: chartData(data.predict).dataset1}],
-    labels: chartData(data.predict).labels,
+  const dataRevenueChart = dataPredict => {
+    const revenueShift1 = dataPredict.shift1.map(item => ({
+      value: parseFloat((item.total / 1000000).toFixed(2)),
+      label: `${new Date(item.tanggal).getDate()} ${new Date(item.tanggal).toLocaleString('default', {month: 'short'})}`,
+      dataPointText: `${(item.total / 1000000).toFixed(2)}jt`,
+    }));
+
+    const revenueShift2 = dataPredict.shift2.map(item => ({
+      value: parseFloat((item.total / 1000000).toFixed(2)),
+      label: `${new Date(item.tanggal).getDate()} ${new Date(item.tanggal).toLocaleString('default', {month: 'short'})}`,
+      dataPointText: `${(item.total / 1000000).toFixed(2)}jt`,
+    }));
+
+    return {revenueShift1, revenueShift2};
   };
 
-  const dataTotalRevenueShift2 = {
-    datasets: [{data: chartData(data.predict).dataset2}],
-    labels: chartData(data.predict).labels,
+  const dataItemChart = dataPredict => {
+    const itemShift1 = dataPredict.shift1.map(item => ({
+      value: item.transactions,
+      label: `${new Date(item.tanggal).getDate()} ${new Date(item.tanggal).toLocaleString('default', {month: 'short'})}`,
+      dataPointText: item.transactions,
+    }));
+
+    const itemShift2 = dataPredict.shift2.map(item => ({
+      value: item.transactions,
+      label: `${new Date(item.tanggal).getDate()} ${new Date(item.tanggal).toLocaleString('default', {month: 'short'})}`,
+      dataPointText: item.transactions,
+    }));
+
+    return {itemShift1, itemShift2};
   };
 
-  const convertData = data => {
-    return data.datasets[0]?.data.map((value, index) => {
-      const part = data.labels[index].split(' ');
-      const label = part.slice(0, 2).join(' ');
-      return {
-        value: parseFloat(value), // Convert the string to a float
-        dataPointText: value.toString(), // Keep it as a string
-        label: label, // Use the shortened date format
-      };
-      // return data.labels[index];
-    });
-  };
+  console.log(
+    'item shift 1: ',
+    dataItemChart(processData(data.predict)).itemShift1,
+  );
 
-  const shift1 = convertData(dataTotalRevenueShift1);
-  const shift2 = convertData(dataTotalRevenueShift2);
-  // console.log('shi1: ', shift1);
-  // console.log('data shift1: ', dataTotalRevenueShift1);
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.header}>
@@ -362,7 +335,7 @@ const DataPrediksi = () => {
           <IncomeItem
             loading={data.loading}
             title={'Transaction Predictions'}
-            centerName={'Total Transacions'}
+            centerName={'Total Transactions'}
             leftName={'Shift 1'}
             rightName={'Shift 2'}
             center={parseInt(
@@ -373,11 +346,26 @@ const DataPrediksi = () => {
             right={incomeData(data.predict).dataShift2.jumlahTransaksi}
           />
         </View>
-        <LineChartComponent
-          data1={convertData(dataTotalRevenueShift1)}
-          data2={convertData(dataTotalRevenueShift2)}
-          title="Total Revenue Chart"
-        />
+        <View>
+          <LineChartComponent
+            data1={dataRevenueChart(processData(data.predict)).revenueShift1}
+            data2={dataRevenueChart(processData(data.predict)).revenueShift2}
+            title="Total Revenue Chart"
+            maxValue={10}
+            legend1={'Shift 1'}
+            legend2={'Shift 2'}
+            suffix={' Jt'}
+          />
+          <LineChartComponent
+            data1={dataItemChart(processData(data.predict)).itemShift1}
+            data2={dataItemChart(processData(data.predict)).itemShift2}
+            title="Total Transaction Chart"
+            // maxValue={10}
+            legend1={'Shift 1'}
+            legend2={'Shift 2'}
+            // area={false}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
