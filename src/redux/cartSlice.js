@@ -25,9 +25,9 @@ export const cartSlice = createSlice({
             state.reduxItems[transactionId][index].count += newItems.count;
             state.reduxItems[transactionId][index].totalprice +=
               newItems.totalprice;
-            if (newItems.disc !== undefined) {
-              state.reduxItems[transactionId][index].disc += newItems.disc;
-            }
+            // if (newItems.disc !== undefined) {
+            //   state.reduxItems[transactionId][index].disc += newItems.disc;
+            // }
           }
         });
       } else {

@@ -31,6 +31,7 @@ const BottomSheet = props => {
   const customer = useSelector(state => state.customer.customerInfo);
   const reduxItems = useSelector(state => state.cart.reduxItems); //! Redux
   const backendItems = useSelector(state => state.cart.backendItems); // !Backend
+
   const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState([]);
 
@@ -108,7 +109,7 @@ const BottomSheet = props => {
         ({name, disc, menuid, totalprice, pricingcategory, ...rest}) => rest,
       );
 
-    console.log('payload: ', payload);
+    // console.log('payload: ', payload);
     try {
       setLoading(true);
       const action = await PostData({
@@ -194,7 +195,6 @@ const BottomSheet = props => {
           mergeCart(backendItems, reduxItems)[transactionId.toString()],
         );
       }
-      dispatch(clearReduxItems());
       ToastAndroid.show('Items saved successfully', ToastAndroid.SHORT);
       navigation.goBack();
     } catch (error) {
@@ -251,7 +251,7 @@ const BottomSheet = props => {
     fetchData();
   }, []);
 
-  console.log('hasil: ', mergeCart(backendItems, reduxItems)[transactionId]);
+  // console.log('hasil: ', mergeCart(backendItems, reduxItems)[transactionId]);
 
   return (
     <Pressable onPress={closeModal} style={styles.backdrop}>
@@ -271,9 +271,6 @@ const BottomSheet = props => {
               produk
             </Text>
             <View style={{flexDirection: 'row', columnGap: 20}}>
-              <TouchableOpacity>
-                <Sale width={25} height={25} fill={'grey'} />
-              </TouchableOpacity>
               <TouchableOpacity onPress={() => {}}>
                 <Edit width={25} height={25} fill={'grey'} />
               </TouchableOpacity>

@@ -18,13 +18,15 @@ import {
 } from '../../../components';
 import {Colors} from '../../../utils/colors';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {MENU_BRANCH_ENDPOINT, TRANSACTION_ENDPOINT} from '@env';
+import {MENU_BRANCH_ENDPOINT, TRANSACTION_ENDPOINT, ITEM_ENDPOINT} from '@env';
 
 import {useSelector, useDispatch} from 'react-redux';
 import {setCustomerInfo} from '../../../redux/customerSlice';
 import getDataQuery from '../../../utils/getDataQuery';
 import PostData from '../../../utils/postData';
 import {setTransactionId} from '../../../redux/transactionSlice';
+import {GetQueryAPI} from '../../../api';
+import {addItem} from '../../../redux/cartSlice';
 const MainTransaksi = ({navigation, route}) => {
   const prevData = route.params;
   const dispatch = useDispatch();
@@ -32,13 +34,13 @@ const MainTransaksi = ({navigation, route}) => {
   const transactionId = useSelector(s => s.transaction.transactionId);
   const reduxItems = useSelector(state => state.cart.reduxItems); // !redux
   const backendItems = useSelector(state => state.cart.backendItems); // !backend
-
   const [data, setData] = useState({
     loading: false,
     query: '',
     error: null,
     menu: [],
     visible: true,
+    item: [],
   });
   const [status, setStatus] = useState(false);
 
@@ -51,6 +53,24 @@ const MainTransaksi = ({navigation, route}) => {
     if (customer.name && customer.table) {
       dispatch(setTransactionId(prevData ? prevData.id : null));
       setData(prev => ({...prev, visible: false}));
+      async function fetchItemData(params) {
+        try {
+          const response = await GetQueryAPI({
+            operation: ITEM_ENDPOINT,
+            endpoint: 'showItems',
+            query: `transactionId=${prevData.id}`,
+          });
+          if (response.status === 200) {
+            // console.log('respon: ', response.data.itemData);
+            console.log('respon: ', response.status);
+            setData(prev => ({...prev, item: response.data.itemData}));
+          }
+        } catch (error) {
+          console.log('error items: ', error.response.status);
+          setData(prev => ({...prev, item: []}));
+        }
+      }
+      fetchItemData();
     } else {
       setData(prev => ({...prev, visible: true}));
     }
