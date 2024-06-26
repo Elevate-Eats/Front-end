@@ -106,10 +106,9 @@ const DetailItemsCart = ({navigation, route}) => {
       count: product.count,
       price: product.price,
       pricingcategory: product.pricingCategory,
-      totalprice: product.totalPrice,
+      totalprice: product.totalPrice - product.disc,
       disc: product.disc,
     };
-    console.log('payload: ', payload);
     dispatch(updateItem(payload));
     ToastAndroid.show(`Updated ${item.name}`, ToastAndroid.SHORT);
     navigation.goBack();
