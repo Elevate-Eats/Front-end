@@ -40,15 +40,6 @@ const PendingTransaction = ({navigation}) => {
   async function fetchData(params) {
     setData(prev => ({...prev, loading: true}));
     try {
-      // const response = await getDataQuery({
-      //   operation: TRANSACTION_ENDPOINT,
-      //   endpoint: 'showTransactions',
-      //   resultKey: 'transactions',
-      //   query: `branch=${branch.id}&limit=50`,
-      // });
-      // if (response) {
-      //   setData(prev => ({...prev, transaction: response}));
-      // }
       const response = await GetQueryAPI({
         operation: TRANSACTION_ENDPOINT,
         endpoint: 'showTransactions',
@@ -145,6 +136,7 @@ const PendingTransaction = ({navigation}) => {
                             id: item.id,
                             table: item.tablenumber,
                           });
+                          // console.log('item: ', item.id);
                         }}>
                         <View
                           style={{
