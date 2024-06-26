@@ -86,10 +86,10 @@ const DrawerBar = ({route}) => {
     <Drawer.Navigator
       drawerContent={props => {
         const {navigation} = props;
-        function handleLogOut(params) {
+        async function handleLogOut(params) {
           navigation.navigate('Home');
           navigation.closeDrawer();
-          AsyncStorage.clear()
+          await AsyncStorage.clear()
             .then(() => {
               navigation.dispatch(
                 CommonActions.reset({
