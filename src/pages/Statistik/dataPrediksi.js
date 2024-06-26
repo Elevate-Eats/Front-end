@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 import {Text} from 'react-native-paper';
-import React, {lazy, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import getDataQuery from '../../utils/getDataQuery';
 import {REPORT_ENDPOINT} from '@env';
@@ -49,9 +49,6 @@ const DataPrediksi = () => {
     manager: [],
     local: {},
   });
-
-  const [visible, setVisible] = useState(false);
-  const toggleModal = () => setVisible(!visible);
 
   useEffect(() => {
     async function fetDataLocal(params) {
@@ -199,28 +196,6 @@ const DataPrediksi = () => {
     return data.branch.sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  const chartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
-    decimalPlaces: 0, // optional, defaults to 2dp
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: '1',
-      strokeWidth: '2',
-      stroke: '#ffa726',
-    },
-    propsForLabels: {
-      fontSize: '10',
-      fontWeight: '900',
-    },
-    showDataPoints: false,
-  };
-
   function chartData(datas) {
     let labels = [];
     let dataset1 = [];
@@ -248,11 +223,6 @@ const DataPrediksi = () => {
     labels: chartData(data.predict).labels,
   };
 
-  const dataDummy = {
-    datasets: [{data: [0, 0, 0, 0, 0]}],
-    labels: ['0', '0', '0', '0', '0'],
-  };
-
   const dataTotalRevenueShift2 = {
     datasets: [{data: chartData(data.predict).dataset2}],
     labels: chartData(data.predict).labels,
@@ -273,7 +243,7 @@ const DataPrediksi = () => {
 
   const shift1 = convertData(dataTotalRevenueShift1);
   const shift2 = convertData(dataTotalRevenueShift2);
-  console.log('shi1: ', shift1);
+  // console.log('shi1: ', shift1);
   // console.log('data shift1: ', dataTotalRevenueShift1);
   return (
     <SafeAreaView style={{flex: 1}}>
